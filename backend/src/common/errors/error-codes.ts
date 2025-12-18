@@ -1,0 +1,30 @@
+/**
+ * Stable machine-readable error codes returned in `{ error: { code, ... } }`
+ * (Section 5). The frontend and the public Developer API both branch on these,
+ * so treat every value here as part of the public contract: add, don't rename.
+ */
+export const ErrorCode = {
+  // Generic
+  VALIDATION_FAILED: 'VALIDATION_FAILED',
+  NOT_FOUND: 'NOT_FOUND',
+  INTERNAL_ERROR: 'INTERNAL_ERROR',
+  RATE_LIMITED: 'RATE_LIMITED',
+
+  // Auth
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  FORBIDDEN: 'FORBIDDEN',
+  INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
+  EMAIL_ALREADY_REGISTERED: 'EMAIL_ALREADY_REGISTERED',
+  PASSWORD_LOGIN_UNAVAILABLE: 'PASSWORD_LOGIN_UNAVAILABLE',
+  OAUTH_PROVIDER_NOT_CONFIGURED: 'OAUTH_PROVIDER_NOT_CONFIGURED',
+
+  // Workspace
+  WORKSPACE_NOT_FOUND: 'WORKSPACE_NOT_FOUND',
+  WORKSPACE_ACCESS_DENIED: 'WORKSPACE_ACCESS_DENIED',
+  WORKSPACE_CONTEXT_REQUIRED: 'WORKSPACE_CONTEXT_REQUIRED',
+  INSUFFICIENT_ROLE: 'INSUFFICIENT_ROLE',
+  MEMBER_ALREADY_EXISTS: 'MEMBER_ALREADY_EXISTS',
+  CANNOT_REMOVE_OWNER: 'CANNOT_REMOVE_OWNER',
+} as const;
+
+export type ErrorCodeValue = (typeof ErrorCode)[keyof typeof ErrorCode];
