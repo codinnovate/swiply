@@ -8,12 +8,13 @@
 
 ### 0.1 Git
 
-**Commit as you finish each task. Never push.**
+**Commit as you finish each task. Push at the end of each build step.**
 
 - **Commit granularly.** One commit per logical unit — a schema, a service, a controller, a guard, a test suite. Not one commit per build step, and not one commit per file for files that only make sense together (a controller and its module, a schema and its indexes).
 - **Commit when a task is done**, not at the end of a session. If a build step from Section 15 produces twelve logical units, that is twelve commits.
-- **Never `git push`.** Not to any remote, not with any flag. Pushing is the human's call, always. The same goes for opening PRs, creating remotes, or anything else that moves code off this machine.
-- **Never force-push, rebase published history, amend someone else's commit, or `git reset --hard`** over work you didn't create.
+- **Push once per completed build step**, after `npm run build`, `npm test`, and `npm run lint` all pass — never mid-step, never with failing tests. Push the working branch to `origin`; do not push to `main`.
+- **Never force-push, rebase published history, amend a pushed commit, or `git reset --hard`** over work you didn't create. Once a commit is on `origin`, it is immutable.
+- **Never merge to `main` or open a PR.** That is the human's call.
 - **Don't commit secrets.** `.env` is gitignored; keep it that way. `.env.example` carries names and format hints only, never values.
 - **Commit message format** — Conventional Commits, scoped to the module:
   ```
