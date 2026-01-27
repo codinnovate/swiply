@@ -3,6 +3,7 @@ import { validateEnv } from './env.validation';
 const MINIMUM = {
   MONGODB_URI: 'mongodb://localhost:27017/swiply',
   JWT_SECRET: 'a-secret-that-is-definitely-32-chars',
+  ENCRYPTION_KEY: 'a'.repeat(64),
 };
 
 describe('validateEnv', () => {
@@ -22,6 +23,10 @@ describe('validateEnv', () => {
   it.each([
     ['MONGODB_URI', {}],
     ['JWT_SECRET', { MONGODB_URI: MINIMUM.MONGODB_URI }],
+    [
+      'ENCRYPTION_KEY',
+      { MONGODB_URI: MINIMUM.MONGODB_URI, JWT_SECRET: MINIMUM.JWT_SECRET },
+    ],
   ])('fails fast when %s is missing', (missing, provided) => {
     expect(() => validateEnv(provided)).toThrow(new RegExp(missing));
   });
@@ -36,7 +41,18 @@ describe('validateEnv', () => {
     expect(() => validateEnv({ ...MINIMUM, ENCRYPTION_KEY: 'abc123' })).toThrow(
       /64 hex characters/,
     );
+    // Right length, wrong alphabet — Buffer.from(hex) would silently truncate.
+    expect(() => validateEnv({ ...MINIMUM, ENCRYPTION_KEY: 'z'.repeat(64) })).toThrow(
+      /64 hex characters/,
+    );
     expect(() => validateEnv({ ...MINIMUM, ENCRYPTION_KEY: 'a'.repeat(64) })).not.toThrow();
+  });
+
+  it('accepts only the documented X API tiers (Section 16)', () => {
+    expect(() => validateEnv({ ...MINIMUM, TWITTER_API_TIER: 'enterprise' })).toThrow(
+      /TWITTER_API_TIER/,
+    );
+    expect(() => validateEnv({ ...MINIMUM, TWITTER_API_TIER: 'basic' })).not.toThrow();
   });
 
   it('rejects an unknown TWITTER_API_TIER, which gates mention polling (Section 6)', () => {
