@@ -14,6 +14,7 @@ export async function createTestApp(): Promise<INestApplication> {
   process.env.MONGODB_URI = await startInMemoryMongo();
   process.env.JWT_SECRET ??= 'test-secret-that-is-at-least-32-characters-long';
   process.env.JWT_EXPIRES_IN ??= '1h';
+  process.env.ENCRYPTION_KEY ??= 'f'.repeat(64);
   delete process.env.GOOGLE_OAUTH_CLIENT_ID;
   delete process.env.GOOGLE_OAUTH_CLIENT_SECRET;
 

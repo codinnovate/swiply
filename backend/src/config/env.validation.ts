@@ -6,7 +6,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  Length,
+  Matches,
   Max,
   Min,
   MinLength,
@@ -69,11 +69,24 @@ export class EnvironmentVariables {
   @IsOptional()
   FRONTEND_URL = 'http://localhost:3001';
 
-  /** AES-256-GCM key for SocialAccount tokens (Section 12). 64 hex chars = 32 bytes. */
+  /**
+   * Public origin of this API, used to build platform OAuth redirect URIs.
+   * Not in Section 13's list — added by build step 2, which cannot register a
+   * relative redirect URI with TikTok/Meta/X.
+   */
   @IsString()
-  @Length(64, 64, { message: 'ENCRYPTION_KEY must be 64 hex characters (32 bytes)' })
   @IsOptional()
-  ENCRYPTION_KEY?: string;
+  API_BASE_URL = 'http://localhost:3000';
+
+  /**
+   * AES-256-GCM key for SocialAccount tokens (Section 12). 64 hex chars = 32
+   * bytes. Required as of build step 2, which stores platform tokens.
+   */
+  @IsString()
+  @Matches(/^[0-9a-fA-F]{64}$/, {
+    message: 'ENCRYPTION_KEY must be 64 hex characters (32 bytes)',
+  })
+  ENCRYPTION_KEY: string;
 
   // --- Declared now, required by later build steps ---
   @IsString() @IsOptional() ANTHROPIC_API_KEY?: string;
@@ -84,6 +97,8 @@ export class EnvironmentVariables {
   @IsString() @IsOptional() STRIPE_SECRET_KEY?: string;
   @IsString() @IsOptional() STRIPE_WEBHOOK_SECRET?: string;
   @IsString() @IsOptional() REDIS_URL?: string;
+  // --- Platform OAuth (Section 6). Optional: an unconfigured platform is
+  // refused at connect time, it does not stop the app booting. ---
   @IsString() @IsOptional() TIKTOK_CLIENT_KEY?: string;
   @IsString() @IsOptional() TIKTOK_CLIENT_SECRET?: string;
   @IsString() @IsOptional() META_APP_ID?: string;
