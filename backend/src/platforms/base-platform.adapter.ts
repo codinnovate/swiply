@@ -4,8 +4,12 @@ import { AxiosError } from 'axios';
 import { ApiException } from '../common/errors/api.exception';
 import type {
   ContentValidationResult,
+  OAuthAuthorizeRequest,
+  OAuthExchangeRequest,
   PlatformAdapter,
   PlatformCapabilities,
+  PlatformConnection,
+  PlatformCredentials,
   ValidatableContent,
 } from './platform-adapter.interface';
 
@@ -19,9 +23,9 @@ export abstract class BasePlatformAdapter implements PlatformAdapter {
   protected readonly logger = new Logger(this.constructor.name);
 
   abstract isConfigured(): boolean;
-  abstract getOAuthUrl(request: never): string;
-  abstract handleOAuthCallback(request: never): Promise<never>;
-  abstract refreshAccessToken(refreshToken: string): Promise<never>;
+  abstract getOAuthUrl(request: OAuthAuthorizeRequest): string;
+  abstract handleOAuthCallback(request: OAuthExchangeRequest): Promise<PlatformConnection>;
+  abstract refreshAccessToken(refreshToken: string): Promise<PlatformCredentials>;
 
   /**
    * Section 6: reject unsupported type/platform combinations before anything is
