@@ -104,13 +104,15 @@ export class TikTokAdapter extends BasePlatformAdapter {
     if (!this.isConfigured()) throw this.notConfigured();
 
     return this.toCredentials(
-      await this.postToken({
-        client_key: this.clientKey as string,
-        client_secret: this.clientSecret as string,
-        grant_type: 'refresh_token',
-        refresh_token: refreshToken,
-      }),
-      'token refresh',
+      await this.postToken(
+        {
+          client_key: this.clientKey as string,
+          client_secret: this.clientSecret as string,
+          grant_type: 'refresh_token',
+          refresh_token: refreshToken,
+        },
+        'token refresh',
+      ),
     );
   }
 
@@ -156,12 +158,8 @@ export class TikTokAdapter extends BasePlatformAdapter {
     }
   }
 
-  private toCredentials(
-    token: TikTokTokenResponse,
-    stage = 'token exchange',
-  ): PlatformCredentials {
-    if (!token.access_token) throw this.exchangeFailure(new Error(stage), stage);
-
+  /** postToken has already proved `access_token` is present. */
+  private toCredentials(token: TikTokTokenResponse): PlatformCredentials {
     return {
       accessToken: token.access_token,
       refreshToken: token.refresh_token ?? null,
