@@ -15,6 +15,16 @@ export async function createTestApp(): Promise<INestApplication> {
   process.env.JWT_SECRET ??= 'test-secret-that-is-at-least-32-characters-long';
   process.env.JWT_EXPIRES_IN ??= '1h';
   process.env.ENCRYPTION_KEY ??= 'f'.repeat(64);
+  process.env.API_BASE_URL ??= 'https://api.swiply.test';
+  process.env.FRONTEND_URL ??= 'https://app.swiply.test';
+  // Platform credentials so the adapters report as configured; the specs mock
+  // the providers themselves with nock.
+  process.env.TIKTOK_CLIENT_KEY ??= 'test-tiktok-key';
+  process.env.TIKTOK_CLIENT_SECRET ??= 'test-tiktok-secret';
+  process.env.META_APP_ID ??= 'test-meta-app';
+  process.env.META_APP_SECRET ??= 'test-meta-secret';
+  process.env.TWITTER_CLIENT_ID ??= 'test-x-id';
+  process.env.TWITTER_CLIENT_SECRET ??= 'test-x-secret';
   delete process.env.GOOGLE_OAUTH_CLIENT_ID;
   delete process.env.GOOGLE_OAUTH_CLIENT_SECRET;
 
