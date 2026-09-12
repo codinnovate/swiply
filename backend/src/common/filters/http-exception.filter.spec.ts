@@ -95,9 +95,7 @@ describe('HttpExceptionFilter', () => {
   });
 
   it('never leaks the internals of an unexpected error', () => {
-    const { status, body } = capture(
-      new Error('ANTHROPIC_API_KEY=sk-ant-secret rejected by upstream'),
-    );
+    const { status, body } = capture(new Error('OPENAI_API_KEY=sk-secret rejected by upstream'));
 
     expect(status).toBe(500);
     expect(body).toEqual({
