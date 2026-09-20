@@ -127,20 +127,5 @@ export function validateEnv(raw: Record<string, unknown>): EnvironmentVariables 
     throw new Error(`Invalid environment configuration:\n${details}`);
   }
 
-  if (config.NODE_ENV === NodeEnv.Production) {
-    const requiredStorage = [
-      'AWS_REGION',
-      'S3_BUCKET',
-      'CLOUDFRONT_DOMAIN',
-      'CLOUDFRONT_DISTRIBUTION_ID',
-    ] as const;
-    const missing = requiredStorage.filter((name) => !config[name]);
-    if (missing.length > 0) {
-      throw new Error(
-        `Invalid environment configuration:\n  - AWS storage: missing ${missing.join(', ')}`,
-      );
-    }
-  }
-
   return config;
 }
