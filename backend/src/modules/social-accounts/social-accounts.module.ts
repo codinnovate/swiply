@@ -6,6 +6,7 @@ import { WorkspacesModule } from '../workspaces/workspaces.module';
 import { SocialAccount, SocialAccountSchema } from './schemas/social-account.schema';
 import { SocialAccountsController } from './social-accounts.controller';
 import { SocialAccountsService } from './social-accounts.service';
+import { Post, PostSchema } from '../posts/schemas/post.schema';
 
 /**
  * WorkspacesModule is imported for WorkspaceGuard and for the WorkspaceMember
@@ -13,7 +14,10 @@ import { SocialAccountsService } from './social-accounts.service';
  */
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: SocialAccount.name, schema: SocialAccountSchema }]),
+    MongooseModule.forFeature([
+      { name: SocialAccount.name, schema: SocialAccountSchema },
+      { name: Post.name, schema: PostSchema },
+    ]),
     WorkspacesModule,
     PlatformsModule,
   ],

@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Query,
   Res,
@@ -20,6 +21,7 @@ import { CurrentWorkspace, RequireRoles } from '../../common/decorators/workspac
 import { WorkspaceGuard } from '../../common/guards/workspace.guard';
 import { OAuthCallbackDto } from './dto/oauth-callback.dto';
 import { VoiceConsentDto } from './dto/voice-consent.dto';
+import { UpdatePublishingDefaultsDto } from './dto/update-publishing-defaults.dto';
 import { toSocialAccountResponse } from './social-accounts.presenter';
 import { SocialAccountsService } from './social-accounts.service';
 
@@ -111,10 +113,24 @@ export class SocialAccountsController {
   @RequireRoles('admin')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Disconnect an account and delete its stored tokens' })
-  async disconnect(
+  async disconnect(@CurrentWorkspace('workspaceId') workspaceId: string, @Param('id') id: string) {
+    await this.socialAccountsService.disconnect(workspaceId, id);
+  }
+
+  @Patch(':id/publishing-defaults')
+  @ApiBearerAuth()
+  @UseGuards(WorkspaceGuard)
+  @RequireRoles('admin')
+  async updatePublishingDefaults(
     @CurrentWorkspace('workspaceId') workspaceId: string,
     @Param('id') id: string,
+    @Body() dto: UpdatePublishingDefaultsDto,
   ) {
-    await this.socialAccountsService.disconnect(workspaceId, id);
+    const account = await this.socialAccountsService.updatePublishingDefaults(
+      workspaceId,
+      id,
+      dto.publishingDefaults,
+    );
+    return { data: toSocialAccountResponse(account) };
   }
 }

@@ -5,6 +5,9 @@ export interface SocialAccountResponse {
   workspaceId: string;
   platform: Platform;
   platformAccountId: string;
+  connectionProvider: 'direct' | 'buffer' | 'postiz';
+  providerChannelType: string | null;
+  publishingDefaults: Record<string, unknown>;
   displayName: string;
   avatarUrl: string | null;
   status: string;
@@ -31,6 +34,9 @@ export function toSocialAccountResponse(
     workspaceId: account.workspaceId.toString(),
     platform: account.platform,
     platformAccountId: account.platformAccountId,
+    connectionProvider: account.connectionProvider ?? 'direct',
+    providerChannelType: account.providerChannelType ?? null,
+    publishingDefaults: account.publishingDefaults ?? {},
     displayName: account.displayName,
     avatarUrl: account.avatarUrl,
     status: account.status,

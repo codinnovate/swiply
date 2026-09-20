@@ -12,6 +12,15 @@ import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { SocialAccountsModule } from './modules/social-accounts/social-accounts.module';
 import { UsersModule } from './modules/users/users.module';
 import { WorkspacesModule } from './modules/workspaces/workspaces.module';
+import { VoiceProfilesModule } from './modules/voice-profiles/voice-profiles.module';
+import { ContentModule } from './modules/content/content.module';
+import { MediaModule } from './modules/media/media.module';
+import { PostsModule } from './modules/posts/posts.module';
+import { SchedulesModule } from './modules/schedules/schedules.module';
+import { EngagementModule } from './modules/engagement/engagement.module';
+import { AiModule } from './ai/ai.module';
+import { AutomationModule } from './modules/automation/automation.module';
+import { PublishingProvidersModule } from './modules/publishing-providers/publishing-providers.module';
 
 @Module({
   imports: [
@@ -25,6 +34,15 @@ import { WorkspacesModule } from './modules/workspaces/workspaces.module';
     WorkspacesModule,
     AuthModule,
     SocialAccountsModule,
+    AiModule,
+    VoiceProfilesModule,
+    MediaModule,
+    ContentModule,
+    PostsModule,
+    SchedulesModule,
+    EngagementModule,
+    AutomationModule,
+    PublishingProvidersModule,
   ],
   providers: [
     // Authenticated by default — routes opt out with @Public().

@@ -10,7 +10,9 @@ import type {
   PlatformCapabilities,
   PlatformConnection,
   PlatformCredentials,
+  SourcePostInput,
   ValidatableContent,
+  PublishableContent,
 } from './platform-adapter.interface';
 
 /**
@@ -26,6 +28,10 @@ export abstract class BasePlatformAdapter implements PlatformAdapter {
   abstract getOAuthUrl(request: OAuthAuthorizeRequest): string;
   abstract handleOAuthCallback(request: OAuthExchangeRequest): Promise<PlatformConnection>;
   abstract refreshAccessToken(refreshToken: string): Promise<PlatformCredentials>;
+  abstract fetchRecentPosts(accessToken: string, limit: number): Promise<SourcePostInput[]>;
+  async publishContent(_accessToken: string, _content: PublishableContent): Promise<{ platformPostId: string; platformPostUrl: string | null }> {
+    throw this.notImplemented('publishing');
+  }
 
   /**
    * Section 6: reject unsupported type/platform combinations before anything is

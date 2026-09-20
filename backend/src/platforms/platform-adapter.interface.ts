@@ -36,6 +36,13 @@ export interface PlatformIdentity {
 
 export type PlatformConnection = PlatformCredentials & PlatformIdentity;
 
+export interface SourcePostInput {
+  platformPostId: string;
+  text: string;
+  postedAt: Date;
+  engagementScore: number | null;
+}
+
 /**
  * The Section 6 capability table as data. `validateContent` reads it, and so
  * will the volume distributor (Section 9) when it needs to know which accounts
@@ -65,6 +72,14 @@ export interface ValidatableContent {
   type: ContentType;
   imageCount: number;
   text?: string | null;
+}
+
+export interface PublishableContent extends ValidatableContent {
+  platformAccountId: string;
+  postCaption: string;
+  hashtags: string[];
+  imageUrls: string[];
+  videoUrl?: string | null;
 }
 
 export interface ContentValidationResult {
@@ -98,6 +113,9 @@ export interface PlatformAdapter {
   getOAuthUrl(request: OAuthAuthorizeRequest): string;
   handleOAuthCallback(request: OAuthExchangeRequest): Promise<PlatformConnection>;
   refreshAccessToken(refreshToken: string): Promise<PlatformCredentials>;
+
+  fetchRecentPosts(accessToken: string, limit: number): Promise<SourcePostInput[]>;
+  publishContent(accessToken: string, content: PublishableContent): Promise<{ platformPostId: string; platformPostUrl: string | null }>;
 
   validateContent(content: ValidatableContent): ContentValidationResult;
 }

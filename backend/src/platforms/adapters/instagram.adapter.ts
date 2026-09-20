@@ -11,6 +11,7 @@ import type {
   PlatformCapabilities,
   PlatformConnection,
   PlatformCredentials,
+  SourcePostInput,
 } from '../platform-adapter.interface';
 
 /** Pinned deliberately: Meta deprecates versions on a schedule, and a silent
@@ -144,6 +145,56 @@ export class InstagramAdapter extends BasePlatformAdapter {
         : null,
       scopes: SCOPES,
     };
+  }
+
+  async fetchRecentPosts(accessToken: string, limit: number): Promise<SourcePostInput[]> {
+    // The Page token can read the connected Instagram account's media.
+    try {
+      const response = await firstValueFrom(
+        this.http.get<{ data?: Array<{ id?: string; caption?: string; timestamp?: string; like_count?: number; comments_count?: number }> }>(
+          `${GRAPH_URL}/me/media`,
+          {
+            params: { fields: 'id,caption,timestamp,like_count,comments_count', limit: Math.min(limit, 100), access_token: accessToken },
+          },
+        ),
+      );
+      return (response.data.data ?? []).flatMap((post) =>
+        post.id && post.caption && post.timestamp
+          ? [{ platformPostId: post.id, text: post.caption, postedAt: new Date(post.timestamp), engagementScore: (post.like_count ?? 0) + (post.comments_count ?? 0) }]
+          : [],
+      );
+    } catch (error) {
+      throw this.exchangeFailure(error, 'recent posts lookup');
+    }
+  }
+
+  async publishContent(accessToken: string, content: import('../platform-adapter.interface').PublishableContent) {
+    if (!content.imageUrls.length) throw this.notImplemented('text-only publishing');
+    try {
+      const caption = [content.postCaption, ...content.hashtags].filter(Boolean).join(' ');
+      const mediaUrl = GRAPH_URL + '/' + content.platformAccountId + '/media';
+      let creationId: string;
+      if (content.type === 'slideshow') {
+        const children: string[] = [];
+        for (const imageUrl of content.imageUrls) {
+          const child = await firstValueFrom(this.http.post<{ id?: string }>(mediaUrl, null, { params: { image_url: imageUrl, is_carousel_item: true, access_token: accessToken } }));
+          if (!child.data.id) throw new Error('carousel child returned no id');
+          children.push(child.data.id);
+        }
+        const parent = await firstValueFrom(this.http.post<{ id?: string }>(mediaUrl, null, { params: { media_type: 'CAROUSEL', children: children.join(','), caption, access_token: accessToken } }));
+        if (!parent.data.id) throw new Error('carousel container returned no id');
+        creationId = parent.data.id;
+      } else {
+        const response = await firstValueFrom(this.http.post<{ id?: string }>(mediaUrl, null, { params: { image_url: content.imageUrls[0], caption, access_token: accessToken } }));
+        if (!response.data.id) throw new Error('media container returned no id');
+        creationId = response.data.id;
+      }
+      const published = await firstValueFrom(this.http.post<{ id?: string }>(mediaUrl + '_publish', null, { params: { creation_id: creationId, access_token: accessToken } }));
+      if (!published.data.id) throw new Error('publish returned no id');
+      return { platformPostId: published.data.id, platformPostUrl: 'https://www.instagram.com/p/' + published.data.id + '/' };
+    } catch (error) {
+      throw this.exchangeFailure(error, 'content publish');
+    }
   }
 
   private async exchangeForLongLived(

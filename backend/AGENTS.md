@@ -65,12 +65,12 @@ This document is the backend spec. A follow-up prompt covers the frontend and wi
 | Auth (dashboard) | **Passport.js via `@nestjs/passport`** — local strategy (email/password) + Google OAuth strategy, sessions issued as JWT (`@nestjs/jwt`) | Guards (`AuthGuard`) protect routes, not middleware |
 | Auth (developer API) | Custom `ApiKeyGuard` | Section 8 |
 | Background jobs & scheduling | **BullMQ via `@nestjs/bullmq`**, Redis-backed, plus **`@nestjs/schedule`** (`@Cron()`) for the recurring triggers that enqueue jobs | NestJS is a long-running process, not serverless — no need for a managed durable-execution platform (Inngest/Trigger.dev) purely to work around short-lived functions the way a Vercel-hosted Next.js app would. BullMQ + a persistent worker process is the idiomatic, simpler choice here |
-| Object storage | Cloudinary (preferred) or AWS S3 + CloudFront | Images and rendered video files |
-| AI text generation | Anthropic Claude API (`claude-sonnet-4-6`) | Copy, captions, hashtags, replies, voice analysis |
+| Object storage | **Private AWS S3 + CloudFront** | Direct multipart uploads; CloudFront is the public delivery origin for images and rendered video files |
+| AI text generation | OpenAI Responses API with per-user BYOK | Users save an encrypted OpenAI key and choose among supported OpenAI models |
 | AI image generation | Pluggable `ImageProvider` interface | Default: Replicate-hosted SDXL/Ideogram, or OpenAI images |
-| Video generation | Pluggable `VideoProvider` interface | Recommend **templated assembly** as the v1 default (Claude-written script + generated/stock images + TTS voiceover + captions, assembled via Remotion or Shotstack API) rather than pure text-to-video — cheaper, faster, more controllable. Leave room to swap in a text-to-video model (Runway/Luma/Kling) later. |
+| Video generation | Pluggable `VideoProvider` interface | Recommend templated assembly with an OpenAI-written script, generated or stock images, TTS voiceover, and captions |
 | Text-to-speech (for video voiceover) | ElevenLabs or OpenAI TTS | Only needed if templated video assembly is used |
-| Sentiment / moderation check | Claude (lightweight classification call) | Used to gate auto-replies, see Section 11 |
+| Sentiment / moderation check | OpenAI (lightweight selected model call) | Uses the initiating user's BYOK credential |
 | Payments | Stripe | Subscriptions + usage-based add-ons |
 | Email | Resend or Postmark | Automation summaries, failure alerts, weekly digest of what Swiply posted |
 | Rate limiting | `@nestjs/throttler`, Redis-backed store for multi-instance consistency | Public Developer API |
@@ -122,7 +122,7 @@ Standard NestJS modular layout — one module per domain, each with its own cont
     /billing
     /webhooks                   <- both inbound (Stripe, Meta comment webhooks) and outbound delivery/retry
   /ai
-    text.service.ts             <- Claude wrapper for copy/captions/replies
+    text.service.ts             <- OpenAI BYOK wrapper for copy/captions/replies
     image.service.ts            <- ImageProvider interface + implementations
     video.service.ts            <- VideoProvider interface + implementations
     moderation.service.ts       <- pre-publish safety check for autonomous replies
@@ -299,6 +299,10 @@ The user's uploaded image/video library. Exists for two reasons: (1) it's what b
   _id: ObjectId,
   workspaceId: ObjectId,
   url: string,
+  storageProvider: 'external' | 's3', // legacy URL records remain readable
+  storageKey: string | null,
+  mimeType: string | null,
+  sizeBytes: number | null,
   type: 'image' | 'video',
   tags: string[],                    // optional, user- or AI-assigned (e.g. "product-shot", "lifestyle", "logo")
   width: number | null,
@@ -561,7 +565,10 @@ interface PlatformAdapter {
 - `DELETE /api/voice-profiles/:socialAccountId/source-posts/:id`
 
 ### Media Library
-- `POST /api/media/upload` — accepts a direct upload (or returns a presigned URL to upload to, then a confirm call); stores the file in Cloudinary/S3 and creates a `MediaAsset`. Response: `{ data: MediaAsset }`.
+- `POST /api/media/uploads` — starts a workspace-scoped S3 multipart upload and returns its session id, 16 MiB part size/count, and expiry.
+- `POST /api/media/uploads/:id/parts` — returns 15-minute presigned URLs for up to 100 requested part numbers.
+- `POST /api/media/uploads/:id/complete` — completes and verifies the S3 object, then creates a `MediaAsset` with a CloudFront URL.
+- `DELETE /api/media/uploads/:id` — aborts an unfinished multipart upload.
 - `GET /api/media?type=&tag=&limit=&cursor=` — browse the library (used both by the manual "pick your own image" picker and to preview what autopilot has to draw from)
 - `DELETE /api/media/:id`
 
@@ -626,6 +633,12 @@ This is the actual creation flow the frontend drives the user through: **pick a 
 - `GET /api/automation/audit-log?socialAccountId=&from=&to=`
 - `POST /api/automation/pause-all` — one-button kill switch: pauses every active `Schedule` and `EngagementRule` for a workspace
 - `GET /api/automation/status` — quick summary: what's active, what's paused, what needs re-auth
+
+### AI settings
+- `GET /api/ai/models` — supported OpenAI model ids and display names
+- `GET /api/ai/credentials` — masked credentials for the authenticated user
+- `PUT /api/ai/credentials/openai` — validate and encrypt the user's OpenAI key and default model
+- `DELETE /api/ai/credentials/openai` — permanently remove the user's key
 
 ### Billing & Developer settings
 `/api/billing/*`, `/api/webhooks/stripe`, `/api/dev/api-keys`, `/api/dev/webhooks`
@@ -699,7 +712,7 @@ Hourly.
 Triggered on account connect (with consent) or manual "relearn." Calls `adapter.fetchRecentPosts()`, upserts into `SourcePost` (capped at ~200 most recent), then calls `analyzeVoice()`.
 
 ### 10.2 Analysis (`analyzeVoice()` in `voice-profiles/voice-analysis.service.ts`)
-Sends a batch of `SourcePost.text` to Claude with a structured prompt asking for:
+Sends a batch of `SourcePost.text` to OpenAI with a structured prompt asking for:
 - `styleSummary` (freeform paragraph)
 - `styleAttributes` (structured: sentence length, emoji/hashtag usage, common topics, formatting quirks)
 - A recommended set of `fewShotExampleIds` — the samples most representative of the voice (weight by `engagementScore` where available, so Swiply learns from what actually performed, not just what was posted)
@@ -736,14 +749,14 @@ This is the highest-risk subsystem — it publishes text on the user's behalf, i
 
 ### 11.2 Processing pipeline (`process-inbound-interaction`)
 1. Run `EngagementRule.filters` — `excludeKeywords`, `onlyFromFollowers`, `skipLikelyBots` (heuristic: near-zero follower count + no avatar + generic username pattern). Any hit → `status: 'skipped'`, `skipReason` recorded, logged to `AutomationAuditLog`.
-2. Run sentiment classification (lightweight Claude call). If negative and `skipNegativeSentiment: true` → force `status: 'pending_review'` regardless of `mode` — never auto-publish a reply to a hostile or upset message without a human glancing at it first.
+2. Run sentiment classification with the user's selected OpenAI model. If negative and `skipNegativeSentiment: true` → force `status: 'pending_review'` regardless of `mode` — never auto-publish a reply to a hostile or upset message without a human glancing at it first.
 3. **Hard-block categories that always route to review, even in `auto_publish` mode**, regardless of rule config: anything that reads as a legal/safety complaint, a request that implies a binding commitment (pricing, contracts, guarantees), or content that trips the moderation check in 11.3. This is a non-negotiable safety floor, not a configurable filter.
 4. If it passes, generate the reply using the voice profile (Section 10.3) and run it through `moderation.service.ts` (11.3).
 5. If `mode: 'auto_publish'` and it passes moderation and the account hasn't hit `maxRepliesPerDay` → publish immediately via `adapter.publishReply()`, `status: 'replied'`, log to `AutomationAuditLog`.
 6. If `mode: 'review_queue'`, or any of the above gates redirected it → `status: 'pending_review'`, surfaced in the dashboard queue and via the `reply.flagged_for_review` webhook, with the AI's drafted reply pre-filled so approving is a single click.
 
 ### 11.3 Moderation gate (`ai/moderation.service.ts`)
-Before any autonomous reply is published, run a second, independent Claude call whose only job is to answer: "Is this reply safe to post unsupervised — no promises made on the brand's behalf, no hostile/inflammatory tone, no engaging with obvious trolling/bait, nothing that could be defamatory or factually wrong about a third party?" A `false` blocks auto-publish and routes to review, always, regardless of `EngagementRule.mode`.
+Before any autonomous reply is published, run a second, independent OpenAI call using the credential owner's key whose only job is to answer whether the reply is safe to post unsupervised. A `false` blocks auto-publish and routes to review, always, regardless of `EngagementRule.mode`.
 
 ### 11.4 Rate & safety caps
 - `maxRepliesPerDay` per account, hard-enforced server-side, not just a UI suggestion.
@@ -776,11 +789,12 @@ GOOGLE_OAUTH_CLIENT_SECRET=
 GOOGLE_OAUTH_CALLBACK_URL=
 FRONTEND_URL=
 ENCRYPTION_KEY=
-ANTHROPIC_API_KEY=
-IMAGE_GEN_API_KEY=
-VIDEO_GEN_API_KEY=            # Remotion/Shotstack or text-to-video provider
-TTS_API_KEY=                  # ElevenLabs/OpenAI TTS, if using templated video assembly
-CLOUDINARY_URL=               # or AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY / S3_BUCKET
+# AI keys are supplied by users through /api/ai/credentials/openai, not environment variables.
+AWS_REGION=
+S3_BUCKET=
+CLOUDFRONT_DOMAIN=
+CLOUDFRONT_DISTRIBUTION_ID=
+AWS_ENDPOINT_URL=             # optional local S3-compatible endpoint
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 REDIS_URL=                    # BullMQ queues + @nestjs/throttler rate-limit store

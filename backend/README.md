@@ -5,14 +5,16 @@ this README covers only how to run what exists today.
 
 ## Status
 
-Build order (AGENTS.md §15):
+Implemented modules include authentication and workspaces, TikTok/Instagram/X
+connections, voice ingestion, personal encrypted OpenAI/Anthropic/Gemini keys,
+content and uploaded-video drafts, S3 multipart media, publishing records,
+schedules, engagement review data, and an automation audit trail. Pinterest and
+LinkedIn adapters, AI image generation, billing, email delivery, and public
+developer credentials still require their dedicated backend modules.
 
-- [x] **1. Foundation** — scaffold, Mongo connection, `User`/`Workspace`/`WorkspaceMember`,
-      Passport auth (local + Google) issuing JWTs, global `ValidationPipe` + exception filter
-- [x] **2. Social connections** — `SocialAccount`, AES-256-GCM token encryption,
-      TikTok/Instagram/X adapters, signed-state + PKCE connect/callback/disconnect
-- [ ] 3. Voice ingestion
-- [ ] 4–15. See `AGENTS.md`
+Buffer and Postiz are available as workspace-owned BYOK publishing gateways.
+They discover the user's existing provider channels and send scheduled posts to
+the provider immediately, without requiring Swiply-owned social OAuth keys.
 
 ## Running
 
@@ -25,6 +27,16 @@ npm run start:dev
 
 The app refuses to boot on an invalid `.env` — `src/config/env.validation.ts`
 validates every variable in §13 and reports all problems at once.
+
+Media uploads use a private S3 bucket and public CloudFront delivery. Development
+can run without AWS configuration, but media-upload endpoints return
+`STORAGE_NOT_CONFIGURED`; production requires the four AWS storage values shown
+in `.env.example`. Provision the resources with `../infra/terraform/storage`,
+then attach its `backend_policy_arn` output to the backend execution role.
+
+Uploads are multipart and client-to-S3: initiate with `POST /api/media/uploads`,
+request presigned part URLs, upload the parts, and submit their ETags to the
+completion endpoint. Images are capped at 50 MB and videos at 2 GB.
 
 - API root: `http://localhost:3000/api`
 - OpenAPI docs: `http://localhost:3000/api/docs`
@@ -127,3 +139,25 @@ still needs confirming.
   stays stateless. Once Redis lands in step 6, move the verifier server-side.
 - No transactions are used: `WorkspacesService.create` compensates manually so the
   code runs against a standalone mongod as well as an Atlas replica set.
+
+## What step 3 established
+
+`VoiceProfilesService` is the single ingestion path. It proves that consent was
+recorded, obtains a usable decrypted platform token through
+`SocialAccountsService`, upserts recent posts, removes anything beyond the 200
+sample cap, and regenerates the profile. `VoiceAnalysisService` uses OpenAI
+Structured Outputs with the authenticated caller's encrypted BYOK key. Accounts
+with no source posts produce an empty profile without an external AI request.
+
+The profile and source-post routes are workspace-scoped and source posts are
+deleted and re-analyzed immediately. Explicit `userSetTone` survives analysis,
+so manual instructions remain higher priority for the generation pipeline.
+
+## User-provided AI keys
+
+Swiply has no deployment-wide AI key. Authenticated users manage encrypted
+OpenAI, Anthropic, or Gemini keys through
+`GET|PUT|DELETE /api/ai/credentials/:provider` and choose among models returned
+by `GET /api/ai/models`. Responses expose only the last four key characters.
+Content generation accepts optional `aiModel`; otherwise it uses the user's
+saved default.
