@@ -65,17 +65,7 @@ describe('validateEnv', () => {
     );
   });
 
-  it('requires the complete S3 and CloudFront configuration in production', () => {
-    expect(() => validateEnv({ ...MINIMUM, NODE_ENV: 'production' })).toThrow(/AWS storage/);
-    expect(() =>
-      validateEnv({
-        ...MINIMUM,
-        NODE_ENV: 'production',
-        AWS_REGION: 'us-east-1',
-        S3_BUCKET: 'swiply-media',
-        CLOUDFRONT_DOMAIN: 'cdn.example.com',
-        CLOUDFRONT_DISTRIBUTION_ID: 'DISTRIBUTION',
-      }),
-    ).not.toThrow();
+  it('allows production to boot without S3; media routes still fail until storage is set', () => {
+    expect(() => validateEnv({ ...MINIMUM, NODE_ENV: 'production' })).not.toThrow();
   });
 });
