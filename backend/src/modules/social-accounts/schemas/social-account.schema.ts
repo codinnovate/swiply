@@ -38,14 +38,23 @@ export class SocialAccount {
    * so a plain find() cannot accidentally carry it into a response — reading it
    * takes an explicit .select('+accessToken').
    */
-  @Prop({ required: true, select: false })
-  accessToken: string;
+  @Prop({ type: String, default: null, select: false })
+  accessToken: string | null;
 
   @Prop({ type: String, default: null, select: false })
   refreshToken: string | null;
 
   @Prop({ type: Date, default: null })
   tokenExpiresAt: Date | null;
+
+  @Prop({ type: String, enum: ['direct', 'buffer', 'postiz'], default: 'direct', index: true })
+  connectionProvider: 'direct' | 'buffer' | 'postiz';
+
+  @Prop({ type: String, default: null })
+  providerChannelType: string | null;
+
+  @Prop({ type: Object, default: {} })
+  publishingDefaults: Record<string, unknown>;
 
   @Prop({ type: [String], default: [] })
   scopes: string[];
@@ -84,7 +93,7 @@ export const SocialAccountSchema = SchemaFactory.createForClass(SocialAccount);
 // same account updates the existing row rather than accumulating duplicates
 // with stale tokens that the refresh sweep would keep trying to renew.
 SocialAccountSchema.index(
-  { workspaceId: 1, platform: 1, platformAccountId: 1 },
+  { workspaceId: 1, connectionProvider: 1, platform: 1, platformAccountId: 1 },
   { unique: true },
 );
 

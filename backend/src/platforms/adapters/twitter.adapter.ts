@@ -10,6 +10,7 @@ import type {
   PlatformCapabilities,
   PlatformConnection,
   PlatformCredentials,
+  SourcePostInput,
 } from '../platform-adapter.interface';
 
 const AUTHORIZE_URL = 'https://twitter.com/i/oauth2/authorize';
@@ -115,6 +116,32 @@ export class TwitterAdapter extends BasePlatformAdapter {
         'token refresh',
       ),
     );
+  }
+
+  async fetchRecentPosts(accessToken: string, limit: number): Promise<SourcePostInput[]> {
+    try {
+      const response = await firstValueFrom(
+        this.http.get<{ data?: Array<{ id?: string; text?: string; created_at?: string; public_metrics?: { like_count?: number; reply_count?: number; retweet_count?: number } }> }>(
+          'https://api.twitter.com/2/users/me/tweets',
+          {
+            params: { 'tweet.fields': 'created_at,public_metrics', max_results: Math.max(5, Math.min(limit, 100)) },
+            headers: { Authorization: `Bearer ${accessToken}` },
+          },
+        ),
+      );
+      return (response.data.data ?? []).flatMap((post) =>
+        post.id && post.text && post.created_at
+          ? [{ platformPostId: post.id, text: post.text, postedAt: new Date(post.created_at), engagementScore: this.engagement(post.public_metrics) }]
+          : [],
+      );
+    } catch (error) {
+      throw this.exchangeFailure(error, 'recent posts lookup');
+    }
+  }
+
+  private engagement(metrics?: { like_count?: number; reply_count?: number; retweet_count?: number }): number | null {
+    if (!metrics) return null;
+    return (metrics.like_count ?? 0) + (metrics.reply_count ?? 0) + (metrics.retweet_count ?? 0);
   }
 
   private async postToken(

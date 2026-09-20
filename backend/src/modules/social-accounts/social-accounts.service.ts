@@ -20,6 +20,7 @@ import {
   SocialAccountDocument,
   type Platform,
 } from './schemas/social-account.schema';
+import { Post, PostDocument } from '../posts/schemas/post.schema';
 
 /** Refresh this far ahead of expiry so a publish never races the deadline. */
 const REFRESH_SKEW_MS = 5 * 60 * 1000;
@@ -38,6 +39,8 @@ export class SocialAccountsService {
     private readonly accountModel: Model<SocialAccountDocument>,
     @InjectModel(WorkspaceMember.name)
     private readonly memberModel: Model<WorkspaceMemberDocument>,
+    @InjectModel(Post.name)
+    private readonly postModel: Model<PostDocument>,
     private readonly registry: PlatformRegistry,
     private readonly oauthState: OAuthStateService,
     private readonly cipher: TokenCipher,
@@ -65,7 +68,11 @@ export class SocialAccountsService {
     const adapter = this.registry.get(platform);
     const resolved = adapter.capabilities.platform;
 
-    const { state, codeChallenge } = this.oauthState.mint({ workspaceId, userId, platform: resolved });
+    const { state, codeChallenge } = this.oauthState.mint({
+      workspaceId,
+      userId,
+      platform: resolved,
+    });
 
     return {
       platform: resolved,
@@ -100,10 +107,7 @@ export class SocialAccountsService {
     }
   }
 
-  private async connectFromCallback(
-    platform: string,
-    query: OAuthCallbackDto,
-  ): Promise<string> {
+  private async connectFromCallback(platform: string, query: OAuthCallbackDto): Promise<string> {
     // Verified before anything else — an invalid state means we cannot trust
     // the platform slug, the code, or which workspace this is even for.
     const claims = this.oauthState.verify(query.state, platform as Platform);
@@ -140,6 +144,7 @@ export class SocialAccountsService {
       .findOneAndUpdate(
         {
           workspaceId: new Types.ObjectId(claims.workspaceId),
+          connectionProvider: 'direct',
           platform: claims.platform,
           platformAccountId: connection.accountId,
         },
@@ -155,6 +160,7 @@ export class SocialAccountsService {
             // A reconnect is how a user fixes a revoked or errored account.
             lastError: null,
             connectedByUserId: new Types.ObjectId(claims.userId),
+            connectionProvider: 'direct',
           },
           // Consent survives a reconnect; asking again would be the only way to
           // revoke it, and re-granting it silently would be worse.
@@ -181,6 +187,24 @@ export class SocialAccountsService {
   async disconnect(workspaceId: string, accountId: string): Promise<void> {
     const account = await this.findOwnedOrFail(workspaceId, accountId);
 
+    if ((account.connectionProvider ?? 'direct') !== 'direct') {
+      const pending = await this.postModel
+        .countDocuments({
+          workspaceId: new Types.ObjectId(workspaceId),
+          socialAccountId: account._id,
+          status: { $in: ['queued', 'processing', 'pending_review'] },
+          scheduledFor: { $gt: new Date() },
+        })
+        .exec();
+      if (pending) {
+        throw ApiException.unprocessable(
+          'PUBLISHING_PROVIDER_HAS_PENDING_POSTS',
+          'Cancel future posts before disconnecting this imported channel',
+          { pending },
+        );
+      }
+    }
+
     // Hard delete, not a soft one. The row's whole purpose is to hold
     // credentials, and Section 12 treats "still in the database somewhere"
     // as not deleted.
@@ -198,6 +222,56 @@ export class SocialAccountsService {
 
     account.voiceIngestionConsentedAt = consent ? new Date() : null;
     return account.save();
+  }
+
+  async updatePublishingDefaults(
+    workspaceId: string,
+    accountId: string,
+    defaults: Record<string, unknown>,
+  ) {
+    const account = await this.findOwnedOrFail(workspaceId, accountId);
+    if ((account.connectionProvider ?? 'direct') === 'direct') {
+      throw ApiException.unprocessable(
+        'PUBLISHING_PROVIDER_CHANNEL_INVALID',
+        'Direct accounts do not use provider publishing defaults',
+      );
+    }
+    this.validatePublishingDefaults(account.platform, defaults);
+    account.publishingDefaults = defaults;
+    return account.save();
+  }
+
+  private validatePublishingDefaults(platform: Platform, defaults: Record<string, unknown>): void {
+    if (platform === 'pinterest' && !defaults.board) {
+      throw ApiException.unprocessable(
+        'PUBLISHING_PROVIDER_DEFAULTS_REQUIRED',
+        'Choose a Pinterest board before saving publishing defaults',
+      );
+    }
+    if (platform === 'tiktok') {
+      const required = [
+        'privacy_level',
+        'duet',
+        'stitch',
+        'comment',
+        'autoAddMusic',
+        'brand_content_toggle',
+        'brand_organic_toggle',
+        'content_posting_method',
+      ];
+      if (required.some((key) => !(key in defaults))) {
+        throw ApiException.unprocessable(
+          'PUBLISHING_PROVIDER_DEFAULTS_REQUIRED',
+          'Complete the TikTok publishing defaults before saving',
+        );
+      }
+    }
+    if (platform === 'instagram' && !defaults.post_type) {
+      throw ApiException.unprocessable(
+        'PUBLISHING_PROVIDER_DEFAULTS_REQUIRED',
+        'Choose an Instagram post type before saving publishing defaults',
+      );
+    }
   }
 
   /**
@@ -223,6 +297,7 @@ export class SocialAccountsService {
       return this.refresh(account);
     }
 
+    if (!account.accessToken) throw this.notFound(accountId);
     return this.cipher.decrypt(account.accessToken);
   }
 
@@ -318,12 +393,9 @@ export class SocialAccountsService {
   }
 
   private notFound(accountId: string): ApiException {
-    return new ApiException(
-      'SOCIAL_ACCOUNT_NOT_FOUND',
-      'Social account not found',
-      404,
-      { accountId },
-    );
+    return new ApiException('SOCIAL_ACCOUNT_NOT_FOUND', 'Social account not found', 404, {
+      accountId,
+    });
   }
 
   private redirectUriFor(platform: Platform): string {

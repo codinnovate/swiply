@@ -88,12 +88,12 @@ export class EnvironmentVariables {
   })
   ENCRYPTION_KEY: string;
 
-  // --- Declared now, required by later build steps ---
-  @IsString() @IsOptional() ANTHROPIC_API_KEY?: string;
-  @IsString() @IsOptional() IMAGE_GEN_API_KEY?: string;
-  @IsString() @IsOptional() VIDEO_GEN_API_KEY?: string;
-  @IsString() @IsOptional() TTS_API_KEY?: string;
-  @IsString() @IsOptional() CLOUDINARY_URL?: string;
+  // AI keys are user-provided and encrypted in MongoDB, never deployment env vars.
+  @IsString() @IsOptional() AWS_REGION?: string;
+  @IsString() @IsOptional() S3_BUCKET?: string;
+  @IsString() @IsOptional() CLOUDFRONT_DOMAIN?: string;
+  @IsString() @IsOptional() CLOUDFRONT_DISTRIBUTION_ID?: string;
+  @IsString() @IsOptional() AWS_ENDPOINT_URL?: string;
   @IsString() @IsOptional() STRIPE_SECRET_KEY?: string;
   @IsString() @IsOptional() STRIPE_WEBHOOK_SECRET?: string;
   @IsString() @IsOptional() REDIS_URL?: string;
@@ -125,6 +125,21 @@ export function validateEnv(raw: Record<string, unknown>): EnvironmentVariables 
       .map((e) => `  - ${e.property}: ${Object.values(e.constraints ?? {}).join(', ')}`)
       .join('\n');
     throw new Error(`Invalid environment configuration:\n${details}`);
+  }
+
+  if (config.NODE_ENV === NodeEnv.Production) {
+    const requiredStorage = [
+      'AWS_REGION',
+      'S3_BUCKET',
+      'CLOUDFRONT_DOMAIN',
+      'CLOUDFRONT_DISTRIBUTION_ID',
+    ] as const;
+    const missing = requiredStorage.filter((name) => !config[name]);
+    if (missing.length > 0) {
+      throw new Error(
+        `Invalid environment configuration:\n  - AWS storage: missing ${missing.join(', ')}`,
+      );
+    }
   }
 
   return config;

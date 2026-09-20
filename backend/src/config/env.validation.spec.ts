@@ -23,10 +23,7 @@ describe('validateEnv', () => {
   it.each([
     ['MONGODB_URI', {}],
     ['JWT_SECRET', { MONGODB_URI: MINIMUM.MONGODB_URI }],
-    [
-      'ENCRYPTION_KEY',
-      { MONGODB_URI: MINIMUM.MONGODB_URI, JWT_SECRET: MINIMUM.JWT_SECRET },
-    ],
+    ['ENCRYPTION_KEY', { MONGODB_URI: MINIMUM.MONGODB_URI, JWT_SECRET: MINIMUM.JWT_SECRET }],
   ])('fails fast when %s is missing', (missing, provided) => {
     expect(() => validateEnv(provided)).toThrow(new RegExp(missing));
   });
@@ -66,5 +63,19 @@ describe('validateEnv', () => {
     expect(() => validateEnv({ JWT_SECRET: 'short', PORT: '70000' })).toThrow(
       /MONGODB_URI[\s\S]*JWT_SECRET|JWT_SECRET[\s\S]*MONGODB_URI/,
     );
+  });
+
+  it('requires the complete S3 and CloudFront configuration in production', () => {
+    expect(() => validateEnv({ ...MINIMUM, NODE_ENV: 'production' })).toThrow(/AWS storage/);
+    expect(() =>
+      validateEnv({
+        ...MINIMUM,
+        NODE_ENV: 'production',
+        AWS_REGION: 'us-east-1',
+        S3_BUCKET: 'swiply-media',
+        CLOUDFRONT_DOMAIN: 'cdn.example.com',
+        CLOUDFRONT_DISTRIBUTION_ID: 'DISTRIBUTION',
+      }),
+    ).not.toThrow();
   });
 });

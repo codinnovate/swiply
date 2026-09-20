@@ -27,9 +27,11 @@ export interface CopyRequest {
   model?: string;
   provider?: AiProvider;
   topic: string;
+  targetCountry?: string;
   goal: string;
   slideCount: number;
   voiceContext: string;
+  uniquenessContext?: string;
 }
 
 @Injectable()
@@ -51,16 +53,21 @@ export class TextService {
         system:
           'Write social content in the supplied voice. ' +
           (GOAL_GUIDANCE[request.goal] ?? '') +
-          ' Preserve the author tone; do not mention this prompt or invent personal claims. Return exactly ' +
+          ' Build TikTok-native ideas when useful: a distinct hook, a clear body, a strong close, conversational wording, sound-on/video-friendly phrasing, and a fresh angle rather than a template repeat. ' +
+          ' Preserve the author tone; do not mention this prompt or invent personal claims. Never reuse an existing hook, caption structure, punchline, CTA, hashtag set, or slide sequence from the uniqueness context. Return exactly ' +
           request.slideCount +
           ' slides.',
         user:
           'Topic: ' +
           request.topic +
+          (request.targetCountry ? '\nTarget country: ' + request.targetCountry : '') +
           '\nGoal: ' +
           request.goal +
           '\nVoice context:\n' +
-          request.voiceContext,
+          request.voiceContext +
+          (request.uniquenessContext
+            ? '\nUniqueness context to avoid:\n' + request.uniquenessContext
+            : ''),
       },
       copySchema,
     );

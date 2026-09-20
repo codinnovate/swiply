@@ -10,6 +10,7 @@ import type {
   PlatformCapabilities,
   PlatformConnection,
   PlatformCredentials,
+  SourcePostInput,
 } from '../platform-adapter.interface';
 
 const AUTHORIZE_URL = 'https://www.tiktok.com/v2/auth/authorize/';
@@ -114,6 +115,25 @@ export class TikTokAdapter extends BasePlatformAdapter {
         'token refresh',
       ),
     );
+  }
+
+  async fetchRecentPosts(accessToken: string, limit: number): Promise<SourcePostInput[]> {
+    try {
+      const response = await firstValueFrom(
+        this.http.post<{ data?: { videos?: Array<{ id?: string; title?: string; create_time?: number; like_count?: number; comment_count?: number; share_count?: number }> } }>(
+          'https://open.tiktokapis.com/v2/video/list/',
+          { max_count: Math.min(limit, 20), cursor: 0 },
+          { params: { fields: 'id,title,create_time,like_count,comment_count,share_count' }, headers: { Authorization: `Bearer ${accessToken}` } },
+        ),
+      );
+      return (response.data.data?.videos ?? []).flatMap((post) =>
+        post.id && post.title && post.create_time
+          ? [{ platformPostId: post.id, text: post.title, postedAt: new Date(post.create_time * 1000), engagementScore: (post.like_count ?? 0) + (post.comment_count ?? 0) + (post.share_count ?? 0) }]
+          : [],
+      );
+    } catch (error) {
+      throw this.exchangeFailure(error, 'recent posts lookup');
+    }
   }
 
   private async postToken(

@@ -24,8 +24,7 @@ export const authConfig = registerAs('auth', () => ({
     clientId: process.env.GOOGLE_OAUTH_CLIENT_ID,
     clientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET,
     callbackUrl:
-      process.env.GOOGLE_OAUTH_CALLBACK_URL ??
-      'http://localhost:3000/api/auth/google/callback',
+      process.env.GOOGLE_OAUTH_CALLBACK_URL ?? 'http://localhost:3000/api/auth/google/callback',
   },
 }));
 
@@ -62,10 +61,19 @@ export const platformsConfig = registerAs('platforms', () => ({
   },
 }));
 
+export const storageConfig = registerAs('storage', () => ({
+  region: process.env.AWS_REGION,
+  bucket: process.env.S3_BUCKET,
+  cloudFrontDomain: process.env.CLOUDFRONT_DOMAIN,
+  cloudFrontDistributionId: process.env.CLOUDFRONT_DISTRIBUTION_ID,
+  endpoint: process.env.AWS_ENDPOINT_URL,
+}));
+
 export const configurations = [
   appConfig,
   databaseConfig,
   authConfig,
   encryptionConfig,
   platformsConfig,
+  storageConfig,
 ];
