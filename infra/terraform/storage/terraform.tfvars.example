@@ -1,0 +1,8 @@
+aws_region     = "us-east-1"
+bucket_name    = "replace-with-a-globally-unique-swiply-media-bucket"
+allowed_origins = ["http://localhost:3001"]
+
+tags = {
+  Application = "swiply"
+  ManagedBy   = "terraform"
+}

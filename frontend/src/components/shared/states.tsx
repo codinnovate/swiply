@@ -1,0 +1,7 @@
+import { AlertTriangle, Inbox, LoaderCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+export function PageLoader() { return <div className="grid min-h-64 place-items-center"><LoaderCircle className="size-7 animate-spin text-primary" aria-label="Loading" /></div>; }
+export function EmptyState({ title, description, action, icon: Icon = Inbox, className }: { title: string; description: string; action?: React.ReactNode; icon?: typeof Inbox; className?: string }) { return <div className={cn("grid min-h-52 place-items-center rounded-2xl border border-dashed bg-muted/20 p-8 text-center", className)}><div><span className="mx-auto mb-4 grid size-12 place-items-center rounded-2xl bg-primary/10 text-primary"><Icon className="size-5" /></span><h3 className="font-display text-lg font-semibold">{title}</h3><p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">{description}</p>{action && <div className="mt-5">{action}</div>}</div></div>; }
+export function ErrorState({ message = "We couldn’t load this right now.", retry }: { message?: string; retry?: () => void }) { return <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-6 text-center"><AlertTriangle className="mx-auto mb-2 size-5 text-destructive" /><p className="text-sm">{message}</p>{retry && <Button variant="outline" size="sm" className="mt-4" onClick={retry}>Try again</Button>}</div>; }
