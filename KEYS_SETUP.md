@@ -47,7 +47,11 @@ CLOUDFRONT_DOMAIN=
 CLOUDFRONT_DISTRIBUTION_ID=
 ```
 
-Attach the output `backend_policy_arn` to the IAM role that runs the backend.
+Attach the output `backend_policy_arn` to the IAM role or user that runs the
+backend. That policy must include `s3:PutObject`, `s3:GetObject`,
+`s3:DeleteObject`, multipart actions, `s3:ListBucket`, and
+`cloudfront:CreateInvalidation`. If library deletes fail with `AccessDenied`,
+the credentials in use are missing `s3:DeleteObject`.
 `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` are only needed if you choose
 long-lived IAM credentials; the application normally uses the AWS credential chain.
 
@@ -61,11 +65,12 @@ These keys belong to Swiply itself. Users must never be asked for them.
 | `TIKTOK_CLIENT_KEY`, `TIKTOK_CLIENT_SECRET` | Create an app in the [TikTok Developer portal](https://developers.tiktok.com/), enable Login Kit and Content Posting, then copy the client key and secret. |
 | `META_APP_ID`, `META_APP_SECRET`, `META_WEBHOOK_VERIFY_TOKEN` | Create an app in [Meta for Developers](https://developers.facebook.com/apps/), add the Instagram/Facebook products, and copy the app ID/secret. You create the webhook verification token yourself as a long random value. |
 | `TWITTER_CLIENT_ID`, `TWITTER_CLIENT_SECRET` | Create a project/app in the [X Developer Portal](https://developer.x.com/en/portal/dashboard), enable OAuth 2.0, and copy the client ID and secret. Set `TWITTER_API_TIER` to your actual plan. |
-| `PINTEREST_APP_ID`, `PINTEREST_APP_SECRET` | Create an app in [Pinterest Developers](https://developers.pinterest.com/apps/). The adapter is not implemented yet. |
+| `PINTEREST_APP_ID`, `PINTEREST_APP_SECRET` | Create an app in [Pinterest Developers](https://developers.pinterest.com/apps/). Register `{API_BASE_URL}/api/social-accounts/callback/pinterest` as the redirect URI. Request `user_accounts:read`, `boards:read`, and `pins:read`. |
 | `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET` | Create an app in [LinkedIn Developers](https://www.linkedin.com/developers/apps). The adapter is not implemented yet. |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Use test keys from the [Stripe API keys page](https://dashboard.stripe.com/test/apikeys). Create a webhook endpoint in Stripe Workbench and reveal its separate signing secret. Billing is not implemented yet. |
 | `RESEND_API_KEY` | Create a key in [Resend](https://resend.com/api-keys) after adding and verifying your sending domain. Email delivery is not implemented yet. |
 | `REDIS_URL` | Local: `redis://127.0.0.1:6379`. For production, copy the TLS connection URL from your managed Redis provider. |
+| `TIKAPI_KEY` | Create a key in [TikAPI](https://tikapi.io/). Official TikTok APIs cannot search competitors; Swiply uses TikAPI public search and hashtag feeds to see what is posting in the product niche. Optional `TIKAPI_SANDBOX=true` hits their sandbox. |
 
 ## Users: AI provider keys only
 

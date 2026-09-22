@@ -62,4 +62,14 @@ describe('AI settings (e2e)', () => {
 
     expect(response.body.error.code).toBe('VALIDATION_FAILED');
   });
+
+  it('rejects a task default for a provider that has no saved key', async () => {
+    const response = await request(app.getHttpServer())
+      .put('/api/ai/preferences')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ provider: 'openai', model: 'gpt-5-mini' })
+      .expect(422);
+
+    expect(response.body.error.code).toBe('AI_NOT_CONFIGURED');
+  });
 });

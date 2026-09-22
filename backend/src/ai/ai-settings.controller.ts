@@ -7,6 +7,7 @@ import { SaveAiCredentialDto } from './dto/save-ai-credential.dto';
 import { AiProviderRegistry } from './ai-provider-registry.service';
 import { isAiProvider } from './ai-providers';
 import { SaveProviderCredentialDto } from './dto/save-provider-credential.dto';
+import { SetAiPreferenceDto } from './dto/set-ai-preference.dto';
 import { ApiException } from '../common/errors/api.exception';
 
 @ApiTags('ai-settings')
@@ -30,6 +31,12 @@ export class AiSettingsController {
   @Get('credentials')
   async list(@CurrentUser('userId') userId: string) {
     return { data: await this.credentials.list(userId) };
+  }
+
+  @Put('preferences')
+  @ApiOperation({ summary: 'Choose which connected provider and model to use for AI tasks' })
+  async setPreference(@CurrentUser('userId') userId: string, @Body() dto: SetAiPreferenceDto) {
+    return { data: await this.credentials.setTaskPreference(userId, dto) };
   }
 
   @Put('credentials/openai')

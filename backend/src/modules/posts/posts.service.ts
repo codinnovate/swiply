@@ -12,6 +12,7 @@ import { Content, ContentDocument } from '../content/schemas/content.schema';
 import { CreatePostDto } from './dto/create-post.dto';
 import { Post, PostDocument } from './schemas/post.schema';
 import { SocialAccountsService } from '../social-accounts/social-accounts.service';
+import { TikTokMediaFitService } from '../media/tiktok-media-fit.service';
 import { PublishingProvidersService } from '../publishing-providers/publishing-providers.service';
 import type { PublishingProvider } from '../publishing-providers/schemas/publishing-provider-connection.schema';
 
@@ -24,6 +25,7 @@ export class PostsService {
     private readonly registry: PlatformRegistry,
     private readonly socialAccounts: SocialAccountsService,
     private readonly publishingProviders: PublishingProvidersService,
+    private readonly tiktokMediaFit: TikTokMediaFitService,
   ) {}
 
   async create(workspaceId: string, dto: CreatePostDto) {
@@ -94,7 +96,7 @@ export class PostsService {
           account,
           content,
           post.scheduledFor,
-          false,
+          Boolean(dto.publishNow),
         );
         post.externalProviderPostId = result.id;
         post.platformPostId = result.id;
@@ -110,6 +112,8 @@ export class PostsService {
         await post.save();
         throw error;
       }
+    } else if (dto.publishNow) {
+      return this.publishNow(workspaceId, String(post.id || post._id));
     }
     return post;
   }
@@ -192,10 +196,13 @@ export class PostsService {
         await post.save();
         return post;
       }
-      const imageUrls =
+      const imageUrls = await this.imagesForPlatform(
+        workspaceId,
+        account.platform,
         content.type === 'slideshow'
           ? (content.slideshow?.slides.map((slide) => slide.imageUrl) ?? [])
-          : (content.post?.imageUrls ?? []);
+          : (content.post?.imageUrls ?? []),
+      );
       const result = await this.registry
         .get(account.platform)
         .publishContent(
@@ -225,17 +232,20 @@ export class PostsService {
     }
   }
 
-  private submitToProvider(
+  private async submitToProvider(
     workspaceId: string,
     account: SocialAccountDocument,
     content: ContentDocument,
     scheduledFor: Date,
     publishNow: boolean,
   ) {
-    const imageUrls =
+    const imageUrls = await this.imagesForPlatform(
+      workspaceId,
+      account.platform,
       content.type === 'slideshow'
         ? (content.slideshow?.slides.map((slide) => slide.imageUrl) ?? [])
-        : (content.post?.imageUrls ?? []);
+        : (content.post?.imageUrls ?? []),
+    );
     const text = [content.postCaption || content.post?.text || '', ...content.hashtags]
       .filter(Boolean)
       .join('\n\n');
@@ -246,5 +256,10 @@ export class PostsService {
       scheduledFor,
       publishNow,
     });
+  }
+
+  private imagesForPlatform(workspaceId: string, platform: string, imageUrls: string[]) {
+    if (platform !== 'tiktok' || !imageUrls.length) return Promise.resolve(imageUrls);
+    return this.tiktokMediaFit.fitAll(workspaceId, imageUrls);
   }
 }

@@ -27,6 +27,15 @@ export class User {
   @Prop({ type: String, default: null, index: true, sparse: true })
   googleId: string | null;
 
+  @Prop({ type: String, default: null, select: false })
+  passwordResetOtpHash: string | null;
+
+  @Prop({ type: Date, default: null, select: false })
+  passwordResetExpiresAt: Date | null;
+
+  @Prop({ type: Number, default: 0, select: false })
+  passwordResetAttemptCount: number;
+
   createdAt: Date;
   updatedAt: Date;
 }

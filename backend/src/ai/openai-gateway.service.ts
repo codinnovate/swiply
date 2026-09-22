@@ -37,12 +37,16 @@ export class OpenAiGateway {
         model,
         instructions: prompt.system,
         input: prompt.user,
-        max_output_tokens: prompt.maxTokens ?? 4096,
+        max_output_tokens: Math.max(prompt.maxTokens ?? 4096, 4096),
         store: false,
         safety_identifier: createHash('sha256').update(userId).digest('hex'),
         text: { format: zodTextFormat(schema, 'swiply_response') },
+        ...(model.startsWith('gpt-5') ? { reasoning: { effort: 'low' as const } } : {}),
       });
       if (response.output_parsed === null) {
+        this.logger.error(
+          `OpenAI structured output missing (status ${response.status ?? 'unknown'}, incomplete=${JSON.stringify(response.incomplete_details ?? null)})`,
+        );
         throw new Error('OpenAI returned output that did not match the requested schema');
       }
       return response.output_parsed;

@@ -49,6 +49,10 @@ export const platformsConfig = registerAs('platforms', () => ({
     appSecret: process.env.META_APP_SECRET,
     webhookVerifyToken: process.env.META_WEBHOOK_VERIFY_TOKEN,
   },
+  pinterest: {
+    appId: process.env.PINTEREST_APP_ID,
+    appSecret: process.env.PINTEREST_APP_SECRET,
+  },
   twitter: {
     clientId: process.env.TWITTER_CLIENT_ID,
     clientSecret: process.env.TWITTER_CLIENT_SECRET,
@@ -69,6 +73,11 @@ export const storageConfig = registerAs('storage', () => ({
   endpoint: process.env.AWS_ENDPOINT_URL,
 }));
 
+export const researchConfig = registerAs('research', () => ({
+  tikapiKey: process.env.TIKAPI_KEY,
+  tikapiSandbox: process.env.TIKAPI_SANDBOX === 'true',
+}));
+
 export const configurations = [
   appConfig,
   databaseConfig,
@@ -76,4 +85,5 @@ export const configurations = [
   encryptionConfig,
   platformsConfig,
   storageConfig,
+  researchConfig,
 ];

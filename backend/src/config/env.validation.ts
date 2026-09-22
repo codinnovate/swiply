@@ -112,6 +112,8 @@ export class EnvironmentVariables {
   @IsString() @IsOptional() LINKEDIN_CLIENT_ID?: string;
   @IsString() @IsOptional() LINKEDIN_CLIENT_SECRET?: string;
   @IsString() @IsOptional() RESEND_API_KEY?: string;
+  @IsString() @IsOptional() TIKAPI_KEY?: string;
+  @IsString() @IsOptional() TIKAPI_SANDBOX?: string;
 }
 
 export function validateEnv(raw: Record<string, unknown>): EnvironmentVariables {

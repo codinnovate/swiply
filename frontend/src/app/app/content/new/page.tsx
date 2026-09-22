@@ -1,1 +1,5 @@
-import { ContentCreator } from "@/components/app/content-creator";export default function NewContent(){return <ContentCreator/>}
+import { redirect } from "next/navigation";
+
+export default function NewContent() {
+  redirect("/app/automation/setup");
+}

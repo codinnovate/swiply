@@ -27,6 +27,9 @@ export const AI_PROVIDER_DEFINITIONS = AI_PROVIDERS.map((id) => ({
   models: AI_MODELS.filter((model) => model.provider === id),
 }));
 
+/** Prefer OpenAI when several keys are saved and the user has not picked a task default. */
+export const AI_PROVIDER_FALLBACK_ORDER: readonly AiProvider[] = ['openai', 'anthropic', 'gemini'];
+
 export function isAiProvider(value: string): value is AiProvider {
   return (AI_PROVIDERS as readonly string[]).includes(value);
 }

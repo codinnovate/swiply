@@ -19,6 +19,9 @@ export class AiCredential {
   @Prop({ required: true })
   defaultModel: string;
 
+  @Prop({ default: false })
+  preferred: boolean;
+
   createdAt: Date;
   updatedAt: Date;
 }

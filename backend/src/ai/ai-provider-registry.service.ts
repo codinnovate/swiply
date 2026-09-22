@@ -41,7 +41,10 @@ export class AiProviderRegistry {
       const response = provider === 'anthropic'
         ? await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' }, body: JSON.stringify({ model, max_tokens: prompt.maxTokens ?? 4096, system: `${prompt.system}\nReturn only valid JSON matching the requested structure.`, messages: [{ role: 'user', content: prompt.user }] }) })
         : await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ systemInstruction: { parts: [{ text: prompt.system }] }, contents: [{ role: 'user', parts: [{ text: `${prompt.user}\nReturn only valid JSON matching the requested structure.` }] }], generationConfig: { responseMimeType: 'application/json', maxOutputTokens: prompt.maxTokens ?? 4096 } }) });
-      if (!response.ok) throw this.failure(provider, response.status, false);
+      if (!response.ok) {
+        this.logger.error(`${provider} structured generation HTTP ${response.status}`);
+        throw this.failure(provider, response.status, false);
+      }
       const body = await response.json() as Record<string, unknown>;
       const text = provider === 'anthropic'
         ? ((body.content as Array<{ text?: string }> | undefined)?.find((item) => item.text)?.text ?? '')

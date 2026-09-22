@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Link2, MessageCircle, Settings2, Trash2 } from "lucide-react";
+import { Check, Download, Link2, MessageCircle, Settings2, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useWorkspace } from "@/components/app/app-shell";
@@ -27,6 +27,7 @@ import { queryKeys } from "@/lib/query-keys";
 import type { PlatformAvailability, SocialAccount } from "@/lib/types";
 import { titleCase } from "@/lib/utils";
 import { ProviderConnections } from "@/components/app/provider-connections";
+import { PinterestImportDialog } from "@/components/app/pinterest-import-dialog";
 const platformStyle: Record<string, string> = {
   instagram: "from-fuchsia-500 to-orange-400",
   tiktok: "from-slate-900 to-cyan-400",
@@ -41,6 +42,7 @@ export function AccountsView() {
   const [defaultsAccount, setDefaultsAccount] = useState<SocialAccount | null>(
     null,
   );
+  const [pinterestImportOpen, setPinterestImportOpen] = useState(false);
   const accounts = useQuery({
     queryKey: queryKeys.accounts(workspace?.id || ""),
     queryFn: () => api<SocialAccount[]>("/social-accounts", {}, workspace?.id),
@@ -123,6 +125,17 @@ export function AccountsView() {
                   )}
                 </div>
                 <div className="flex">
+                  {account.platform === "pinterest" &&
+                    (account.connectionProvider || "direct") === "direct" && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title="Import board into media"
+                      onClick={() => setPinterestImportOpen(true)}
+                    >
+                      <Download className="size-4" />
+                    </Button>
+                  )}
                   {(account.connectionProvider || "direct") !== "direct" && (
                     <Button
                       variant="ghost"
@@ -219,6 +232,10 @@ export function AccountsView() {
           setDefaultsAccount(null);
         }}
       />
+      <PinterestImportDialog
+        open={pinterestImportOpen}
+        onOpenChange={setPinterestImportOpen}
+      />
     </>
   );
 }
@@ -250,6 +267,7 @@ function PublishingDefaultsDialog({
   const { workspace } = useWorkspace();
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
@@ -358,7 +376,7 @@ function PublishingDefaultsDialog({
               <FormSelect
                 name="postType"
                 label="Instagram post type"
-                register={register}
+                control={control}
                 options={[
                   { value: "post", label: "Post" },
                   { value: "reel", label: "Reel" },
@@ -370,7 +388,7 @@ function PublishingDefaultsDialog({
               <FormSelect
                 name="whoCanReply"
                 label="Who can reply"
-                register={register}
+                control={control}
                 options={[
                   { value: "everyone", label: "Everyone" },
                   { value: "following", label: "Accounts you follow" },
@@ -383,7 +401,7 @@ function PublishingDefaultsDialog({
                 <FormSelect
                   name="privacyLevel"
                   label="TikTok privacy"
-                  register={register}
+                  control={control}
                   options={[
                     { value: "PUBLIC_TO_EVERYONE", label: "Public" },
                     { value: "FOLLOWER_OF_CREATOR", label: "Followers" },
@@ -394,7 +412,7 @@ function PublishingDefaultsDialog({
                 <FormSelect
                   name="autoAddMusic"
                   label="Automatically add music"
-                  register={register}
+                  control={control}
                   options={[
                     { value: "no", label: "No" },
                     { value: "yes", label: "Yes" },

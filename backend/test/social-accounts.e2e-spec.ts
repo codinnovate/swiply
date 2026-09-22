@@ -99,7 +99,7 @@ describe('Social accounts (e2e)', () => {
       expect(response.body.data.find((p: { platform: string }) => p.platform === 'tiktok'))
         .toMatchObject({ implemented: true, configured: true });
       expect(response.body.data.find((p: { platform: string }) => p.platform === 'pinterest'))
-        .toMatchObject({ implemented: false });
+        .toMatchObject({ implemented: true, configured: true });
     });
   });
 

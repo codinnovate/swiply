@@ -10,20 +10,16 @@ import {
   CircleGauge,
   FileCode2,
   Images,
-  Library,
   Menu,
   MessageCircleReply,
   Moon,
-  PanelLeftClose,
   Plus,
   Search,
   Settings,
   Sparkles,
   Sun,
   Users,
-  WandSparkles,
   X,
-  Zap,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Brand } from "@/components/brand";
@@ -47,21 +43,19 @@ const navigation = [
     label: "Workspace",
     items: [
       { href: "/app", label: "Overview", icon: CircleGauge },
-      { href: "/app/content", label: "Content", icon: Library },
+      { href: "/app/automation", label: "Automation", icon: Bot },
       { href: "/app/media", label: "Media", icon: Images },
       { href: "/app/calendar", label: "Calendar", icon: CalendarDays },
-      { href: "/app/schedules", label: "Schedules", icon: Zap },
     ],
   },
   {
-    label: "Automate",
+    label: "Conversations",
     items: [
       {
         href: "/app/engagement",
         label: "Engagement",
         icon: MessageCircleReply,
       },
-      { href: "/app/automation", label: "Activity", icon: Bot },
     ],
   },
   {
@@ -252,9 +246,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Bell className="size-4.5" />
             </Button>
             <Button asChild size="sm">
-              <Link href="/app/content/new">
+              <Link href="/app/automation/setup">
                 <Plus className="size-4" />
-                Create
+                Automate
               </Link>
             </Button>
           </div>
@@ -328,7 +322,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <input
               autoFocus
               className="h-14 flex-1 bg-transparent text-sm outline-none"
-              placeholder="Search content, posts, and settings…"
+              placeholder="Search slideshows, posts, and settings…"
             />
           </div>
           <div className="p-3">
@@ -337,8 +331,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </p>
             {[
               {
-                label: "Create content",
-                href: "/app/content/new",
+                label: "Start automation",
+                href: "/app/automation/setup",
                 icon: Sparkles,
               },
               { label: "Upload media", href: "/app/media", icon: Images },

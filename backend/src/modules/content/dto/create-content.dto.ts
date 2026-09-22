@@ -1,5 +1,6 @@
 import {
   IsArray,
+  IsBoolean,
   IsIn,
   IsInt,
   IsOptional,
@@ -17,6 +18,7 @@ export class CreateContentDto {
   @IsIn(CONTENT_TYPES) type: 'slideshow' | 'video' | 'post';
   @IsOptional() @IsString() @MaxLength(5000) topic?: string;
   @IsOptional() @IsString() @MaxLength(80) targetCountry?: string;
+  @IsOptional() @IsString() @MaxLength(80) language?: string;
   @IsOptional() @IsString() socialAccountId?: string;
   @IsOptional() @IsString() voiceProfileId?: string;
   @IsOptional() @IsString() @MaxLength(120) aiModel?: string;
@@ -26,6 +28,10 @@ export class CreateContentDto {
   @IsOptional() @IsString() @MaxLength(2200) postCaption?: string;
   @IsOptional() @IsArray() @IsString({ each: true }) hashtags?: string[];
   @IsOptional() @IsInt() @Min(2) @Max(35) slideCount?: number;
+  @IsOptional() @IsBoolean() randomizeSlides?: boolean;
+  @IsOptional() @IsString() @MaxLength(8000) websiteBrief?: string;
+  @IsOptional() @IsString() @MaxLength(4000) tiktokInsights?: string;
+  @IsOptional() @IsArray() @IsString({ each: true }) @MaxLength(80, { each: true }) assetNames?: string[];
   @ValidateIf((dto) => dto.type !== 'video') @IsIn(['user_provided', 'ai_generated']) imageSource:
     'user_provided' | 'ai_generated';
   @IsOptional()
