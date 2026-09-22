@@ -1,6 +1,8 @@
+import { Transform } from 'class-transformer';
 import { ArrayMaxSize, ArrayMinSize, ArrayUnique, IsArray, IsInt, Max, Min } from 'class-validator';
 
 export class SignUploadPartsDto {
+  @Transform(({ value }) => (Array.isArray(value) ? value.map(Number) : value))
   @IsArray()
   @ArrayMinSize(1)
   @ArrayMaxSize(100)

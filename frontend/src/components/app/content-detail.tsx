@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useWorkspace } from "@/components/app/app-shell";
 import { FormInput, FormSelect } from "@/components/forms/form-fields";
+import { TikTokSlideshowPreview } from "@/components/app/tiktok-slideshow-preview";
 import { PageLoader, ErrorState } from "@/components/shared/states";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -115,7 +116,13 @@ export function ContentDetail() {
       <div className="grid gap-6 xl:grid-cols-[1.3fr_.7fr]">
         <Card>
           <CardContent className="pt-5">
-            {images.length ? (
+            {x.type === "slideshow" && x.slideshow?.slides.length ? (
+              <TikTokSlideshowPreview
+                slides={x.slideshow.slides}
+                caption={x.postCaption}
+                hashtags={x.hashtags}
+              />
+            ) : images.length ? (
               <div
                 className={images.length > 1 ? "grid grid-cols-2 gap-3" : ""}
               >
@@ -229,6 +236,7 @@ function ScheduleContentDialog({
   );
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
@@ -280,7 +288,7 @@ function ScheduleContentDialog({
             name="socialAccountId"
             label="Publishing account"
             required
-            register={register}
+            control={control}
             rules={{ required: "Choose a publishing account" }}
             error={errors.socialAccountId?.message}
             disabled={accounts.isLoading || schedule.isPending}

@@ -200,6 +200,7 @@ function ProviderDialog({
   const { workspace } = useWorkspace();
   const {
     register,
+    control,
     handleSubmit,
     getValues,
     setValue,
@@ -340,7 +341,7 @@ function ProviderDialog({
               <FormSelect
                 name="organizationId"
                 label="Buffer organization"
-                register={register}
+                control={control}
                 options={discovery.organizations.map((item) => ({
                   value: item.id,
                   label: item.name,

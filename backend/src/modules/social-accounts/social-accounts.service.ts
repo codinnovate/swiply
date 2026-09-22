@@ -5,6 +5,7 @@ import { Model, Types, isValidObjectId } from 'mongoose';
 
 import { TokenCipher } from '../../common/crypto/token-cipher.service';
 import { ApiException, ApiErrorBody } from '../../common/errors/api.exception';
+import { PinterestAdapter, PINTEREST_IMPORT_LIMIT } from '../../platforms/adapters/pinterest.adapter';
 import { OAuthStateService } from '../../platforms/oauth-state.service';
 import {
   PlatformRegistry,
@@ -21,6 +22,7 @@ import {
   type Platform,
 } from './schemas/social-account.schema';
 import { Post, PostDocument } from '../posts/schemas/post.schema';
+import { MediaService } from '../media/media.service';
 
 /** Refresh this far ahead of expiry so a publish never races the deadline. */
 const REFRESH_SKEW_MS = 5 * 60 * 1000;
@@ -45,6 +47,7 @@ export class SocialAccountsService {
     private readonly oauthState: OAuthStateService,
     private readonly cipher: TokenCipher,
     private readonly config: ConfigService,
+    private readonly media: MediaService,
   ) {}
 
   listPlatforms(): PlatformAvailability[] {
@@ -239,6 +242,79 @@ export class SocialAccountsService {
     this.validatePublishingDefaults(account.platform, defaults);
     account.publishingDefaults = defaults;
     return account.save();
+  }
+
+  async listPinterestBoards(workspaceId: string, accountId: string) {
+    const { adapter, token } = await this.pinterestContext(workspaceId, accountId);
+    return adapter.listBoards(token);
+  }
+
+  async importPinterestBoard(
+    workspaceId: string,
+    userId: string,
+    accountId: string,
+    boardId: string,
+  ) {
+    const { adapter, token, account } = await this.pinterestContext(workspaceId, accountId);
+    const boards = await adapter.listBoards(token);
+    const board = boards.find((item) => item.id === boardId);
+    if (!board) {
+      throw ApiException.unprocessable(
+        'PINTEREST_BOARD_NOT_FOUND',
+        'That Pinterest board is not on this connected account',
+        { boardId },
+      );
+    }
+
+    const pins = await adapter.listBoardImagePins(token, boardId, PINTEREST_IMPORT_LIMIT);
+    let imported = 0;
+    let skipped = 0;
+    let failed = 0;
+    for (const pin of pins) {
+      try {
+        const result = await this.media.importRemoteImage(workspaceId, userId, {
+          url: pin.imageUrl,
+          fileName: `${pin.title.slice(0, 80)}.jpg`,
+          tags: ['pinterest', `board:${board.id}`, `board-name:${board.name}`],
+          width: pin.width,
+          height: pin.height,
+          fingerprint: `pin:${account._id.toString()}:${pin.pinId}`,
+        });
+        if (result.created) imported += 1;
+        else skipped += 1;
+      } catch {
+        failed += 1;
+      }
+    }
+
+    return {
+      boardId: board.id,
+      boardName: board.name,
+      considered: pins.length,
+      imported,
+      skipped,
+      failed,
+      capped: pins.length >= PINTEREST_IMPORT_LIMIT,
+    };
+  }
+
+  private async pinterestContext(workspaceId: string, accountId: string) {
+    const account = await this.findOwnedOrFail(workspaceId, accountId);
+    if (account.platform !== 'pinterest' || (account.connectionProvider ?? 'direct') !== 'direct') {
+      throw ApiException.unprocessable(
+        'PLATFORM_CAPABILITY_UNSUPPORTED',
+        'Connect a direct Pinterest account to import boards',
+      );
+    }
+    const adapter = this.registry.get('pinterest');
+    if (!(adapter instanceof PinterestAdapter)) {
+      throw ApiException.unprocessable(
+        'PLATFORM_NOT_SUPPORTED',
+        'Pinterest connections are not available yet',
+      );
+    }
+    const token = await this.getUsableAccessToken(workspaceId, accountId);
+    return { account, adapter, token };
   }
 
   private validatePublishingDefaults(platform: Platform, defaults: Record<string, unknown>): void {

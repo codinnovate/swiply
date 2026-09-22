@@ -2,12 +2,13 @@ import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 
 import { InstagramAdapter } from './adapters/instagram.adapter';
+import { PinterestAdapter } from './adapters/pinterest.adapter';
 import { TikTokAdapter } from './adapters/tiktok.adapter';
 import { TwitterAdapter } from './adapters/twitter.adapter';
 import { OAuthStateService } from './oauth-state.service';
 import { PlatformRegistry } from './platform-registry.service';
 
-const ADAPTERS = [TikTokAdapter, InstagramAdapter, TwitterAdapter];
+const ADAPTERS = [TikTokAdapter, InstagramAdapter, TwitterAdapter, PinterestAdapter];
 
 @Module({
   imports: [

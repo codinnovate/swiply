@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 
 import { PlatformsModule } from '../../platforms/platforms.module';
 import { WorkspacesModule } from '../workspaces/workspaces.module';
+import { MediaModule } from '../media/media.module';
 import { SocialAccount, SocialAccountSchema } from './schemas/social-account.schema';
 import { SocialAccountsController } from './social-accounts.controller';
 import { SocialAccountsService } from './social-accounts.service';
@@ -20,6 +21,7 @@ import { Post, PostSchema } from '../posts/schemas/post.schema';
     ]),
     WorkspacesModule,
     PlatformsModule,
+    MediaModule,
   ],
   controllers: [SocialAccountsController],
   providers: [SocialAccountsService],

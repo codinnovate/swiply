@@ -9,8 +9,10 @@ import type { AuthenticatedRequest, AuthenticatedUser } from '../../common/inter
 import { UserDocument } from '../users/schemas/user.schema';
 import { UsersService } from '../users/users.service';
 import { AuthService } from './auth.service';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 
@@ -39,6 +41,22 @@ export class AuthController {
     // LocalAuthGuard has already replaced request.user with the UserDocument.
     const user = request.user as unknown as UserDocument;
     return { data: await this.authService.login(user) };
+  }
+
+  @Public()
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Start a password reset and print the OTP to the server console' })
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return { data: await this.authService.forgotPassword(dto) };
+  }
+
+  @Public()
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Set a new password with the emailed or console OTP' })
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    return { data: await this.authService.resetPassword(dto) };
   }
 
   @Public()

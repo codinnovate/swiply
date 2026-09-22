@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 
 import { ApiException, ApiErrorBody } from '../common/errors/api.exception';
 import { InstagramAdapter } from './adapters/instagram.adapter';
+import { PinterestAdapter } from './adapters/pinterest.adapter';
 import { TikTokAdapter } from './adapters/tiktok.adapter';
 import { TwitterAdapter } from './adapters/twitter.adapter';
 import { PlatformRegistry } from './platform-registry.service';
@@ -13,6 +14,7 @@ function registryWith(config: Record<string, string | undefined>): PlatformRegis
     new TikTokAdapter(new HttpService(), configService),
     new InstagramAdapter(new HttpService(), configService),
     new TwitterAdapter(new HttpService(), configService),
+    new PinterestAdapter(new HttpService(), configService),
   );
 }
 
@@ -23,6 +25,8 @@ const ALL_CONFIGURED = {
   'platforms.meta.appSecret': 's',
   'platforms.twitter.clientId': 'i',
   'platforms.twitter.clientSecret': 's',
+  'platforms.pinterest.appId': 'i',
+  'platforms.pinterest.appSecret': 's',
 };
 
 function codeOf(run: () => unknown): string {
@@ -39,7 +43,7 @@ describe('PlatformRegistry', () => {
   it('resolves the adapters build step 2 ships', () => {
     const registry = registryWith(ALL_CONFIGURED);
 
-    for (const platform of ['tiktok', 'instagram', 'twitter']) {
+    for (const platform of ['tiktok', 'instagram', 'twitter', 'pinterest']) {
       expect(registry.get(platform).capabilities.platform).toBe(platform);
     }
   });
@@ -49,8 +53,8 @@ describe('PlatformRegistry', () => {
 
     // Both are "you can't connect this", but only one is a typo.
     expect(codeOf(() => registry.get('myspace'))).toBe('PLATFORM_NOT_SUPPORTED');
-    expect(codeOf(() => registry.get('pinterest'))).toBe('PLATFORM_NOT_SUPPORTED');
-    expect(codeOf(() => registry.get('pinterest'))).not.toBe('PLATFORM_NOT_CONFIGURED');
+    expect(codeOf(() => registry.get('linkedin'))).toBe('PLATFORM_NOT_SUPPORTED');
+    expect(registry.get('pinterest').capabilities.platform).toBe('pinterest');
   });
 
   it('separates missing credentials from a missing adapter', () => {

@@ -7,7 +7,10 @@ import { ApiException } from '../../common/errors/api.exception';
 import { UserDocument } from '../users/schemas/user.schema';
 import { UsersService } from '../users/users.service';
 import { WorkspacesService } from '../workspaces/workspaces.service';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { RegisterDto } from './dto/register.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import * as passwordReset from './password-reset';
 import { JwtPayload } from './types/jwt-payload.interface';
 
 export interface GoogleProfileInput {
@@ -86,6 +89,56 @@ export class AuthService {
 
   async login(user: UserDocument): Promise<AuthResult> {
     return this.issueToken(user);
+  }
+
+  /**
+   * Unknown emails still return `{ sent: true }` with no OTP. Known accounts also
+   * get the OTP back so the login page can show it, and it is printed to the
+   * backend console.
+   */
+  async forgotPassword(dto: ForgotPasswordDto): Promise<{ sent: true; otp?: string }> {
+    const user = await this.usersService.findByEmail(dto.email);
+    if (!user) return { sent: true };
+
+    const otp = passwordReset.createPasswordResetOtp();
+    const secret = this.configService.getOrThrow<string>('auth.jwtSecret');
+    await this.usersService.setPasswordReset(
+      user._id,
+      passwordReset.hashPasswordResetOtp(otp, secret),
+      new Date(Date.now() + passwordReset.PASSWORD_RESET_OTP_TTL_MS),
+    );
+    this.logger.warn(`Password reset OTP for ${user.email}: ${otp} (valid 15 minutes)`);
+    return { sent: true, otp };
+  }
+
+  async resetPassword(dto: ResetPasswordDto): Promise<{ reset: true }> {
+    const user = await this.usersService.findByEmailWithPasswordReset(dto.email);
+    const secret = this.configService.getOrThrow<string>('auth.jwtSecret');
+    const invalid = () =>
+      ApiException.unprocessable(
+        'PASSWORD_RESET_INVALID',
+        'That reset code is invalid or expired',
+      );
+
+    if (!user?.passwordResetOtpHash || !user.passwordResetExpiresAt) throw invalid();
+    if (user.passwordResetExpiresAt.getTime() < Date.now()) {
+      await this.usersService.clearPasswordReset(user._id);
+      throw invalid();
+    }
+    if ((user.passwordResetAttemptCount ?? 0) >= passwordReset.PASSWORD_RESET_MAX_ATTEMPTS) {
+      await this.usersService.clearPasswordReset(user._id);
+      throw invalid();
+    }
+    if (!passwordReset.passwordResetOtpsMatch(dto.otp, user.passwordResetOtpHash, secret)) {
+      const attempts = await this.usersService.incrementPasswordResetAttempts(user._id);
+      if (attempts >= passwordReset.PASSWORD_RESET_MAX_ATTEMPTS) {
+        await this.usersService.clearPasswordReset(user._id);
+      }
+      throw invalid();
+    }
+
+    await this.usersService.setPassword(user._id, dto.password);
+    return { reset: true };
   }
 
   /**

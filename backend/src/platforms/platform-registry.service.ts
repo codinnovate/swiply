@@ -6,6 +6,7 @@ import {
   type Platform,
 } from '../modules/social-accounts/schemas/social-account.schema';
 import { InstagramAdapter } from './adapters/instagram.adapter';
+import { PinterestAdapter } from './adapters/pinterest.adapter';
 import { TikTokAdapter } from './adapters/tiktok.adapter';
 import { TwitterAdapter } from './adapters/twitter.adapter';
 import type { PlatformAdapter } from './platform-adapter.interface';
@@ -20,10 +21,8 @@ export interface PlatformAvailability {
 }
 
 /**
- * Resolves a platform slug to its adapter. Build step 2 ships TikTok,
- * Instagram, and X; Facebook, Pinterest, and LinkedIn arrive in step 9 and
- * report as unimplemented until then rather than 404ing as unknown, which
- * would be indistinguishable from a typo.
+ * Resolves a platform slug to its adapter. Facebook and LinkedIn still land
+ * later and report as unimplemented rather than 404ing as unknown.
  */
 @Injectable()
 export class PlatformRegistry {
@@ -33,8 +32,9 @@ export class PlatformRegistry {
     tiktok: TikTokAdapter,
     instagram: InstagramAdapter,
     twitter: TwitterAdapter,
+    pinterest: PinterestAdapter,
   ) {
-    this.adapters = { tiktok, instagram, twitter };
+    this.adapters = { tiktok, instagram, twitter, pinterest };
   }
 
   /** Throws unless the platform has an adapter *and* usable credentials. */

@@ -198,6 +198,46 @@ describe('ContentService', () => {
       );
     });
 
+    it('passes website research into the copy prompt and can randomize slides', async () => {
+      text.generate.mockResolvedValue({
+        postCaption: 'See the onboarding.',
+        postText: 'See the onboarding.',
+        hashtags: ['#saas'],
+        slides: [
+          { caption: 'Hook', altText: 'Onboarding' },
+          { caption: 'Close', altText: 'Pricing' },
+        ],
+        model: 'gpt-5-mini',
+        provider: 'openai',
+      });
+      media.resolveImages.mockResolvedValue([
+        { imageUrl: 'https://cdn.example.com/a.png', mediaAssetId: null },
+        { imageUrl: 'https://cdn.example.com/b.png', mediaAssetId: null },
+      ]);
+
+      await service.generate(workspaceId, userId, {
+        type: 'slideshow',
+        goal: 'traffic',
+        topic: 'onboarding',
+        imageSource: 'user_provided',
+        randomizeSlides: true,
+        websiteBrief: 'A product that posts itself.',
+        tiktokInsights: 'Short listicles win.',
+        language: 'Spanish',
+        providedImageUrls: ['https://cdn.example.com/a.png', 'https://cdn.example.com/b.png'],
+        assetNames: ['Onboarding', 'Pricing'],
+      } as never);
+
+      expect(text.generate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          websiteBrief: 'A product that posts itself.',
+          tiktokInsights: 'Short listicles win.',
+          language: 'Spanish',
+          slideCount: 2,
+        }),
+      );
+    });
+
     it('retries when generated copy is too similar to recent AI content', async () => {
       model.find.mockReturnValue({
         sort: jest.fn().mockReturnThis(),

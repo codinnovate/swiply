@@ -19,6 +19,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentWorkspace, RequireRoles } from '../../common/decorators/workspace.decorator';
 import { WorkspaceGuard } from '../../common/guards/workspace.guard';
+import { ImportPinterestBoardDto } from './dto/import-pinterest-board.dto';
 import { OAuthCallbackDto } from './dto/oauth-callback.dto';
 import { VoiceConsentDto } from './dto/voice-consent.dto';
 import { UpdatePublishingDefaultsDto } from './dto/update-publishing-defaults.dto';
@@ -105,6 +106,39 @@ export class SocialAccountsController {
       dto.consent,
     );
     return { data: toSocialAccountResponse(account) };
+  }
+
+  @Get(':id/pinterest/boards')
+  @ApiBearerAuth()
+  @UseGuards(WorkspaceGuard)
+  @RequireRoles('editor')
+  @ApiOperation({ summary: 'List boards on a connected Pinterest account' })
+  async listPinterestBoards(
+    @CurrentWorkspace('workspaceId') workspaceId: string,
+    @Param('id') id: string,
+  ) {
+    return { data: await this.socialAccountsService.listPinterestBoards(workspaceId, id) };
+  }
+
+  @Post(':id/pinterest/import')
+  @ApiBearerAuth()
+  @UseGuards(WorkspaceGuard)
+  @RequireRoles('editor')
+  @ApiOperation({ summary: 'Copy image pins from a Pinterest board into this workspace media library' })
+  async importPinterestBoard(
+    @CurrentWorkspace('workspaceId') workspaceId: string,
+    @CurrentUser('userId') userId: string,
+    @Param('id') id: string,
+    @Body() dto: ImportPinterestBoardDto,
+  ) {
+    return {
+      data: await this.socialAccountsService.importPinterestBoard(
+        workspaceId,
+        userId,
+        id,
+        dto.boardId,
+      ),
+    };
   }
 
   @Delete(':id')

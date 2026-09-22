@@ -9,6 +9,7 @@ import { UpdateScheduleDto } from './dto/update-schedule.dto';
 export class SchedulesController {
   constructor(private readonly service: SchedulesService) {}
   @Get() async list(@CurrentWorkspace('workspaceId') id: string) { return { data: await this.service.list(id) }; }
+  @Get(':id') async get(@CurrentWorkspace('workspaceId') id: string, @Param('id') scheduleId: string) { return { data: await this.service.get(id, scheduleId) }; }
   @Post() @RequireRoles('editor') async create(@CurrentWorkspace('workspaceId') id: string, @Body() dto: CreateScheduleDto) { return { data: await this.service.create(id, dto) }; }
   @Patch(':id') @RequireRoles('editor') async update(@CurrentWorkspace('workspaceId') id: string, @Param('id') scheduleId: string, @Body() dto: UpdateScheduleDto) { return { data: await this.service.update(id, scheduleId, dto) }; }
   @Patch(':id/pause') @RequireRoles('editor') async pause(@CurrentWorkspace('workspaceId') id: string, @Param('id') scheduleId: string) { return { data: await this.service.pause(id, scheduleId) }; }
