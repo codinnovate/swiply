@@ -21,6 +21,7 @@ import { EngagementModule } from './modules/engagement/engagement.module';
 import { AiModule } from './ai/ai.module';
 import { AutomationModule } from './modules/automation/automation.module';
 import { PublishingProvidersModule } from './modules/publishing-providers/publishing-providers.module';
+import { PostingConsistencyModule } from './modules/posting-consistency/posting-consistency.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { PublishingProvidersModule } from './modules/publishing-providers/publis
     EngagementModule,
     AutomationModule,
     PublishingProvidersModule,
+    PostingConsistencyModule,
   ],
   providers: [
     // Authenticated by default — routes opt out with @Public().
