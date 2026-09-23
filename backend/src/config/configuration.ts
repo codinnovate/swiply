@@ -78,6 +78,13 @@ export const researchConfig = registerAs('research', () => ({
   tikapiSandbox: process.env.TIKAPI_SANDBOX === 'true',
 }));
 
+export const postingConsistencyConfig = registerAs('postingConsistency', () => ({
+  provider: process.env.X_DATA_PROVIDER ?? 'fxtwitter',
+  providerApiKey: process.env.X_DATA_PROVIDER_API_KEY,
+  providerBaseUrl: process.env.X_DATA_PROVIDER_BASE_URL ?? 'https://api.fxtwitter.com',
+  providerTimeoutMs: parseInt(process.env.POSTING_PROVIDER_TIMEOUT_MS ?? '8000', 10),
+}));
+
 export const configurations = [
   appConfig,
   databaseConfig,
@@ -86,4 +93,5 @@ export const configurations = [
   platformsConfig,
   storageConfig,
   researchConfig,
+  postingConsistencyConfig,
 ];
