@@ -18,6 +18,7 @@ import {
   Settings,
   Sparkles,
   Sun,
+  TrendingUp,
   Users,
   X,
 } from "lucide-react";
@@ -46,6 +47,12 @@ const navigation = [
       { href: "/app/automation", label: "Automation", icon: Bot },
       { href: "/app/media", label: "Media", icon: Images },
       { href: "/app/calendar", label: "Calendar", icon: CalendarDays },
+    ],
+  },
+  {
+    label: "Growth",
+    items: [
+      { href: "/app/x-growth", label: "X Growth Engine", icon: TrendingUp },
     ],
   },
   {

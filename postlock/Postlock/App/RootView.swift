@@ -2,14 +2,17 @@ import SwiftUI
 
 struct RootView: View {
     @Environment(AppSession.self) private var session
+    @State private var purchases = PurchasesService()
 
     var body: some View {
         Group {
             if session.hasPostingProfile {
                 if session.hasCommitment {
                     MainTabView()
-                } else {
+                } else if purchases.isPro {
                     NavigationStack { ScheduleSetupView() }
+                } else {
+                    PaywallView()
                 }
             } else {
                 NavigationStack {
@@ -17,7 +20,10 @@ struct RootView: View {
                 }
             }
         }
+        .environment(purchases)
+        .task { purchases.configure() }
         .animation(.easeInOut(duration: 0.3), value: session.hasPostingProfile)
+        .animation(.easeInOut(duration: 0.3), value: purchases.isPro)
     }
 }
 

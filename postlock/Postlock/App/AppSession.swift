@@ -68,6 +68,16 @@ final class AppSession {
 
     func reconcileEnforcement(now: Date = .now) {
         guard let commitment else { return }
+        screenTime.refreshAuthorization()
+        let today = Self.localDate(for: commitment, now: now)
+        if commitmentStore.loadVerifiedDate() != today {
+            verifiedCount = 0
+            verificationMessage = nil
+            developerOverrideBlocked = false
+            commitmentStore.saveVerifiedCount(0)
+            commitmentStore.saveVerifiedDate(today)
+            screenTime.updateVerifiedCount(0, commitment: commitment)
+        }
         if developerOverrideBlocked {
             screenTime.setShielding(active: true)
             return
@@ -92,11 +102,20 @@ final class AppSession {
 
     func verifyPosts() async {
         guard let profile, let commitment, !isVerifying else { return }
+        reconcileEnforcement()
+        let verificationDay = Self.localDate(for: commitment)
         isVerifying = true
         verificationMessage = nil
         defer { isVerifying = false }
         do {
             let result = try await verificationClient.verify(username: profile.username, commitment: commitment)
+            guard self.commitment == commitment,
+                  self.profile == profile,
+                  Self.localDate(for: commitment) == verificationDay else {
+                reconcileEnforcement()
+                verificationMessage = "Your day or schedule changed. Check your posts again."
+                return
+            }
             setVerifiedCount(result.verifiedCount)
             verificationMessage = result.verified
                 ? "Public posts verified."

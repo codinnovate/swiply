@@ -2,6 +2,8 @@
 
 Native SwiftUI client for POSTLOCK. This slice implements public X username setup and settings management without OAuth.
 
+When a posting deadline is missed, POSTLOCK uses Apple's Screen Time APIs to block all app categories except the single app the user selected as X/Twitter. Apple exposes only an opaque selection token, so the user must choose X in the system picker; POSTLOCK cannot identify or preselect it by bundle identifier. If that exception is missing or invalid, POSTLOCK fails open instead of risking blocking X.
+
 ## Run
 
 1. Run `xcodegen generate` in this directory.

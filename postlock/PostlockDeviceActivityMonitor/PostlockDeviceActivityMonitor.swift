@@ -10,14 +10,18 @@ final class PostlockDeviceActivityMonitor: DeviceActivityMonitor {
     override func intervalDidStart(for activity: DeviceActivityName) {
         super.intervalDidStart(for: activity)
         guard shouldShield(for: activity),
-              let data = defaults?.data(forKey: "familyActivitySelection"),
-              let selection = try? JSONDecoder().decode(FamilyActivitySelection.self, from: data) else {
+              let data = defaults?.data(forKey: "allowedAppSelectionV2"),
+              let selection = try? JSONDecoder().decode(FamilyActivitySelection.self, from: data),
+              selection.applicationTokens.count == 1,
+              selection.categoryTokens.isEmpty,
+              selection.webDomainTokens.isEmpty else {
             settings.clearAllSettings()
+            defaults?.set(false, forKey: "shouldBlock")
             return
         }
-        settings.shield.applications = selection.applicationTokens.isEmpty ? nil : selection.applicationTokens
-        settings.shield.applicationCategories = selection.categoryTokens.isEmpty ? nil : .specific(selection.categoryTokens)
-        settings.shield.webDomains = selection.webDomainTokens.isEmpty ? nil : selection.webDomainTokens
+        settings.shield.applications = nil
+        settings.shield.applicationCategories = .all(except: selection.applicationTokens)
+        settings.shield.webDomains = nil
         defaults?.set(true, forKey: "shouldBlock")
     }
 
