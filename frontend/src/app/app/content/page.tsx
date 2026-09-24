@@ -1,1 +1,5 @@
-import { ContentLibrary } from "@/components/app/content-library";export default function Content(){return <ContentLibrary/>}
+import { redirect } from "next/navigation";
+
+export default function Content() {
+  redirect("/app/automation");
+}

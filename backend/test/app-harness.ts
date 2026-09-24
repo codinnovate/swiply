@@ -25,6 +25,8 @@ export async function createTestApp(): Promise<INestApplication> {
   process.env.META_APP_SECRET ??= 'test-meta-secret';
   process.env.TWITTER_CLIENT_ID ??= 'test-x-id';
   process.env.TWITTER_CLIENT_SECRET ??= 'test-x-secret';
+  process.env.PINTEREST_APP_ID ??= 'test-pinterest-id';
+  process.env.PINTEREST_APP_SECRET ??= 'test-pinterest-secret';
   delete process.env.GOOGLE_OAUTH_CLIENT_ID;
   delete process.env.GOOGLE_OAUTH_CLIENT_SECRET;
 

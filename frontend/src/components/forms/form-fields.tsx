@@ -2,24 +2,82 @@
 
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import type {
-  FieldPath,
-  FieldValues,
-  UseFormRegister,
-  RegisterOptions,
+import {
+  Controller,
+  type Control,
+  type FieldPath,
+  type FieldValues,
+  type RegisterOptions,
+  type UseFormRegister,
 } from "react-hook-form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
-interface BaseProps<T extends FieldValues> {
+const EMPTY_SELECT_VALUE = "__empty__";
+
+interface FieldShellProps {
+  id: string;
+  label: string;
+  description?: string;
+  error?: string;
+  required?: boolean;
+  className?: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}
+
+function FieldShell({
+  id,
+  label,
+  description,
+  error,
+  required,
+  className,
+  action,
+  children,
+}: FieldShellProps) {
+  return (
+    <div className={cn("space-y-2", className)}>
+      <div className="flex items-center justify-between gap-3">
+        <Label htmlFor={id}>
+          {label}
+          {required && <span className="ml-1 text-destructive">*</span>}
+        </Label>
+        {action}
+      </div>
+      {children}
+      {(error || description) && (
+        <p
+          id={`${id}-help`}
+          className={cn(
+            "text-xs leading-5",
+            error ? "text-destructive" : "text-muted-foreground",
+          )}
+        >
+          {error || description}
+        </p>
+      )}
+    </div>
+  );
+}
+
+interface RegisteredFieldProps<T extends FieldValues> {
   name: FieldPath<T>;
   label: string;
   description?: string;
   error?: string;
   required?: boolean;
   register: UseFormRegister<T>;
-  rules?: RegisterOptions<T>;
+  rules?: RegisterOptions<T, FieldPath<T>>;
   className?: string;
 }
 
@@ -34,16 +92,19 @@ export function FormInput<T extends FieldValues>({
   className,
   type,
   ...props
-}: BaseProps<T> & Omit<React.ComponentProps<typeof Input>, "name">) {
-  const id = `field-${name}`;
+}: RegisteredFieldProps<T> & Omit<React.ComponentProps<typeof Input>, "name">) {
+  const id = `field-${String(name)}`;
   const [passwordVisible, setPasswordVisible] = useState(false);
   const isPassword = type === "password";
   return (
-    <div className={cn("space-y-2", className)}>
-      <label htmlFor={id} className="text-sm font-semibold">
-        {label}
-        {required && <span className="ml-1 text-destructive">*</span>}
-      </label>
+    <FieldShell
+      id={id}
+      label={label}
+      description={description}
+      error={error}
+      required={required}
+      className={className}
+    >
       <div className="relative">
         <Input
           id={id}
@@ -66,28 +127,17 @@ export function FormInput<T extends FieldValues>({
                 : `Show ${label.toLowerCase()}`
             }
             aria-pressed={passwordVisible}
-            className="absolute right-2 top-1/2 z-10 grid size-8 -translate-y-1/2 place-items-center rounded-md bg-background text-foreground shadow-sm ring-1 ring-border transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50"
+            className="absolute right-2 top-1/2 z-10 grid size-8 -translate-y-1/2 place-items-center rounded-lg bg-background text-foreground shadow-sm ring-1 ring-border transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50"
           >
             {passwordVisible ? (
-              <EyeOff className="size-5" aria-hidden="true" />
+              <EyeOff className="size-4" aria-hidden="true" />
             ) : (
-              <Eye className="size-5" aria-hidden="true" />
+              <Eye className="size-4" aria-hidden="true" />
             )}
           </button>
         )}
       </div>
-      {(error || description) && (
-        <p
-          id={`${id}-help`}
-          className={cn(
-            "text-xs text-muted-foreground",
-            error && "text-destructive",
-          )}
-        >
-          {error || description}
-        </p>
-      )}
-    </div>
+    </FieldShell>
   );
 }
 
@@ -101,21 +151,25 @@ export function FormTextarea<T extends FieldValues>({
   rules,
   className,
   ...props
-}: BaseProps<T> & Omit<React.ComponentProps<typeof Textarea>, "name">) {
-  const id = `field-${name}`;
+}: RegisteredFieldProps<T> &
+  Omit<React.ComponentProps<typeof Textarea>, "name">) {
+  const id = `field-${String(name)}`;
   return (
-    <div className={cn("space-y-2", className)}>
-      <div className="flex items-center justify-between">
-        <label htmlFor={id} className="text-sm font-semibold">
-          {label}
-          {required && <span className="ml-1 text-destructive">*</span>}
-        </label>
-        {props.maxLength && (
+    <FieldShell
+      id={id}
+      label={label}
+      description={description}
+      error={error}
+      required={required}
+      className={className}
+      action={
+        props.maxLength ? (
           <span className="text-xs text-muted-foreground">
             Max {props.maxLength}
           </span>
-        )}
-      </div>
+        ) : null
+      }
+    >
       <Textarea
         id={id}
         aria-invalid={!!error}
@@ -123,18 +177,60 @@ export function FormTextarea<T extends FieldValues>({
         {...register(name, rules)}
         {...props}
       />
-      {(error || description) && (
-        <p
-          id={`${id}-help`}
-          className={cn(
-            "text-xs text-muted-foreground",
-            error && "text-destructive",
-          )}
-        >
-          {error || description}
-        </p>
-      )}
-    </div>
+    </FieldShell>
+  );
+}
+
+export type SelectOption = { label: string; value: string };
+
+export function SelectControl({
+  id,
+  value,
+  onValueChange,
+  options,
+  placeholder,
+  disabled,
+  invalid,
+  size = "default",
+}: {
+  id?: string;
+  value?: string;
+  onValueChange(value: string): void;
+  options: SelectOption[];
+  placeholder?: string;
+  disabled?: boolean;
+  invalid?: boolean;
+  size?: "default" | "sm";
+}) {
+  const selectValue =
+    value == null || value === "" ? EMPTY_SELECT_VALUE : value;
+  return (
+    <Select
+      value={selectValue}
+      onValueChange={(next) =>
+        onValueChange(next === EMPTY_SELECT_VALUE ? "" : next)
+      }
+      disabled={disabled}
+    >
+      <SelectTrigger
+        id={id}
+        size={size}
+        aria-invalid={invalid}
+        disabled={disabled}
+      >
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((option) => (
+          <SelectItem
+            key={option.value || EMPTY_SELECT_VALUE}
+            value={option.value || EMPTY_SELECT_VALUE}
+          >
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
@@ -144,45 +240,52 @@ export function FormSelect<T extends FieldValues>({
   description,
   error,
   required,
-  register,
+  control,
   rules,
   options,
   className,
-  ...props
-}: BaseProps<T> &
-  React.ComponentProps<"select"> & {
-    options: { label: string; value: string }[];
-  }) {
-  const id = `field-${name}`;
+  disabled,
+  placeholder,
+}: {
+  name: FieldPath<T>;
+  label: string;
+  description?: string;
+  error?: string;
+  required?: boolean;
+  control: Control<T>;
+  rules?: RegisterOptions<T, FieldPath<T>>;
+  options: SelectOption[];
+  className?: string;
+  disabled?: boolean;
+  placeholder?: string;
+}) {
+  const id = `field-${String(name)}`;
+  const emptyLabel = options.find((option) => option.value === "")?.label;
   return (
-    <div className={cn("space-y-2", className)}>
-      <label htmlFor={id} className="text-sm font-semibold">
-        {label}
-        {required && <span className="ml-1 text-destructive">*</span>}
-      </label>
-      <select
-        id={id}
-        className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
-        aria-invalid={!!error}
-        {...register(name, rules)}
-        {...props}
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-      {(error || description) && (
-        <p
-          className={cn(
-            "text-xs text-muted-foreground",
-            error && "text-destructive",
-          )}
+    <Controller
+      name={name}
+      control={control}
+      rules={rules}
+      render={({ field }) => (
+        <FieldShell
+          id={id}
+          label={label}
+          description={description}
+          error={error}
+          required={required}
+          className={className}
         >
-          {error || description}
-        </p>
+          <SelectControl
+            id={id}
+            value={typeof field.value === "string" ? field.value : ""}
+            onValueChange={field.onChange}
+            options={options}
+            placeholder={placeholder || emptyLabel || "Select an option"}
+            disabled={disabled}
+            invalid={!!error}
+          />
+        </FieldShell>
       )}
-    </div>
+    />
   );
 }

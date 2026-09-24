@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
+import * as passwordReset from '../src/modules/auth/password-reset';
 import { createTestApp, destroyTestApp } from './app-harness';
 import { clearDatabase } from './mongo-test-env';
 
@@ -109,6 +110,62 @@ describe('Auth (e2e)', () => {
 
       expect(wrongPassword.body.error.code).toBe('INVALID_CREDENTIALS');
       expect(unknownEmail.body.error).toEqual(wrongPassword.body.error);
+    });
+  });
+
+  describe('POST /api/auth/forgot-password and /api/auth/reset-password', () => {
+    beforeEach(async () => {
+      await server().post('/api/auth/register').send(VALID_USER).expect(201);
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('returns an OTP for a known email and no OTP for an unknown email', async () => {
+      jest.spyOn(passwordReset, 'createPasswordResetOtp').mockReturnValue('424242');
+      const known = await server()
+        .post('/api/auth/forgot-password')
+        .send({ email: VALID_USER.email })
+        .expect(200);
+      const unknown = await server()
+        .post('/api/auth/forgot-password')
+        .send({ email: 'nobody@example.com' })
+        .expect(200);
+      expect(known.body).toEqual({ data: { sent: true, otp: '424242' } });
+      expect(unknown.body).toEqual({ data: { sent: true } });
+    });
+
+    it('resets the password with the console OTP and accepts the new password', async () => {
+      jest.spyOn(passwordReset, 'createPasswordResetOtp').mockReturnValue('424242');
+      await server().post('/api/auth/forgot-password').send({ email: VALID_USER.email }).expect(200);
+
+      await server()
+        .post('/api/auth/reset-password')
+        .send({ email: VALID_USER.email, otp: '424242', password: 'new-correct-horse-1' })
+        .expect(200);
+
+      await server()
+        .post('/api/auth/login')
+        .send({ email: VALID_USER.email, password: VALID_USER.password })
+        .expect(401);
+
+      const login = await server()
+        .post('/api/auth/login')
+        .send({ email: VALID_USER.email, password: 'new-correct-horse-1' })
+        .expect(200);
+      expect(login.body.data.accessToken).toEqual(expect.any(String));
+    });
+
+    it('rejects a wrong OTP with PASSWORD_RESET_INVALID', async () => {
+      jest.spyOn(passwordReset, 'createPasswordResetOtp').mockReturnValue('424242');
+      await server().post('/api/auth/forgot-password').send({ email: VALID_USER.email }).expect(200);
+
+      const response = await server()
+        .post('/api/auth/reset-password')
+        .send({ email: VALID_USER.email, otp: '000000', password: 'new-correct-horse-1' })
+        .expect(422);
+      expect(response.body.error.code).toBe('PASSWORD_RESET_INVALID');
     });
   });
 

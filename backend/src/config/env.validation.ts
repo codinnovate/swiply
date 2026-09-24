@@ -112,6 +112,20 @@ export class EnvironmentVariables {
   @IsString() @IsOptional() LINKEDIN_CLIENT_ID?: string;
   @IsString() @IsOptional() LINKEDIN_CLIENT_SECRET?: string;
   @IsString() @IsOptional() RESEND_API_KEY?: string;
+  @IsString() @IsOptional() TIKAPI_KEY?: string;
+  @IsString() @IsOptional() TIKAPI_SANDBOX?: string;
+
+  // --- POSTLOCK public X profile verification (no user OAuth) ---
+  @IsIn(['fxtwitter', 'development', 'http']) @IsOptional() X_DATA_PROVIDER = 'fxtwitter';
+  @IsString() @IsOptional() X_DATA_PROVIDER_API_KEY?: string;
+  @IsString() @IsOptional() X_DATA_PROVIDER_BASE_URL?: string;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(60_000)
+  @IsOptional()
+  POSTING_PROVIDER_TIMEOUT_MS = 8_000;
 }
 
 export function validateEnv(raw: Record<string, unknown>): EnvironmentVariables {

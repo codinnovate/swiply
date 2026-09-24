@@ -1,0 +1,793 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		423242C51190D2658D9F871A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB7A238548284B34578D950 /* SettingsView.swift */; };
+		5C4355EF66AB75CF7F55ED16 /* PostingProfileClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76D4DA3A70CA7E06AECA4F75 /* PostingProfileClient.swift */; };
+		5DDBB647DDFB3FDFC2D2B99E /* PostingStateCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB363665E73796C6B9E1B32 /* PostingStateCalculatorTests.swift */; };
+		6AFA73162872678F650A3136 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3886050B0C38B2C963AF67FD /* RootView.swift */; };
+		7365B14AD673BEB92138AB05 /* PostlockDeviceActivityMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6818C326F0B6AF27F208A17A /* PostlockDeviceActivityMonitor.swift */; };
+		763F0AD88B42D83075664CD3 /* PostingProfileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27AC65C501F2AC5B47CB5670 /* PostingProfileStore.swift */; };
+		775F9A9802FC3850061F776E /* PostingCommitment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577DC93AB6538516892DF67A /* PostingCommitment.swift */; };
+		8056D686AD357698057EA4F7 /* UsernameNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ADB82CD24DC37B5B0D17E4C /* UsernameNormalizer.swift */; };
+		8B343B6F8E136E16C500E475 /* AppSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F47D111B0ED641A4BD154C4 /* AppSession.swift */; };
+		8F2DF4F1E75BAE3D2FC47C08 /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66A33A7B987091FD6FD4B4E0 /* TodayView.swift */; };
+		8F70EC7DE76E1B51542D4B91 /* PostlockFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B956ED9090F8880FE867CD4 /* PostlockFlowUITests.swift */; };
+		95A562DD8172029D0FA7399C /* UsernameSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC85E3CC2D7D9F8DD5B65E66 /* UsernameSetupView.swift */; };
+		9F9C53CF3868F985EAAA786F /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1866EDADF2C072F499850FB /* AppConfiguration.swift */; };
+		A95D805CAD460F8C681FE9D7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F8633D16CA1A99FEB71FC318 /* Assets.xcassets */; };
+		B469232F3088D47F5E6114D8 /* ScreenTimeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CB9FCC6C7BFF25A006C412E /* ScreenTimeService.swift */; };
+		B57BB52F0FB021DCF2382700 /* UsernameNormalizerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 755653B2CF91C78C3AB8D629 /* UsernameNormalizerTests.swift */; };
+		C6669F896FDFC39DF8E74678 /* PostVerificationClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32FE436875555FC45793BFD4 /* PostVerificationClient.swift */; };
+		C6C073ADE2E006BEF2D57B45 /* PostlockApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7199559260012D92343EBD03 /* PostlockApp.swift */; };
+		C6FF722B8D1A0BF5E412D808 /* ScheduleSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B99744997649D457E879B532 /* ScheduleSetupView.swift */; };
+		D58CB8A915EF2AB5F888E677 /* PostlockDeviceActivityMonitor.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 12BE695C9B38D376C4217EA9 /* PostlockDeviceActivityMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		D728151491DC7C06C25C498F /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9377C946925A9840766F399 /* Theme.swift */; };
+		E35B957A60805F701B2D20AE /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00F019C192F66158AFF1CBB /* Components.swift */; };
+		E67FDFF8147F0737A8247D5D /* PostingCommitmentStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8643366B70F42E806757AF42 /* PostingCommitmentStore.swift */; };
+		ED2409074B3646E70538B3FA /* UsernameSetupViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F0D577C736C1ED168D11F8E /* UsernameSetupViewModel.swift */; };
+		F150F9C9FD617E9927EEC954 /* PostingProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 508BCFABB8FC0CA1847A74A2 /* PostingProfile.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		40E76D196966C29D9A637ADC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1137235CF9AAAE6EA2A7E182 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = ED81FF3E54AA3F6B5AD737F4;
+			remoteInfo = Postlock;
+		};
+		70673E678747F9983ADF36F3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1137235CF9AAAE6EA2A7E182 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = ED81FF3E54AA3F6B5AD737F4;
+			remoteInfo = Postlock;
+		};
+		9D75EBAA1597E09044CAF53E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1137235CF9AAAE6EA2A7E182 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6C5C1A21B1ACAAC1A0415487;
+			remoteInfo = PostlockDeviceActivityMonitor;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		AE6BC0DF7D41893FF352C6F0 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				D58CB8A915EF2AB5F888E677 /* PostlockDeviceActivityMonitor.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		0ADB82CD24DC37B5B0D17E4C /* UsernameNormalizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsernameNormalizer.swift; sourceTree = "<group>"; };
+		12BE695C9B38D376C4217EA9 /* PostlockDeviceActivityMonitor.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = PostlockDeviceActivityMonitor.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		27AC65C501F2AC5B47CB5670 /* PostingProfileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostingProfileStore.swift; sourceTree = "<group>"; };
+		2AB7A238548284B34578D950 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		32FE436875555FC45793BFD4 /* PostVerificationClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostVerificationClient.swift; sourceTree = "<group>"; };
+		3886050B0C38B2C963AF67FD /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		3E330F84A6500192005FB75A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		4B956ED9090F8880FE867CD4 /* PostlockFlowUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostlockFlowUITests.swift; sourceTree = "<group>"; };
+		4CB9FCC6C7BFF25A006C412E /* ScreenTimeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenTimeService.swift; sourceTree = "<group>"; };
+		508BCFABB8FC0CA1847A74A2 /* PostingProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostingProfile.swift; sourceTree = "<group>"; };
+		52C4CB5A2E8887CD1A6F8FDB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		577DC93AB6538516892DF67A /* PostingCommitment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostingCommitment.swift; sourceTree = "<group>"; };
+		5F0D577C736C1ED168D11F8E /* UsernameSetupViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsernameSetupViewModel.swift; sourceTree = "<group>"; };
+		5F47D111B0ED641A4BD154C4 /* AppSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSession.swift; sourceTree = "<group>"; };
+		66A33A7B987091FD6FD4B4E0 /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
+		6818C326F0B6AF27F208A17A /* PostlockDeviceActivityMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostlockDeviceActivityMonitor.swift; sourceTree = "<group>"; };
+		709DA2150B567B17E44859ED /* PostlockDeviceActivityMonitor.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PostlockDeviceActivityMonitor.entitlements; sourceTree = "<group>"; };
+		7199559260012D92343EBD03 /* PostlockApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostlockApp.swift; sourceTree = "<group>"; };
+		755653B2CF91C78C3AB8D629 /* UsernameNormalizerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsernameNormalizerTests.swift; sourceTree = "<group>"; };
+		76D4DA3A70CA7E06AECA4F75 /* PostingProfileClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostingProfileClient.swift; sourceTree = "<group>"; };
+		8643366B70F42E806757AF42 /* PostingCommitmentStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostingCommitmentStore.swift; sourceTree = "<group>"; };
+		9C8AB2B8F214987303159D28 /* Postlock.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Postlock.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9D3FAEE41F7301B55382146D /* PostlockTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = PostlockTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AAB363665E73796C6B9E1B32 /* PostingStateCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostingStateCalculatorTests.swift; sourceTree = "<group>"; };
+		B99744997649D457E879B532 /* ScheduleSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleSetupView.swift; sourceTree = "<group>"; };
+		BC762D025818138FEFCDBFA0 /* Postlock.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Postlock.entitlements; sourceTree = "<group>"; };
+		C9377C946925A9840766F399 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		DAEA3DF8D20BC809FB25DFBB /* PostlockUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = PostlockUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F00F019C192F66158AFF1CBB /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
+		F1866EDADF2C072F499850FB /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
+		F8633D16CA1A99FEB71FC318 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		FC85E3CC2D7D9F8DD5B65E66 /* UsernameSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsernameSetupView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		1F6276633238B9998A657486 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				577DC93AB6538516892DF67A /* PostingCommitment.swift */,
+				508BCFABB8FC0CA1847A74A2 /* PostingProfile.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		30C4ACBD5CCAFE963541D943 /* PostlockDeviceActivityMonitor */ = {
+			isa = PBXGroup;
+			children = (
+				3E330F84A6500192005FB75A /* Info.plist */,
+				709DA2150B567B17E44859ED /* PostlockDeviceActivityMonitor.entitlements */,
+				6818C326F0B6AF27F208A17A /* PostlockDeviceActivityMonitor.swift */,
+			);
+			path = PostlockDeviceActivityMonitor;
+			sourceTree = "<group>";
+		};
+		351E7F82F8187A6FA494D942 /* PostlockUITests */ = {
+			isa = PBXGroup;
+			children = (
+				4B956ED9090F8880FE867CD4 /* PostlockFlowUITests.swift */,
+			);
+			path = PostlockUITests;
+			sourceTree = "<group>";
+		};
+		3C2A035C212D2329EC603967 /* UsernameSetup */ = {
+			isa = PBXGroup;
+			children = (
+				FC85E3CC2D7D9F8DD5B65E66 /* UsernameSetupView.swift */,
+				5F0D577C736C1ED168D11F8E /* UsernameSetupViewModel.swift */,
+			);
+			path = UsernameSetup;
+			sourceTree = "<group>";
+		};
+		4A1843102F21252399549459 /* Postlock */ = {
+			isa = PBXGroup;
+			children = (
+				BC762D025818138FEFCDBFA0 /* Postlock.entitlements */,
+				C9E4B0BB952025F343A3584B /* App */,
+				7501424CBB74F04CAFBEF13C /* DesignSystem */,
+				8715A468E71F9E0403E45679 /* Features */,
+				1F6276633238B9998A657486 /* Models */,
+				B9CA415333629F1D70AD32FF /* Resources */,
+				F5590D0D99726BE4C82B617D /* Services */,
+			);
+			path = Postlock;
+			sourceTree = "<group>";
+		};
+		54390740B628FAB068F4F765 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9C8AB2B8F214987303159D28 /* Postlock.app */,
+				12BE695C9B38D376C4217EA9 /* PostlockDeviceActivityMonitor.appex */,
+				9D3FAEE41F7301B55382146D /* PostlockTests.xctest */,
+				DAEA3DF8D20BC809FB25DFBB /* PostlockUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7501424CBB74F04CAFBEF13C /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				F00F019C192F66158AFF1CBB /* Components.swift */,
+				C9377C946925A9840766F399 /* Theme.swift */,
+			);
+			path = DesignSystem;
+			sourceTree = "<group>";
+		};
+		814C74B33CE3E2150BE62633 /* PostlockTests */ = {
+			isa = PBXGroup;
+			children = (
+				AAB363665E73796C6B9E1B32 /* PostingStateCalculatorTests.swift */,
+				755653B2CF91C78C3AB8D629 /* UsernameNormalizerTests.swift */,
+			);
+			path = PostlockTests;
+			sourceTree = "<group>";
+		};
+		8715A468E71F9E0403E45679 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				B55511B47002E952C2D8DD87 /* Schedule */,
+				8F501B2F36CE383B0BF1EFF1 /* Settings */,
+				C3B276D89E7DDF301E2FE952 /* Today */,
+				3C2A035C212D2329EC603967 /* UsernameSetup */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		8F501B2F36CE383B0BF1EFF1 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				2AB7A238548284B34578D950 /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		B55511B47002E952C2D8DD87 /* Schedule */ = {
+			isa = PBXGroup;
+			children = (
+				B99744997649D457E879B532 /* ScheduleSetupView.swift */,
+			);
+			path = Schedule;
+			sourceTree = "<group>";
+		};
+		B9CA415333629F1D70AD32FF /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				F8633D16CA1A99FEB71FC318 /* Assets.xcassets */,
+				52C4CB5A2E8887CD1A6F8FDB /* Info.plist */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		C3B276D89E7DDF301E2FE952 /* Today */ = {
+			isa = PBXGroup;
+			children = (
+				66A33A7B987091FD6FD4B4E0 /* TodayView.swift */,
+			);
+			path = Today;
+			sourceTree = "<group>";
+		};
+		C9E4B0BB952025F343A3584B /* App */ = {
+			isa = PBXGroup;
+			children = (
+				F1866EDADF2C072F499850FB /* AppConfiguration.swift */,
+				5F47D111B0ED641A4BD154C4 /* AppSession.swift */,
+				7199559260012D92343EBD03 /* PostlockApp.swift */,
+				3886050B0C38B2C963AF67FD /* RootView.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		CB89DFA016252C466FCFF14C = {
+			isa = PBXGroup;
+			children = (
+				4A1843102F21252399549459 /* Postlock */,
+				30C4ACBD5CCAFE963541D943 /* PostlockDeviceActivityMonitor */,
+				814C74B33CE3E2150BE62633 /* PostlockTests */,
+				351E7F82F8187A6FA494D942 /* PostlockUITests */,
+				54390740B628FAB068F4F765 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		F5590D0D99726BE4C82B617D /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				8643366B70F42E806757AF42 /* PostingCommitmentStore.swift */,
+				76D4DA3A70CA7E06AECA4F75 /* PostingProfileClient.swift */,
+				27AC65C501F2AC5B47CB5670 /* PostingProfileStore.swift */,
+				32FE436875555FC45793BFD4 /* PostVerificationClient.swift */,
+				4CB9FCC6C7BFF25A006C412E /* ScreenTimeService.swift */,
+				0ADB82CD24DC37B5B0D17E4C /* UsernameNormalizer.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		16DA751C77B38C3743D725F9 /* PostlockUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C3C693BAB651652D5F0957DE /* Build configuration list for PBXNativeTarget "PostlockUITests" */;
+			buildPhases = (
+				CB3963FBAB2E93D2A7FDD479 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FE298283FBAD7C22802F9138 /* PBXTargetDependency */,
+			);
+			name = PostlockUITests;
+			packageProductDependencies = (
+			);
+			productName = PostlockUITests;
+			productReference = DAEA3DF8D20BC809FB25DFBB /* PostlockUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		6C5C1A21B1ACAAC1A0415487 /* PostlockDeviceActivityMonitor */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2EB5F76516451880ED987C33 /* Build configuration list for PBXNativeTarget "PostlockDeviceActivityMonitor" */;
+			buildPhases = (
+				C9D466D92740B6807146220B /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PostlockDeviceActivityMonitor;
+			packageProductDependencies = (
+			);
+			productName = PostlockDeviceActivityMonitor;
+			productReference = 12BE695C9B38D376C4217EA9 /* PostlockDeviceActivityMonitor.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		B985EEEBA85E3D30721798C9 /* PostlockTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2A1C1B9921658EFB4DD01297 /* Build configuration list for PBXNativeTarget "PostlockTests" */;
+			buildPhases = (
+				8908C26281076D87184705E3 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				177AFAECECF4FD7E5302F878 /* PBXTargetDependency */,
+			);
+			name = PostlockTests;
+			packageProductDependencies = (
+			);
+			productName = PostlockTests;
+			productReference = 9D3FAEE41F7301B55382146D /* PostlockTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		ED81FF3E54AA3F6B5AD737F4 /* Postlock */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4F9F6999BD953DB3F714B908 /* Build configuration list for PBXNativeTarget "Postlock" */;
+			buildPhases = (
+				86B80DB32FEC5686A0ED4FEC /* Sources */,
+				25249DB9E41198498B1BEE3A /* Resources */,
+				AE6BC0DF7D41893FF352C6F0 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				468BF82534E02F1FFDF73033 /* PBXTargetDependency */,
+			);
+			name = Postlock;
+			packageProductDependencies = (
+			);
+			productName = Postlock;
+			productReference = 9C8AB2B8F214987303159D28 /* Postlock.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		1137235CF9AAAE6EA2A7E182 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					16DA751C77B38C3743D725F9 = {
+						DevelopmentTeam = 9WHCDKVKJQ;
+						TestTargetID = ED81FF3E54AA3F6B5AD737F4;
+					};
+					6C5C1A21B1ACAAC1A0415487 = {
+						DevelopmentTeam = 9WHCDKVKJQ;
+					};
+					B985EEEBA85E3D30721798C9 = {
+						DevelopmentTeam = 9WHCDKVKJQ;
+					};
+					ED81FF3E54AA3F6B5AD737F4 = {
+						DevelopmentTeam = 9WHCDKVKJQ;
+					};
+				};
+			};
+			buildConfigurationList = B311CE51F150A1AADFD8E0DB /* Build configuration list for PBXProject "Postlock" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = CB89DFA016252C466FCFF14C;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 54390740B628FAB068F4F765 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				ED81FF3E54AA3F6B5AD737F4 /* Postlock */,
+				6C5C1A21B1ACAAC1A0415487 /* PostlockDeviceActivityMonitor */,
+				B985EEEBA85E3D30721798C9 /* PostlockTests */,
+				16DA751C77B38C3743D725F9 /* PostlockUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		25249DB9E41198498B1BEE3A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A95D805CAD460F8C681FE9D7 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		86B80DB32FEC5686A0ED4FEC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9F9C53CF3868F985EAAA786F /* AppConfiguration.swift in Sources */,
+				8B343B6F8E136E16C500E475 /* AppSession.swift in Sources */,
+				E35B957A60805F701B2D20AE /* Components.swift in Sources */,
+				C6669F896FDFC39DF8E74678 /* PostVerificationClient.swift in Sources */,
+				775F9A9802FC3850061F776E /* PostingCommitment.swift in Sources */,
+				E67FDFF8147F0737A8247D5D /* PostingCommitmentStore.swift in Sources */,
+				F150F9C9FD617E9927EEC954 /* PostingProfile.swift in Sources */,
+				5C4355EF66AB75CF7F55ED16 /* PostingProfileClient.swift in Sources */,
+				763F0AD88B42D83075664CD3 /* PostingProfileStore.swift in Sources */,
+				C6C073ADE2E006BEF2D57B45 /* PostlockApp.swift in Sources */,
+				6AFA73162872678F650A3136 /* RootView.swift in Sources */,
+				C6FF722B8D1A0BF5E412D808 /* ScheduleSetupView.swift in Sources */,
+				B469232F3088D47F5E6114D8 /* ScreenTimeService.swift in Sources */,
+				423242C51190D2658D9F871A /* SettingsView.swift in Sources */,
+				D728151491DC7C06C25C498F /* Theme.swift in Sources */,
+				8F2DF4F1E75BAE3D2FC47C08 /* TodayView.swift in Sources */,
+				8056D686AD357698057EA4F7 /* UsernameNormalizer.swift in Sources */,
+				95A562DD8172029D0FA7399C /* UsernameSetupView.swift in Sources */,
+				ED2409074B3646E70538B3FA /* UsernameSetupViewModel.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8908C26281076D87184705E3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5DDBB647DDFB3FDFC2D2B99E /* PostingStateCalculatorTests.swift in Sources */,
+				B57BB52F0FB021DCF2382700 /* UsernameNormalizerTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C9D466D92740B6807146220B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7365B14AD673BEB92138AB05 /* PostlockDeviceActivityMonitor.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CB3963FBAB2E93D2A7FDD479 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8F70EC7DE76E1B51542D4B91 /* PostlockFlowUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		177AFAECECF4FD7E5302F878 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = ED81FF3E54AA3F6B5AD737F4 /* Postlock */;
+			targetProxy = 70673E678747F9983ADF36F3 /* PBXContainerItemProxy */;
+		};
+		468BF82534E02F1FFDF73033 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6C5C1A21B1ACAAC1A0415487 /* PostlockDeviceActivityMonitor */;
+			targetProxy = 9D75EBAA1597E09044CAF53E /* PBXContainerItemProxy */;
+		};
+		FE298283FBAD7C22802F9138 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = ED81FF3E54AA3F6B5AD737F4 /* Postlock */;
+			targetProxy = 40E76D196966C29D9A637ADC /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		40CF285160553F82BADEC3DC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Postlock/Postlock.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Postlock/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.swiply.postlock;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		44524F29A2863BC2ECF11E81 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.swiply.postlock.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Postlock.app/Postlock";
+			};
+			name = Debug;
+		};
+		9EBCFCCFE07D2B55599A3521 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.swiply.postlock.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Postlock;
+			};
+			name = Release;
+		};
+		B25E8C107EBEA73CD9EE8E74 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Postlock/Postlock.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Postlock/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.swiply.postlock;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		C06F9240B27F3C0C9C0B90B1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.swiply.postlock.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Postlock;
+			};
+			name = Debug;
+		};
+		C2AB7A40F81B23A05C5E0059 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				API_BASE_URL = "https://postlock.up.railway.app";
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 9WHCDKVKJQ;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		C4DBF55D3F917C232DF072EF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = PostlockDeviceActivityMonitor/PostlockDeviceActivityMonitor.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = PostlockDeviceActivityMonitor/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.swiply.postlock.device-activity-monitor";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		CF85642E052C26F253B7C045 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.swiply.postlock.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Postlock.app/Postlock";
+			};
+			name = Release;
+		};
+		D338F5149862C30989E83DBD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = PostlockDeviceActivityMonitor/PostlockDeviceActivityMonitor.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = PostlockDeviceActivityMonitor/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.swiply.postlock.device-activity-monitor";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		E43D0C4DB4FA209A8C4FB626 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				API_BASE_URL = "http://localhost:3000";
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 9WHCDKVKJQ;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		2A1C1B9921658EFB4DD01297 /* Build configuration list for PBXNativeTarget "PostlockTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				44524F29A2863BC2ECF11E81 /* Debug */,
+				CF85642E052C26F253B7C045 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		2EB5F76516451880ED987C33 /* Build configuration list for PBXNativeTarget "PostlockDeviceActivityMonitor" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C4DBF55D3F917C232DF072EF /* Debug */,
+				D338F5149862C30989E83DBD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		4F9F6999BD953DB3F714B908 /* Build configuration list for PBXNativeTarget "Postlock" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				40CF285160553F82BADEC3DC /* Debug */,
+				B25E8C107EBEA73CD9EE8E74 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		B311CE51F150A1AADFD8E0DB /* Build configuration list for PBXProject "Postlock" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E43D0C4DB4FA209A8C4FB626 /* Debug */,
+				C2AB7A40F81B23A05C5E0059 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		C3C693BAB651652D5F0957DE /* Build configuration list for PBXNativeTarget "PostlockUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C06F9240B27F3C0C9C0B90B1 /* Debug */,
+				9EBCFCCFE07D2B55599A3521 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 1137235CF9AAAE6EA2A7E182 /* Project object */;
+}

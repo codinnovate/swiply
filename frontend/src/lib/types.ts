@@ -63,6 +63,7 @@ export interface PlatformAvailability {
 }
 export interface SocialAccount {
   id: string;
+  _id?: string;
   platform: Platform;
   displayName: string;
   avatarUrl: string | null;
@@ -117,6 +118,7 @@ export interface AiCredential {
   provider: AiProvider;
   keyHint: string;
   defaultModel: string;
+  preferred?: boolean;
   updatedAt: string;
 }
 export interface MediaAsset {
@@ -138,6 +140,7 @@ export interface ContentItem {
   type: "slideshow" | "video" | "post";
   goal: string | null;
   targetCountry?: string | null;
+  language?: string | null;
   postCaption: string;
   hashtags: string[];
   status: string;
@@ -193,11 +196,49 @@ export interface Schedule {
     jitterMinutes: number;
   } | null;
   contentSource: string;
+  autoGeneratePrompt?: string | null;
   defaultGoal: string;
   defaultImageSource: string;
   autopilot: boolean;
   status: string;
+  websiteUrl?: string | null;
+  websiteBrief?: string | null;
+  tiktokInsights?: string | null;
+  cadence?: "daily" | "weekly" | null;
+  timesOfDay?: string[];
+  postsPerPeriod?: number | null;
+  targetCountry?: string | null;
+  language?: string | null;
+  postingTimeZone?: string | null;
+  brandResearch?: BrandResearch | null;
   createdAt: string;
+  updatedAt?: string;
+}
+export interface PostingTimeSuggestion {
+  times: string[];
+  timeZone: string;
+  rationale: string;
+}
+export interface BrandResearch {
+  productName: string;
+  oneLiner: string;
+  audience: string;
+  valueProps: string[];
+  websiteBrief: string;
+  tiktokInsights: string;
+  suggestedAngles: string[];
+  competitors?: string[];
+  competitorAccounts?: string[];
+  websiteUrl: string;
+}
+export interface AutomationStartResult {
+  queued: number;
+  schedule: Schedule;
+  research: {
+    productName: string;
+    websiteBrief: string;
+    tiktokInsights: string;
+  };
 }
 export interface VoiceProfile {
   userSetTone: string[];

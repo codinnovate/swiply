@@ -278,6 +278,7 @@ function ProviderCard({
 }) {
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
@@ -372,7 +373,7 @@ function ProviderCard({
               <FormSelect
                 name="defaultModel"
                 label="Default model"
-                register={register}
+                control={control}
                 options={models.map((m) => ({ value: m.id, label: m.name }))}
               />
             )}
