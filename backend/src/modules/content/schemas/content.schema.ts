@@ -67,6 +67,7 @@ export class Content {
     'ai' | 'manual' | 'api';
   @Prop({ type: String, default: null }) aiPrompt: string | null;
   @Prop({ type: String, default: null }) targetCountry: string | null;
+  @Prop({ type: String, default: null }) language: string | null;
   @Prop({ type: String, default: null, index: true }) contentFingerprint: string | null;
   @Prop({ type: String, enum: ['openai', 'anthropic', 'gemini'], default: null }) aiProvider:
     'openai' | 'anthropic' | 'gemini' | null;

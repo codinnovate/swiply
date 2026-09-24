@@ -58,6 +58,71 @@ export class UsersService {
     return this.userModel.findOne({ googleId }).exec();
   }
 
+  findByEmailWithPasswordReset(email: string): Promise<UserDocument | null> {
+    return this.userModel
+      .findOne({ email: email.toLowerCase().trim() })
+      .select('+passwordResetOtpHash +passwordResetExpiresAt +passwordResetAttemptCount')
+      .exec();
+  }
+
+  async setPasswordReset(
+    userId: string | Types.ObjectId,
+    otpHash: string,
+    expiresAt: Date,
+  ): Promise<void> {
+    await this.userModel
+      .updateOne(
+        { _id: userId },
+        {
+          $set: {
+            passwordResetOtpHash: otpHash,
+            passwordResetExpiresAt: expiresAt,
+            passwordResetAttemptCount: 0,
+          },
+        },
+      )
+      .exec();
+  }
+
+  async incrementPasswordResetAttempts(userId: string | Types.ObjectId): Promise<number> {
+    const updated = await this.userModel
+      .findByIdAndUpdate(userId, { $inc: { passwordResetAttemptCount: 1 } }, { new: true })
+      .select('+passwordResetAttemptCount')
+      .exec();
+    return updated?.passwordResetAttemptCount ?? 0;
+  }
+
+  async clearPasswordReset(userId: string | Types.ObjectId): Promise<void> {
+    await this.userModel
+      .updateOne(
+        { _id: userId },
+        {
+          $set: {
+            passwordResetOtpHash: null,
+            passwordResetExpiresAt: null,
+            passwordResetAttemptCount: 0,
+          },
+        },
+      )
+      .exec();
+  }
+
+  async setPassword(userId: string | Types.ObjectId, password: string): Promise<void> {
+    await this.userModel
+      .updateOne(
+        { _id: userId },
+        {
+          $set: {
+            passwordHash: await UsersService.hashPassword(password),
+            passwordResetOtpHash: null,
+            passwordResetExpiresAt: null,
+            passwordResetAttemptCount: 0,
+          },
+        },
+      )
+      .exec();
+  }
+
   async setDefaultWorkspace(
     userId: string | Types.ObjectId,
     workspaceId: Types.ObjectId,

@@ -15,9 +15,10 @@ export class SchedulesService {
     return this.model.create({ ...dto, workspaceId: new Types.ObjectId(workspaceId), socialAccountIds: dto.socialAccountIds.map((id) => new Types.ObjectId(id)), endDate: dto.endDate ? new Date(dto.endDate) : null, autoGeneratePrompt: dto.autoGeneratePrompt ?? null, status: 'active' });
   }
   list(workspaceId: string) { return this.model.find({ workspaceId: new Types.ObjectId(workspaceId) }).sort({ createdAt: -1 }).exec(); }
+  get(workspaceId: string, id: string) { return this.find(workspaceId, id); }
   async update(workspaceId: string, id: string, dto: UpdateScheduleDto) { const schedule = await this.find(workspaceId, id); Object.assign(schedule, dto, dto.socialAccountIds ? { socialAccountIds: dto.socialAccountIds.map((value) => new Types.ObjectId(value)) } : {}, dto.endDate ? { endDate: new Date(dto.endDate) } : {}); return schedule.save(); }
-  async pause(workspaceId: string, id: string) { const schedule = await this.find(workspaceId, id); schedule.status = 'paused'; return schedule.save(); }
-  async resume(workspaceId: string, id: string) { const schedule = await this.find(workspaceId, id); schedule.status = 'active'; return schedule.save(); }
+  async pause(workspaceId: string, id: string) { const schedule = await this.find(workspaceId, id); if (schedule.status === 'draft') throw ApiException.unprocessable('SCHEDULE_CONFIGURATION_INVALID', 'Finish this draft before pausing it'); schedule.status = 'paused'; return schedule.save(); }
+  async resume(workspaceId: string, id: string) { const schedule = await this.find(workspaceId, id); if (schedule.status === 'draft') throw ApiException.unprocessable('SCHEDULE_CONFIGURATION_INVALID', 'Finish this draft to start posting'); schedule.status = 'active'; return schedule.save(); }
   async remove(workspaceId: string, id: string) { const schedule = await this.find(workspaceId, id); await schedule.deleteOne(); }
   private async find(workspaceId: string, id: string) { const schedule = await this.model.findOne({ _id: id, workspaceId: new Types.ObjectId(workspaceId) }).exec(); if (!schedule) throw ApiException.notFound('Schedule'); return schedule; }
 }

@@ -1,9 +1,11 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
+  Allow,
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
   IsInt,
+  IsOptional,
   IsString,
   Max,
   Min,
@@ -11,8 +13,16 @@ import {
 } from 'class-validator';
 
 export class CompletedUploadPartDto {
-  @IsInt() @Min(1) @Max(10000) partNumber: number;
-  @IsString() eTag: string;
+  @Type(() => Number) @IsInt() @Min(1) @Max(10000) partNumber: number;
+
+  @Transform(({ obj, value }) => value ?? obj.etag)
+  @IsOptional()
+  @IsString()
+  eTag?: string;
+
+  /** Browsers expose S3's header as `etag`; accept it and map onto `eTag`. */
+  @Allow()
+  etag?: string;
 }
 
 export class CompleteMediaUploadDto {

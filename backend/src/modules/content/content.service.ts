@@ -9,6 +9,7 @@ import { Content, ContentDocument } from './schemas/content.schema';
 import { MediaService } from '../media/media.service';
 import { TextService } from '../../ai/text.service';
 import { VoiceProfilesService } from '../voice-profiles/voice-profiles.service';
+import { pickRandomSlideSubset } from '../automation/slide-picker';
 import { UpdateContentDto } from './dto/update-content.dto';
 
 type GeneratedCopy = Awaited<ReturnType<TextService['generate']>>;
@@ -52,6 +53,7 @@ export class ContentService {
         generationSource: 'manual',
         aiPrompt: null,
         targetCountry: dto.targetCountry?.trim() || null,
+        language: dto.language?.trim() || null,
         aiProvider: null,
         aiModel: null,
         voiceProfileId: null,
@@ -110,6 +112,7 @@ export class ContentService {
       generationSource: 'manual',
       aiPrompt: null,
       targetCountry: dto.targetCountry?.trim() || null,
+      language: dto.language?.trim() || null,
       aiProvider: null,
       aiModel: null,
       voiceProfileId: null,
@@ -146,17 +149,31 @@ export class ContentService {
           .join('\n');
       }
     }
-    const slideCount = dto.type === 'slideshow' ? (dto.slideCount ?? 2) : 0;
     const recentCopies = await this.recentGeneratedCopies(workspaceId);
+    const pool = dto.providedImageUrls ?? [];
+    const assetNames = dto.assetNames ?? [];
+    const randomizeSlideshow =
+      dto.type === 'slideshow' && dto.imageSource === 'user_provided' && (dto.randomizeSlides || !dto.slideCount);
+    const selectedImages = randomizeSlideshow ? pickRandomSlideSubset(pool) : pool;
+    const selectedNames = selectedImages
+      .map((url) => assetNames[pool.indexOf(url)])
+      .filter(Boolean);
+    const selectedAssetIds = selectedImages.map((url) => dto.providedMediaAssetIds?.[pool.indexOf(url)] ?? '');
+    const slideCount =
+      dto.type === 'slideshow' ? (randomizeSlideshow ? selectedImages.length : (dto.slideCount ?? selectedImages.length)) : 0;
     const copy = await this.generateUniqueCopy({
       userId,
       model: dto.aiModel,
       provider: dto.aiProvider,
       topic,
       targetCountry: dto.targetCountry?.trim() || undefined,
+      language: dto.language?.trim() || undefined,
       goal: dto.goal,
       slideCount,
       voiceContext,
+      websiteBrief: dto.websiteBrief?.trim() || undefined,
+      tiktokInsights: dto.tiktokInsights?.trim() || undefined,
+      assetNames: selectedNames,
       recentCopies,
     });
     const contentFingerprint = this.fingerprintGeneratedCopy(copy);
@@ -189,6 +206,7 @@ export class ContentService {
         generationSource: 'ai',
         aiPrompt: topic,
         targetCountry: dto.targetCountry?.trim() || null,
+        language: dto.language?.trim() || null,
         contentFingerprint,
         aiProvider: copy.provider,
         aiModel: copy.model,
@@ -196,7 +214,7 @@ export class ContentService {
         status: 'ready',
       });
     }
-    const images = dto.providedImageUrls ?? [];
+    const images = selectedImages;
     let resolved: { imageUrl: string; mediaAssetId: Types.ObjectId | null }[] = [];
     if (dto.imageSource === 'user_provided') {
       const expected = dto.type === 'slideshow' ? slideCount : 1;
@@ -209,7 +227,7 @@ export class ContentService {
         );
       resolved = textOnlyPost
         ? []
-        : await this.media.resolveImages(workspaceId, images, dto.providedMediaAssetIds);
+        : await this.media.resolveImages(workspaceId, images, selectedAssetIds);
     } else if (images.length) {
       throw ApiException.unprocessable(
         'IMAGE_SOURCE_CONFLICT',
@@ -246,6 +264,7 @@ export class ContentService {
       generationSource: 'ai',
       aiPrompt: topic,
       targetCountry: dto.targetCountry?.trim() || null,
+      language: dto.language?.trim() || null,
       contentFingerprint,
       aiProvider: copy.provider,
       aiModel: copy.model,
@@ -262,9 +281,13 @@ export class ContentService {
     provider?: CreateContentDto['aiProvider'];
     topic: string;
     targetCountry?: string;
+    language?: string;
     goal: string;
     slideCount: number;
     voiceContext: string;
+    websiteBrief?: string;
+    tiktokInsights?: string;
+    assetNames?: string[];
     recentCopies: string[];
   }): Promise<GeneratedCopy> {
     let lastCopy: GeneratedCopy | null = null;
@@ -276,9 +299,13 @@ export class ContentService {
         provider: request.provider,
         topic: request.topic,
         targetCountry: request.targetCountry,
+        language: request.language,
         goal: request.goal,
         slideCount: request.slideCount,
         voiceContext: request.voiceContext,
+        websiteBrief: request.websiteBrief,
+        tiktokInsights: request.tiktokInsights,
+        assetNames: request.assetNames,
         uniquenessContext: this.uniquenessContext(request.recentCopies, lastCopy, attempt),
       });
       lastCopy = copy;

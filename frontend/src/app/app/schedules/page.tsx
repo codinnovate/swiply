@@ -1,1 +1,5 @@
-import { SchedulesView } from "@/components/app/schedules-view";export default function Schedules(){return <SchedulesView/>}
+import { redirect } from "next/navigation";
+
+export default function Schedules() {
+  redirect("/app/automation");
+}

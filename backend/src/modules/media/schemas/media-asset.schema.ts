@@ -9,6 +9,7 @@ export class MediaAsset {
   @Prop({ type: String, enum: ['external', 's3'], default: 'external' }) storageProvider:
     'external' | 's3';
   @Prop({ type: String, default: null }) storageKey: string | null;
+  @Prop({ type: String, default: null }) fileName: string | null;
   @Prop({ type: String, default: null }) mimeType: string | null;
   @Prop({ type: Number, default: null }) sizeBytes: number | null;
   @Prop({ type: String, enum: ['image', 'video'], required: true }) type: 'image' | 'video';

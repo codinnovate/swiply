@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, isValidObjectId } from 'mongoose';
 
@@ -22,24 +22,148 @@ const IMAGE_MIME_TYPES = new Set([
   'image/avif',
 ]);
 const VIDEO_MIME_TYPES = new Set(['video/mp4', 'video/quicktime', 'video/webm']);
+const MIME_BY_EXTENSION: Record<string, string> = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+  gif: 'image/gif',
+  avif: 'image/avif',
+  mp4: 'video/mp4',
+  mov: 'video/quicktime',
+  webm: 'video/webm',
+};
 const IMAGE_MAX_BYTES = 50 * 1024 * 1024;
 const VIDEO_MAX_BYTES = 2 * 1024 * 1024 * 1024;
+const REMOTE_IMAGE_MAX_BYTES = 15 * 1024 * 1024;
+const PINIMG_HOST = /(^|\.)pinimg\.com$/i;
 
 @Injectable()
 export class MediaService {
+  private readonly logger = new Logger(MediaService.name);
+
   constructor(
     @InjectModel(MediaAsset.name) private readonly assetModel: Model<MediaAssetDocument>,
     @InjectModel(MediaUpload.name) private readonly uploadModel: Model<MediaUploadDocument>,
     private readonly storage: S3StorageService,
   ) {}
 
+  async importRemoteImage(
+    workspaceId: string,
+    userId: string,
+    input: {
+      url: string;
+      fileName: string;
+      tags?: string[];
+      width?: number | null;
+      height?: number | null;
+      fingerprint?: string;
+    },
+  ): Promise<{ asset: MediaAssetDocument; created: boolean }> {
+    this.storage.assertConfigured();
+    if (input.fingerprint) {
+      const existing = await this.assetModel
+        .findOne({
+          workspaceId: new Types.ObjectId(workspaceId),
+          tags: input.fingerprint,
+        })
+        .exec();
+      if (existing) return { asset: existing, created: false };
+    }
+
+    const { body, mimeType } = await this.downloadAllowedImage(input.url);
+    const storageKey = this.storage.buildObjectKey(workspaceId, input.fileName);
+    await this.storage.putObject(storageKey, body, mimeType, workspaceId);
+    const tags = [...new Set([...(input.tags ?? []), ...(input.fingerprint ? [input.fingerprint] : [])])];
+
+    try {
+      const asset = await this.assetModel.create({
+        workspaceId: new Types.ObjectId(workspaceId),
+        uploadedByUserId: new Types.ObjectId(userId),
+        url: this.storage.publicUrl(storageKey),
+        storageProvider: 's3',
+        storageKey,
+        fileName: input.fileName,
+        mimeType,
+        sizeBytes: body.byteLength,
+        type: 'image',
+        tags,
+        width: input.width ?? null,
+        height: input.height ?? null,
+      });
+      return { asset, created: true };
+    } catch (error) {
+      await this.storage.deleteObjectAndInvalidate(storageKey).catch(() => undefined);
+      throw error;
+    }
+  }
+
+  async downloadAllowedImage(url: string): Promise<{ body: Buffer; mimeType: string }> {
+    this.assertSafePinImageUrl(url);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15_000);
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        signal: controller.signal,
+        redirect: 'manual',
+        headers: { Accept: 'image/*' },
+      });
+    } catch {
+      throw ApiException.unprocessable('MEDIA_UPLOAD_FAILED', 'Could not download the Pinterest image');
+    } finally {
+      clearTimeout(timer);
+    }
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get('location');
+      if (!location) throw ApiException.unprocessable('REMOTE_MEDIA_UNSAFE', 'Redirect had no location');
+      this.assertSafePinImageUrl(new URL(location, url).toString());
+      throw ApiException.unprocessable(
+        'REMOTE_MEDIA_UNSAFE',
+        'Redirects are not followed for Pinterest imports',
+      );
+    }
+    if (!response.ok) {
+      throw ApiException.unprocessable('MEDIA_UPLOAD_FAILED', 'Pinterest image download failed');
+    }
+    const mimeType = (response.headers.get('content-type') ?? 'image/jpeg').split(';', 1)[0].toLowerCase();
+    if (!IMAGE_MIME_TYPES.has(mimeType)) {
+      throw ApiException.unprocessable('MEDIA_UPLOAD_INVALID', 'Pinterest pin is not a supported image type');
+    }
+    const body = Buffer.from(await response.arrayBuffer());
+    if (body.byteLength > REMOTE_IMAGE_MAX_BYTES) {
+      throw ApiException.unprocessable('MEDIA_UPLOAD_INVALID', 'Pinterest image exceeds 15 MB');
+    }
+    return { body, mimeType };
+  }
+
+  assertSafePinImageUrl(raw: string): void {
+    let parsed: URL;
+    try {
+      parsed = new URL(raw);
+    } catch {
+      throw new ApiException('REMOTE_MEDIA_UNSAFE', 'Invalid image URL', HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+    if (parsed.protocol !== 'https:') {
+      throw new ApiException('REMOTE_MEDIA_UNSAFE', 'Image URL must be https', HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+    if (!PINIMG_HOST.test(parsed.hostname)) {
+      throw new ApiException(
+        'REMOTE_MEDIA_UNSAFE',
+        'Only Pinterest CDN image URLs can be imported',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+  }
+
   async initiate(workspaceId: string, userId: string, dto: InitiateMediaUploadDto) {
-    this.validateUpload(dto);
+    const mimeType = this.normalizeMime(dto.fileName, dto.mimeType);
+    this.validateUpload({ ...dto, mimeType });
     this.storage.assertConfigured();
     const storageKey = this.storage.buildObjectKey(workspaceId, dto.fileName);
     const s3UploadId = await this.storage.createMultipartUpload(
       storageKey,
-      dto.mimeType,
+      mimeType,
       workspaceId,
     );
     const partCount = Math.ceil(dto.sizeBytes / UPLOAD_PART_SIZE);
@@ -52,9 +176,9 @@ export class MediaService {
         storageKey,
         s3UploadId,
         fileName: dto.fileName,
-        mimeType: dto.mimeType.toLowerCase(),
+        mimeType,
         sizeBytes: dto.sizeBytes,
-        type: dto.type,
+        type: IMAGE_MIME_TYPES.has(mimeType) ? 'image' : 'video',
         tags: dto.tags ?? [],
         width: dto.width ?? null,
         height: dto.height ?? null,
@@ -109,10 +233,19 @@ export class MediaService {
       throw ApiException.unprocessable('MEDIA_UPLOAD_INVALID', 'Media upload is no longer active');
     }
 
-    const parts = [...dto.parts].sort((a, b) => a.partNumber - b.partNumber);
+    let listed: Array<{ partNumber: number; eTag: string }> = [];
+    try {
+      listed = await this.storage.listParts(upload.storageKey, upload.s3UploadId);
+    } catch {
+      listed = [];
+    }
+    const supplied = [...dto.parts]
+      .sort((a, b) => a.partNumber - b.partNumber)
+      .flatMap((part) => (part.eTag ? [{ partNumber: part.partNumber, eTag: part.eTag }] : []));
+    const parts = listed.length === upload.partCount ? listed : supplied;
     if (
       parts.length !== upload.partCount ||
-      parts.some((part, index) => part.partNumber !== index + 1)
+      parts.some((part, index) => part.partNumber !== index + 1 || !part.eTag)
     ) {
       throw ApiException.unprocessable(
         'MEDIA_UPLOAD_INVALID',
@@ -130,7 +263,7 @@ export class MediaService {
     if (stored.sizeBytes !== upload.sizeBytes || stored.mimeType !== upload.mimeType) {
       upload.status = 'failed';
       await upload.save();
-      await this.storage.deleteObjectAndInvalidate(upload.storageKey);
+      await this.storage.deleteObjectAndInvalidate(upload.storageKey).catch(() => undefined);
       throw ApiException.unprocessable(
         'MEDIA_UPLOAD_INVALID',
         'Uploaded object size or content type does not match the upload session',
@@ -144,6 +277,7 @@ export class MediaService {
         url: this.storage.publicUrl(upload.storageKey),
         storageProvider: 's3',
         storageKey: upload.storageKey,
+        fileName: upload.fileName,
         mimeType: upload.mimeType,
         sizeBytes: upload.sizeBytes,
         type: upload.type,
@@ -238,9 +372,51 @@ export class MediaService {
       .exec();
     if (!asset) throw ApiException.notFound('Media asset');
     if (asset.storageProvider === 's3' && asset.storageKey) {
-      await this.storage.deleteObjectAndInvalidate(asset.storageKey);
+      try {
+        await this.storage.deleteObjectAndInvalidate(asset.storageKey);
+      } catch (error) {
+        this.logger.warn(
+          `Could not delete stored media ${asset.storageKey}: ${
+            error instanceof Error ? error.message : 'unknown error'
+          }`,
+        );
+      }
     }
     await asset.deleteOne();
+  }
+
+  async listImages(workspaceId: string, limit = 100) {
+    return this.assetModel
+      .find({
+        workspaceId: new Types.ObjectId(workspaceId),
+        type: 'image',
+      })
+      .sort({ createdAt: -1 })
+      .limit(Math.min(Math.max(limit, 2), 200))
+      .exec();
+  }
+
+  async getImagesByIds(workspaceId: string, ids: string[]) {
+    const unique = [...new Set(ids.filter((id) => isValidObjectId(id)))];
+    if (!unique.length) return [];
+    const assets = await this.assetModel
+      .find({
+        workspaceId: new Types.ObjectId(workspaceId),
+        type: 'image',
+        _id: { $in: unique.map((id) => new Types.ObjectId(id)) },
+      })
+      .exec();
+    if (assets.length !== unique.length) {
+      throw ApiException.unprocessable(
+        'MEDIA_ASSET_NOT_FOUND',
+        'Every supplied media asset must belong to this workspace',
+      );
+    }
+    const byId = new Map(assets.map((asset) => [asset.id, asset]));
+    return ids.flatMap((id) => {
+      const asset = byId.get(id);
+      return asset ? [asset] : [];
+    });
   }
 
   async assertImagesBelongToWorkspace(workspaceId: string, urls: string[]): Promise<void> {
@@ -317,10 +493,25 @@ export class MediaService {
     }
   }
 
+  private normalizeMime(fileName: string, mimeType: string): string {
+    let mime = mimeType.toLowerCase().split(';', 1)[0].trim();
+    if (mime === 'image/jpg') mime = 'image/jpeg';
+    if (!IMAGE_MIME_TYPES.has(mime) && !VIDEO_MIME_TYPES.has(mime)) {
+      const extension = fileName.split('.').pop()?.toLowerCase() ?? '';
+      mime = MIME_BY_EXTENSION[extension] ?? mime;
+    }
+    return mime;
+  }
+
   private validateUpload(dto: InitiateMediaUploadDto): void {
-    const mimeType = dto.mimeType.toLowerCase();
-    const allowed = dto.type === 'image' ? IMAGE_MIME_TYPES : VIDEO_MIME_TYPES;
-    const maxBytes = dto.type === 'image' ? IMAGE_MAX_BYTES : VIDEO_MAX_BYTES;
+    const mimeType = this.normalizeMime(dto.fileName, dto.mimeType);
+    const inferredType = IMAGE_MIME_TYPES.has(mimeType)
+      ? 'image'
+      : VIDEO_MIME_TYPES.has(mimeType)
+        ? 'video'
+        : dto.type;
+    const allowed = inferredType === 'image' ? IMAGE_MIME_TYPES : VIDEO_MIME_TYPES;
+    const maxBytes = inferredType === 'image' ? IMAGE_MAX_BYTES : VIDEO_MAX_BYTES;
     if (!allowed.has(mimeType)) {
       throw ApiException.unprocessable(
         'MEDIA_UPLOAD_INVALID',
@@ -330,7 +521,7 @@ export class MediaService {
     if (dto.sizeBytes > maxBytes) {
       throw new ApiException(
         'MEDIA_UPLOAD_INVALID',
-        `${dto.type === 'image' ? 'Images' : 'Videos'} may not exceed ${dto.type === 'image' ? '50 MB' : '2 GB'}`,
+        `${inferredType === 'image' ? 'Images' : 'Videos'} may not exceed ${inferredType === 'image' ? '50 MB' : '2 GB'}`,
         HttpStatus.PAYLOAD_TOO_LARGE,
       );
     }

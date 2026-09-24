@@ -8,11 +8,13 @@ import { Post, PostSchema } from './schemas/post.schema';
 import { PostsController } from './posts.controller';
 import { PostsService } from './posts.service';
 import { SocialAccountsModule } from '../social-accounts/social-accounts.module';
+import { MediaModule } from '../media/media.module';
 import { PublishingProvidersModule } from '../publishing-providers/publishing-providers.module';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: Post.name, schema: PostSchema }, { name: Content.name, schema: ContentSchema }, { name: SocialAccount.name, schema: SocialAccountSchema }]), PlatformsModule, WorkspacesModule, SocialAccountsModule, PublishingProvidersModule],
+  imports: [MongooseModule.forFeature([{ name: Post.name, schema: PostSchema }, { name: Content.name, schema: ContentSchema }, { name: SocialAccount.name, schema: SocialAccountSchema }]), PlatformsModule, WorkspacesModule, SocialAccountsModule, PublishingProvidersModule, MediaModule],
   controllers: [PostsController],
   providers: [PostsService],
+  exports: [PostsService],
 })
 export class PostsModule {}

@@ -29,7 +29,7 @@ resource "aws_s3_bucket_cors_configuration" "media" {
     allowed_headers = ["*"]
     allowed_methods = ["PUT"]
     allowed_origins = var.allowed_origins
-    expose_headers  = ["ETag"]
+    expose_headers  = ["ETag", "etag"]
     max_age_seconds = 3600
   }
 }
@@ -134,7 +134,7 @@ data "aws_iam_policy_document" "backend" {
   }
 
   statement {
-    actions   = ["s3:ListBucketMultipartUploads"]
+    actions   = ["s3:ListBucket", "s3:ListBucketMultipartUploads"]
     resources = [aws_s3_bucket.media.arn]
   }
 
