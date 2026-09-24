@@ -190,18 +190,18 @@ struct ScheduleSetupView: View {
         VStack(alignment: .leading, spacing: Spacing.extraLarge) {
             stepLabel("3 OF 3")
             VStack(alignment: .leading, spacing: Spacing.small) {
-                Text("What gets locked?")
+                Text("Keep X available")
                     .font(.system(size: 34, weight: .bold, design: .rounded))
-                Text("Choose the apps you tend to open instead of posting.")
+                Text("Choose only X in the Screen Time picker. When you miss a deadline, every other app will be locked.")
                     .foregroundStyle(Theme.secondaryText)
             }
 
             Button { showingPicker = true } label: {
                 SurfaceCard {
                     HStack {
-                        Image(systemName: "square.grid.2x2.fill").foregroundStyle(Theme.accent)
+                        Image(systemName: "at").foregroundStyle(Theme.accent)
                         VStack(alignment: .leading) {
-                            Text("Choose Apps").fontWeight(.bold).foregroundStyle(.white)
+                            Text("Choose X / Twitter").fontWeight(.bold).foregroundStyle(.white)
                             Text(selectionSummary).font(.subheadline).foregroundStyle(Theme.secondaryText)
                         }
                         Spacer()
@@ -211,13 +211,13 @@ struct ScheduleSetupView: View {
             }
             .buttonStyle(.plain)
 
-            Text("Your app selections stay on this device. POSTLOCK never sends them to the backend.")
+            Text("Apple keeps the selected app private. POSTLOCK stores its anonymous Screen Time token only on this device.")
                 .font(.footnote)
                 .foregroundStyle(Theme.secondaryText)
             Spacer()
             PrimaryButton(
-                title: "Lock These Apps",
-                isDisabled: session.screenTime.selectedCount == 0 && !isSimulator
+                title: "Block All Other Apps",
+                isDisabled: !session.screenTime.hasValidXException && !isSimulator
             ) {
                 session.save(commitment)
                 session.reconcileEnforcement()
@@ -263,8 +263,12 @@ struct ScheduleSetupView: View {
     }
 
     private var selectionSummary: String {
-        let count = session.screenTime.selectedCount
-        return count == 0 ? "No apps selected" : "\(count) selection\(count == 1 ? "" : "s")"
+        let selection = session.screenTime.selection
+        if session.screenTime.hasValidXException { return "One app allowed — make sure it is X" }
+        if selection.applicationTokens.isEmpty && selection.categoryTokens.isEmpty && selection.webDomainTokens.isEmpty {
+            return "X has not been selected"
+        }
+        return "Select exactly one app, with no categories or websites"
     }
 
     private var isSimulator: Bool {

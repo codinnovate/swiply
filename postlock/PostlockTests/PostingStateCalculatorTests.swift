@@ -64,3 +64,28 @@ struct PostingStateCalculatorTests {
         #expect(Set(custom.deadlineMinutes).count == 10)
     }
 }
+
+struct PostingDayRefreshTests {
+    @Test @MainActor func openSessionResetsProgressOnNextDay() {
+        let suite = "PostlockDayRefresh-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let store = UserDefaultsPostingCommitmentStore(defaults: defaults)
+        let session = AppSession(
+            profileStore: UserDefaultsPostingProfileStore(defaults: defaults),
+            commitmentStore: store,
+            profileClient: URLSessionPostingProfileClient(baseURL: URL(string: "https://example.invalid")!),
+            verificationClient: URLSessionPostVerificationClient(baseURL: URL(string: "https://example.invalid")!),
+            screenTime: ScreenTimeService()
+        )
+        session.save(.suggested(goal: 3, timezoneIdentifier: "UTC"))
+        session.setVerifiedCount(3)
+        session.reconcileEnforcement(now: .now)
+        #expect(session.verifiedCount == 3)
+        let tomorrow = Date.now.addingTimeInterval(24 * 60 * 60)
+        session.reconcileEnforcement(now: tomorrow)
+        #expect(session.verifiedCount == 0)
+        #expect(store.loadVerifiedCount() == 0)
+        #expect(session.todayState(now: tomorrow)?.status != .completed)
+    }
+}

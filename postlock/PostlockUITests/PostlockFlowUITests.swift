@@ -12,11 +12,11 @@ final class PostlockFlowUITests: XCTestCase {
         app.buttons["Continue"].tap()
         XCTAssertTrue(app.staticTexts["Allow app blocking"].waitForExistence(timeout: 2))
         app.buttons["Continue in Simulator"].tap()
-        XCTAssertTrue(app.staticTexts["What gets locked?"].waitForExistence(timeout: 2))
-        app.buttons["Lock These Apps"].tap()
+        XCTAssertTrue(app.staticTexts["Keep X available"].waitForExistence(timeout: 2))
+        app.buttons["Block All Other Apps"].tap()
 
-        XCTAssertTrue(app.navigationBars["Today"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["0 of 2 posts verified"].exists)
+        XCTAssertTrue(app.buttons["checkPosts"].waitForExistence(timeout: 3))
+        XCTAssertEqual(app.descendants(matching: .any)["dailyProgress"].label, "0 of 2 posts verified")
     }
 
     @MainActor
@@ -30,13 +30,13 @@ final class PostlockFlowUITests: XCTestCase {
         revealAndTap("Simulate missed deadline", in: app)
 
         app.tabBars.buttons["Today"].tap()
-        XCTAssertTrue(app.staticTexts["APPS LOCKED"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.staticTexts["Let's catch up."].waitForExistence(timeout: 2))
 
         app.tabBars.buttons["Settings"].tap()
         revealAndTap("Simulate verification success", in: app)
         app.tabBars.buttons["Today"].tap()
-        XCTAssertFalse(app.staticTexts["APPS LOCKED"].exists)
-        XCTAssertTrue(app.staticTexts["3 of 3 posts verified"].exists)
+        XCTAssertTrue(app.staticTexts["Daily goal complete"].waitForExistence(timeout: 2))
+        XCTAssertEqual(app.descendants(matching: .any)["dailyProgress"].label, "3 of 3 posts verified")
     }
 
     @MainActor

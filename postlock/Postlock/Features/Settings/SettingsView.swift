@@ -3,6 +3,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(AppSession.self) private var session
+    @Environment(PurchasesService.self) private var purchases
     @State private var showChangeConfirmation = false
     @State private var showUsernameSetup = false
     @State private var showScheduleSetup = false
@@ -11,6 +12,7 @@ struct SettingsView: View {
     var body: some View {
         List {
             accountSection
+            subscriptionSection
             commitmentSection
             blockingSection
             simulatorSection
@@ -57,6 +59,13 @@ struct SettingsView: View {
         }
     }
 
+    private var subscriptionSection: some View {
+        Section("Subscription") {
+            LabeledContent("Status", value: purchases.isPro ? "Postlock Pro" : "Not subscribed")
+            Link("Manage Subscription", destination: URL(string: "https://apps.apple.com/account/subscriptions")!)
+        }
+    }
+
     @ViewBuilder
     private var commitmentSection: some View {
         Section("Posting commitment") {
@@ -72,12 +81,12 @@ struct SettingsView: View {
     private var blockingSection: some View {
         Section {
             LabeledContent("Screen Time", value: authorizationLabel)
-            LabeledContent("Blocked selections", value: "\(session.screenTime.selectedCount)")
-            Button("Change Blocked Apps") { showAppPicker = true }
+            LabeledContent("Allowed while locked", value: session.screenTime.hasValidXException ? "X / Twitter" : "Not configured")
+            Button("Choose X / Twitter") { showAppPicker = true }
         } header: {
             Text("App blocking")
         } footer: {
-            Text("Your blocked-app selections stay on this device.")
+            Text("Choose only X. After a missed deadline, every other app is blocked. Apple keeps the selection private and POSTLOCK stores it only on this device.")
         }
     }
 

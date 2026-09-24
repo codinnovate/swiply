@@ -15,18 +15,26 @@ final class ScreenTimeService {
 
     private let store = ManagedSettingsStore(named: .postlock)
     private let defaults: UserDefaults
-    private let selectionKey = "familyActivitySelection"
+    // This is deliberately a new key. Older releases stored apps to block;
+    // interpreting those tokens as apps to allow would invert the user's choice.
+    static let allowedAppSelectionKey = "allowedAppSelectionV2"
     private let activityCenter = DeviceActivityCenter()
 
     init() {
         defaults = UserDefaults(suiteName: AppGroup.identifier) ?? .standard
-        selection = defaults.data(forKey: selectionKey)
+        selection = defaults.data(forKey: Self.allowedAppSelectionKey)
             .flatMap { try? JSONDecoder().decode(FamilyActivitySelection.self, from: $0) }
             ?? .init()
     }
 
     var selectedCount: Int {
-        selection.applicationTokens.count + selection.categoryTokens.count + selection.webDomainTokens.count
+        selection.applicationTokens.count
+    }
+
+    var hasValidXException: Bool {
+        selection.applicationTokens.count == 1
+            && selection.categoryTokens.isEmpty
+            && selection.webDomainTokens.isEmpty
     }
 
     func requestAuthorization() async throws {
@@ -34,16 +42,21 @@ final class ScreenTimeService {
         authorizationStatus = AuthorizationCenter.shared.authorizationStatus
     }
 
+    func refreshAuthorization() {
+        authorizationStatus = AuthorizationCenter.shared.authorizationStatus
+    }
+
     func setShielding(active: Bool) {
-        isShielding = active
-        guard active else {
+        guard active, hasValidXException else {
+            isShielding = false
             store.clearAllSettings()
             SharedEnforcementStore.setShouldBlock(false)
             return
         }
-        store.shield.applications = selection.applicationTokens.isEmpty ? nil : selection.applicationTokens
-        store.shield.applicationCategories = selection.categoryTokens.isEmpty ? nil : .specific(selection.categoryTokens)
-        store.shield.webDomains = selection.webDomainTokens.isEmpty ? nil : selection.webDomainTokens
+        isShielding = true
+        store.shield.applications = nil
+        store.shield.applicationCategories = .all(except: selection.applicationTokens)
+        store.shield.webDomains = nil
         SharedEnforcementStore.setShouldBlock(true)
     }
 
@@ -70,7 +83,10 @@ final class ScreenTimeService {
     }
 
     private func persistSelection() {
-        defaults.set(try? JSONEncoder().encode(selection), forKey: selectionKey)
+        defaults.set(try? JSONEncoder().encode(selection), forKey: Self.allowedAppSelectionKey)
+        if isShielding {
+            setShielding(active: true)
+        }
     }
 
     private func persistSchedule(_ commitment: PostingCommitment, verifiedCount: Int) {
