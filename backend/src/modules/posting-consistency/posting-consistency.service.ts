@@ -19,12 +19,20 @@ export class PostingConsistencyService {
 
   async verifyPosts(dto: VerifyPostsDto) {
     if (!IANAZone.isValidZone(dto.timezone)) {
-      throw ApiException.unprocessable('VALIDATION_FAILED', 'timezone must be a valid IANA timezone');
+      throw ApiException.unprocessable(
+        'VALIDATION_FAILED',
+        'timezone must be a valid IANA timezone',
+      );
     }
     const localNow = DateTime.now().setZone(dto.timezone);
     const providerWeekday = localNow.weekday === 7 ? 1 : localNow.weekday + 1;
     if (!dto.postingDays.includes(providerWeekday)) {
-      return { verified: true, verifiedCount: 0, goal: dto.deadlineMinutes.length, shouldBlock: false };
+      return {
+        verified: true,
+        verifiedCount: 0,
+        goal: dto.deadlineMinutes.length,
+        shouldBlock: false,
+      };
     }
 
     const since = localNow.startOf('day').toUTC().toJSDate();

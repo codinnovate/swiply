@@ -126,6 +126,24 @@ export class EnvironmentVariables {
   @Max(60_000)
   @IsOptional()
   POSTING_PROVIDER_TIMEOUT_MS = 8_000;
+
+  // --- POSTLOCK virality scoring & leaderboard ---
+  // Optional: without the selected provider's key, posts still sync but stay unscored.
+  @IsIn(['openai', 'xai']) @IsOptional() POSTLOCK_AI_PROVIDER = 'openai';
+  @IsString() @IsOptional() POSTLOCK_AI_MODEL?: string;
+  @IsString() @IsOptional() OPENAI_API_KEY?: string;
+  @IsString() @IsOptional() XAI_API_KEY?: string;
+  // Optional: without a token, the featured-accounts admin routes reject every call.
+  @IsString() @IsOptional() @MinLength(24) POSTLOCK_ADMIN_TOKEN?: string;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  @IsOptional()
+  POSTLOCK_MAX_SCORES_PER_SYNC = 10;
+
+  @IsIn(['true', 'false']) @IsOptional() POSTLOCK_JOBS_ENABLED?: string;
 }
 
 export function validateEnv(raw: Record<string, unknown>): EnvironmentVariables {

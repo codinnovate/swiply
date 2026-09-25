@@ -33,9 +33,12 @@ enum AppConfiguration {
 }
 
 enum SubscriptionPlan {
-    static let entitlementID = "pro"
+    /// Matches the "PostLock Pro" entitlement (identifier `postlock_pro`) in
+    /// RevenueCat — reused from the existing entitlement rather than creating
+    /// a duplicate, so Test Store and real App Store products share one gate.
+    static let entitlementID = "postlock_pro"
     static let monthlyProductID = "com.swiply.postlock.pro.monthly"
     static let yearlyProductID = "com.swiply.postlock.pro.yearly"
-    static let termsURL = URL(string: "https://postlock.app/terms")!
-    static let privacyURL = URL(string: "https://postlock.app/privacy")!
+    static let termsURL = URL(string: "https://postlock-app.up.railway.app/terms")!
+    static let privacyURL = URL(string: "https://postlock-app.up.railway.app/privacy")!
 }

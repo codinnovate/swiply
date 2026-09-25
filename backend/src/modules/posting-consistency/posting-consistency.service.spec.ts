@@ -11,6 +11,7 @@ describe('PostingConsistencyService', () => {
         isPublic: true,
       }),
       listPostsSince: jest.fn().mockResolvedValue([]),
+      listRecentPosts: jest.fn(),
     };
     const service = new PostingConsistencyService(provider);
 
@@ -31,6 +32,7 @@ describe('PostingConsistencyService', () => {
         { id: '2', createdAt: new Date(), kind: 'reply' },
         { id: '3', createdAt: new Date(), kind: 'quote' },
       ]),
+      listRecentPosts: jest.fn(),
     };
     const service = new PostingConsistencyService(provider);
     const result = await service.verifyPosts({
@@ -38,7 +40,12 @@ describe('PostingConsistencyService', () => {
       timezone: 'UTC',
       postingDays: [1, 2, 3, 4, 5, 6, 7],
       deadlineMinutes: [0, 1439],
-      qualifyingPostTypes: { originalPosts: true, replies: false, reposts: false, quotePosts: true },
+      qualifyingPostTypes: {
+        originalPosts: true,
+        replies: false,
+        reposts: false,
+        quotePosts: true,
+      },
     });
     expect(result.verifiedCount).toBe(2);
     expect(result.shouldBlock).toBe(false);

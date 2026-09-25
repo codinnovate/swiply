@@ -1,5 +1,5 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
+import { Test, type TestingModuleBuilder } from '@nestjs/testing';
 
 import { VALIDATION_PIPE_OPTIONS } from '../src/common/pipes/validation.pipe';
 import { startInMemoryMongo, stopInMemoryMongo } from './mongo-test-env';
@@ -9,7 +9,9 @@ import { startInMemoryMongo, stopInMemoryMongo } from './mongo-test-env';
  * main.ts (global prefix, validation pipe, exception filter) so e2e specs
  * exercise the same request pipeline production does.
  */
-export async function createTestApp(): Promise<INestApplication> {
+export async function createTestApp(
+  override: (builder: TestingModuleBuilder) => TestingModuleBuilder = (builder) => builder,
+): Promise<INestApplication> {
   process.env.NODE_ENV = 'test';
   process.env.MONGODB_URI = await startInMemoryMongo();
   process.env.JWT_SECRET ??= 'test-secret-that-is-at-least-32-characters-long';
@@ -32,7 +34,7 @@ export async function createTestApp(): Promise<INestApplication> {
 
   const { AppModule } = await import('../src/app.module');
 
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+  const moduleRef = await override(Test.createTestingModule({ imports: [AppModule] })).compile();
 
   const app = moduleRef.createNestApplication();
   app.setGlobalPrefix('api');
