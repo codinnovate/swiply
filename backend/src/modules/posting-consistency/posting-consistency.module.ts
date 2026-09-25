@@ -24,5 +24,6 @@ import { createXPostProvider } from './providers/x-post-provider.factory';
       useFactory: createXPostProvider,
     },
   ],
+  exports: [X_POST_PROVIDER],
 })
 export class PostingConsistencyModule {}
