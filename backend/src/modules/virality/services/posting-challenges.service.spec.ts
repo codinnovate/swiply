@@ -1,3 +1,6 @@
+import { firstValueFrom, take, toArray } from 'rxjs';
+
+import { ChallengeEventsService } from './challenge-events.service';
 import { PostingChallengesService } from './posting-challenges.service';
 
 const now = new Date('2026-09-25T08:00:00.000Z');
@@ -22,16 +25,22 @@ const challenge = {
   updatedAt: now,
 };
 
+const query = (result: unknown) => ({
+  sort: jest.fn().mockReturnThis(),
+  limit: jest.fn().mockReturnThis(),
+  select: jest.fn().mockReturnThis(),
+  lean: jest.fn().mockResolvedValue(result),
+});
+
 function makeService() {
-  const listQuery = {
-    sort: jest.fn().mockReturnThis(),
-    limit: jest.fn().mockReturnThis(),
-    lean: jest.fn().mockResolvedValue([challenge]),
-  };
+  const active = { ...challenge, status: 'active' as const };
   const challenges = {
     updateMany: jest.fn().mockResolvedValue({}),
     findOne: jest.fn().mockResolvedValue(null),
-    find: jest.fn().mockReturnValue(listQuery),
+    // Expiry sweeps find nothing; the watcher sees one active duel; listings see the fixture.
+    find: jest.fn((filter: { endsAt?: unknown; status?: string }) =>
+      query(filter.endsAt ? [] : filter.status === 'active' ? [active] : [challenge]),
+    ),
     findById: jest.fn(),
     create: jest.fn().mockResolvedValue({ toObject: () => challenge }),
   };
@@ -39,7 +48,10 @@ function makeService() {
     lean: jest.fn().mockResolvedValue({ installId: challenge.opponentInstallId }),
   };
   const participants = { findOne: jest.fn().mockReturnValue(participantQuery) };
-  const posts = { aggregate: jest.fn().mockResolvedValue([]) };
+  const posts = {
+    aggregate: jest.fn().mockResolvedValue([]),
+    countDocuments: jest.fn().mockResolvedValue(0),
+  };
   const provider = {
     getProfile: jest.fn((username: string) =>
       Promise.resolve({
@@ -50,15 +62,22 @@ function makeService() {
       }),
     ),
   };
-  const history = { syncAndScore: jest.fn().mockResolvedValue(undefined) };
+  const history = {
+    syncAndScore: jest.fn().mockResolvedValue(undefined),
+    ingest: jest.fn().mockResolvedValue([]),
+  };
+  const events = new ChallengeEventsService();
+  const alerts = { checkDuels: jest.fn().mockResolvedValue(undefined) };
   const service = new PostingChallengesService(
     challenges as never,
     participants as never,
     posts as never,
     provider as never,
     history as never,
+    events,
+    alerts as never,
   );
-  return { service, challenges, posts, history };
+  return { service, challenges, participants, posts, history, events, alerts };
 }
 
 describe('PostingChallengesService', () => {
@@ -126,5 +145,151 @@ describe('PostingChallengesService', () => {
       }),
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
     expect(challenges.findById).not.toHaveBeenCalled();
+  });
+
+  it('announces a new challenge to both people', async () => {
+    const { service, events } = makeService();
+    const announced = jest.fn();
+    events.changesFor('bob').subscribe(announced);
+
+    await service.create({
+      challengerUsername: 'alice',
+      challengerInstallId: challenge.challengerInstallId,
+      opponentUsername: 'bob',
+      duration: 'day',
+    });
+
+    expect(announced).toHaveBeenCalledTimes(1);
+  });
+
+  it('streams the list on connect and again only when one of its challenges changes', async () => {
+    const { service, events } = makeService();
+    const received = firstValueFrom(
+      service
+        .stream({ username: 'bob', installId: challenge.opponentInstallId })
+        .pipe(take(2), toArray()),
+    );
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(events.watchedUsernames()).toEqual(['bob']);
+    events.changed('carol');
+    events.changed('alice', 'bob');
+
+    const [first, second] = await received;
+    expect(first).toMatchObject({ type: 'challenges', data: [{ requiresResponse: true }] });
+    expect(second.type).toBe('challenges');
+    expect(events.watchedUsernames()).toEqual([]);
+  });
+
+  it('polls only watched duels and announces the people who posted', async () => {
+    const { service, events, history, posts } = makeService();
+    const release = events.watch('bob');
+    // alice's count grows across her ingest; bob's stays flat.
+    posts.countDocuments.mockImplementation(({ username }: { username: string }) =>
+      Promise.resolve(username === 'alice' && history.ingest.mock.calls.length > 0 ? 3 : 2),
+    );
+    const forAlice = jest.fn();
+    const forBob = jest.fn();
+    events.changesFor('alice').subscribe(forAlice);
+    events.changesFor('bob').subscribe(forBob);
+
+    await service.pollWatched();
+
+    expect(history.ingest).toHaveBeenCalledWith('alice', { pages: 1 });
+    expect(history.ingest).toHaveBeenCalledWith('bob', { pages: 1 });
+    expect(forAlice).toHaveBeenCalledTimes(1);
+    expect(forBob).not.toHaveBeenCalled();
+    release();
+  });
+
+  it('skips polling when nobody has a stream open', async () => {
+    const { service, history } = makeService();
+
+    await service.pollWatched();
+
+    expect(history.ingest).not.toHaveBeenCalled();
+  });
+
+  it('polls every active duel for alerts, watched or not, and checks the people who posted', async () => {
+    const { service, history, posts, alerts, challenges } = makeService();
+    posts.countDocuments.mockImplementation(({ username }: { username: string }) =>
+      Promise.resolve(username === 'bob' && history.ingest.mock.calls.length > 0 ? 5 : 4),
+    );
+
+    await service.pollActive();
+
+    expect(challenges.find).toHaveBeenCalledWith({ status: 'active' });
+    expect(history.ingest).toHaveBeenCalledWith('alice', { pages: 1 });
+    expect(history.ingest).toHaveBeenCalledWith('bob', { pages: 1 });
+    expect(alerts.checkDuels).toHaveBeenCalledWith(['bob']);
+  });
+
+  it('runs an active poll after a watched poll in flight instead of skipping it', async () => {
+    const { service, events, challenges } = makeService();
+    const release = events.watch('bob');
+
+    const watched = service.pollWatched();
+    const active = service.pollActive();
+    await Promise.all([watched, active]);
+
+    const scopes = challenges.find.mock.calls
+      .map(([filter]) => filter as { status?: string; $or?: unknown; endsAt?: unknown })
+      .filter((filter) => filter.status === 'active' && !filter.endsAt);
+    expect(scopes).toEqual([expect.objectContaining({ $or: expect.any(Array) }), { status: 'active' }]);
+    release();
+  });
+
+  it('checks duel alerts after syncing the people in active duels', async () => {
+    const { service, alerts, challenges, history } = makeService();
+    challenges.find.mockImplementation((filter: { endsAt?: unknown }) =>
+      query(filter.endsAt ? [] : [{ ...challenge, status: 'active' }]),
+    );
+
+    await service.list({ username: 'bob', installId: challenge.opponentInstallId });
+
+    expect(alerts.checkDuels).toHaveBeenCalledWith(['alice', 'bob']);
+    expect(alerts.checkDuels.mock.invocationCallOrder[0]).toBeGreaterThan(
+      history.syncAndScore.mock.invocationCallOrder[1],
+    );
+  });
+
+  it('starts a duel against a non-user with a zero baseline so the first post alerts', async () => {
+    const { service, challenges, participants } = makeService();
+    participants.findOne.mockReturnValue({ lean: jest.fn().mockResolvedValue(null) });
+
+    await service.create({
+      challengerUsername: 'alice',
+      challengerInstallId: challenge.challengerInstallId,
+      opponentUsername: 'bob',
+      duration: 'day',
+    });
+
+    expect(challenges.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'active',
+        notifiedScores: { challenger: 0, opponent: 0 },
+      }),
+    );
+  });
+
+  it('resets the alert baseline when an invitation is accepted', async () => {
+    const { service, challenges } = makeService();
+    const doc = {
+      ...challenge,
+      save: jest.fn().mockResolvedValue(undefined),
+      toObject() {
+        return { ...this };
+      },
+    };
+    challenges.findById.mockResolvedValue(doc);
+
+    await service.respond(challenge._id, {
+      username: 'bob',
+      installId: challenge.opponentInstallId,
+      action: 'accept',
+    });
+
+    expect(doc).toMatchObject({ status: 'active', notifiedScores: { challenger: 0, opponent: 0 } });
+    expect(doc.save).toHaveBeenCalled();
   });
 });

@@ -97,6 +97,14 @@ export const viralityConfig = registerAs('virality', () => ({
   jobsEnabled: process.env.POSTLOCK_JOBS_ENABLED !== 'false',
 }));
 
+export const apnsConfig = registerAs('apns', () => ({
+  keyId: process.env.APNS_KEY_ID,
+  teamId: process.env.APNS_TEAM_ID,
+  // Hosts often store the .p8 on one line with escaped newlines.
+  privateKey: process.env.APNS_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+  bundleId: process.env.APNS_BUNDLE_ID ?? 'com.swiply.postlock',
+}));
+
 export const configurations = [
   appConfig,
   databaseConfig,
@@ -107,4 +115,5 @@ export const configurations = [
   researchConfig,
   postingConsistencyConfig,
   viralityConfig,
+  apnsConfig,
 ];

@@ -30,6 +30,12 @@ export class PostingChallenge {
   @Prop({ required: true, index: true }) endsAt: Date;
   @Prop({ type: Date, default: null }) respondedAt: Date | null;
 
+  /** Scores the last duel alert check saw; null until a baseline is recorded. */
+  @Prop({ type: { challenger: Number, opponent: Number, _id: false }, default: null })
+  notifiedScores: { challenger: number; opponent: number } | null;
+  @Prop({ type: Date, default: null }) challengerPostAlertAt: Date | null;
+  @Prop({ type: Date, default: null }) opponentPostAlertAt: Date | null;
+
   createdAt: Date;
   updatedAt: Date;
 }

@@ -1,8 +1,11 @@
 import type { INestApplication } from '@nestjs/common';
+import { getModelToken } from '@nestjs/mongoose';
+import type { Model } from 'mongoose';
 import request from 'supertest';
 import type { App } from 'supertest/types';
 
 import { REWRITE_SYSTEM_PROMPT } from '../src/modules/virality/domain/prompts';
+import { PushDevice } from '../src/modules/virality/schemas/push-device.schema';
 import { VIRALITY_LLM } from '../src/modules/virality/services/llm-providers';
 import { createTestApp, destroyTestApp } from './app-harness';
 
@@ -178,5 +181,42 @@ describe('POSTLOCK virality scoring & leaderboard (e2e)', () => {
       'growth_guru',
     ]);
     expect(afterOptOut.body.me).toBeNull();
+  });
+
+  it('registers, re-points, and removes an install for duel push alerts', async () => {
+    const installId = '33333333-3333-4333-8333-333333333333';
+    const token = 'AB'.repeat(32);
+
+    await request(server())
+      .put('/api/v1/postlock/push/devices')
+      .send({ username: '@Sam_Dev', installId, token, environment: 'sandbox' })
+      .expect(200, { registered: true });
+    await request(server())
+      .put('/api/v1/postlock/push/devices')
+      .send({ username: 'sam_dev', installId, token: 'cd'.repeat(32), environment: 'production' })
+      .expect(200);
+
+    const devices = app.get<Model<PushDevice>>(getModelToken(PushDevice.name));
+    expect(await devices.find({ installId }).lean()).toEqual([
+      expect.objectContaining({ username: 'sam_dev', token: 'cd'.repeat(32), environment: 'production' }),
+    ]);
+
+    await request(server())
+      .delete('/api/v1/postlock/push/devices')
+      .send({ installId })
+      .expect(200, { registered: false });
+    expect(await devices.countDocuments({ installId })).toBe(0);
+  });
+
+  it('rejects malformed push registrations', async () => {
+    await request(server())
+      .put('/api/v1/postlock/push/devices')
+      .send({
+        username: 'sam_dev',
+        installId: '33333333-3333-4333-8333-333333333333',
+        token: 'not-a-token',
+        environment: 'sandbox',
+      })
+      .expect(400);
   });
 });
