@@ -114,6 +114,19 @@ export default function PrivacyPage() {
 
           <div>
             <h2 className="mb-2 text-base font-semibold text-foreground">
+              Payments
+            </h2>
+            <p>
+              POSTLOCK offers optional paid subscriptions. All payments are
+              processed by Apple through the App Store; we do not receive
+              or store your payment card details. Apple&apos;s handling of
+              your payment information is governed by Apple&apos;s own
+              privacy policy, not this one.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="mb-2 text-base font-semibold text-foreground">
               Purposes for processing
             </h2>
             <p>

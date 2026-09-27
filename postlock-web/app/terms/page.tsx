@@ -46,6 +46,43 @@ export default function TermsPage() {
 
         <div>
           <h2 className="mb-2 text-base font-semibold text-foreground">
+            Subscriptions and payment
+          </h2>
+          <p>
+            POSTLOCK offers an optional paid subscription with two plans: a
+            monthly plan at $8.00/month, and a yearly plan at $30.00/year
+            that includes a 3-day free trial. All payments are processed by
+            Apple through the App Store and charged to your Apple ID
+            account; POSTLOCK does not receive or store your payment card
+            details.
+          </p>
+          <p className="mt-3">
+            If you start the yearly plan&apos;s free trial, you will not be
+            charged during the 3-day trial. Unless you cancel at least 24
+            hours before the trial ends, your subscription automatically
+            renews and your Apple ID account will be charged $30.00 for the
+            first year. Subscriptions automatically renew for successive
+            periods (monthly or yearly, matching your plan) unless canceled
+            at least 24 hours before the end of the current period, and
+            your account will be charged for renewal within 24 hours prior
+            to the end of the current period.
+          </p>
+          <p className="mt-3">
+            You can manage or cancel your subscription, and view or change
+            your trial or renewal status, at any time in your Apple ID
+            account&apos;s subscription settings on your device. Canceling
+            stops future renewals but does not refund any amount already
+            charged for the current period. We may change subscription
+            prices from time to time; where required, you will be notified
+            of a price change in advance, and continuing to use POSTLOCK
+            after a price change takes effect constitutes acceptance of the
+            new price. Refund requests are handled by Apple in accordance
+            with the App Store&apos;s own refund policies, not by us.
+          </p>
+        </div>
+
+        <div>
+          <h2 className="mb-2 text-base font-semibold text-foreground">
             Your responsibility for the username you provide
           </h2>
           <p>

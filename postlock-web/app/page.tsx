@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { APP_STORE_URL } from "./lib/site";
+import { APP_STORE_URL, pricingPlans } from "./lib/site";
 
 const steps = [
   {
@@ -128,6 +128,50 @@ export default function Home() {
             ))}
           </div>
         </div>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="mx-auto w-full max-w-310 px-4 py-16 sm:px-6">
+        <h2 className="mb-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+          Pricing
+        </h2>
+        <p className="mb-10 max-w-md text-sm leading-6 text-muted">
+          One plan, two ways to pay. Manage or cancel anytime from your
+          Apple ID subscription settings.
+        </p>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:max-w-2xl">
+          {pricingPlans.map((plan) => (
+            <div
+              key={plan.id}
+              className="relative rounded-3xl border border-surface-border bg-surface p-8"
+            >
+              {plan.badge ? (
+                <span className="absolute right-8 top-8 rounded-full bg-lime px-3 py-1 text-xs font-semibold text-lime-foreground">
+                  {plan.badge}
+                </span>
+              ) : null}
+              <h3 className="text-sm font-semibold tracking-widest text-muted uppercase">
+                {plan.name}
+              </h3>
+              <p className="mt-3 flex items-baseline gap-1">
+                <span className="text-4xl font-semibold tracking-tight text-foreground">
+                  {plan.price}
+                </span>
+                <span className="text-sm text-muted">{plan.period}</span>
+              </p>
+              <p className="mt-4 text-sm leading-6 text-muted">
+                {plan.billing}
+              </p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-6 max-w-md text-xs leading-5 text-muted">
+          Subscriptions are billed through the Apple App Store. See{" "}
+          <a href="/terms" className="font-semibold text-lime hover:underline">
+            Terms of Use
+          </a>{" "}
+          for full auto-renewal and cancellation details.
+        </p>
       </section>
     </>
   );
