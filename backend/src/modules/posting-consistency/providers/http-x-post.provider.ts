@@ -5,7 +5,12 @@ import { AxiosError } from 'axios';
 import { firstValueFrom } from 'rxjs';
 
 import { ApiException } from '../../../common/errors/api.exception';
-import type { XPost, XPostProvider, XProfile } from '../domain/x-post-provider.interface';
+import type {
+  XPost,
+  XPostDetail,
+  XPostProvider,
+  XProfile,
+} from '../domain/x-post-provider.interface';
 
 type ProviderResponse = XProfile | { profile: XProfile };
 
@@ -55,11 +60,17 @@ export class HttpXPostProvider implements XPostProvider {
     }
   }
 
-
   async listPostsSince(_username: string, _since: Date): Promise<XPost[]> {
     throw ApiException.unprocessable(
       'X_PROFILE_PROVIDER_FAILED',
       'The configured X provider does not support post verification',
+    );
+  }
+
+  async listRecentPosts(_username: string): Promise<XPostDetail[]> {
+    throw ApiException.unprocessable(
+      'X_PROFILE_PROVIDER_FAILED',
+      'The configured X provider does not support post history',
     );
   }
 }

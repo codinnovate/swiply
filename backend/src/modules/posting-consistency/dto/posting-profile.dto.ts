@@ -1,7 +1,7 @@
 import { Transform } from 'class-transformer';
 import { IsString, Matches } from 'class-validator';
 
-function normalizeUsername(value: unknown): unknown {
+export function normalizeUsername(value: unknown): unknown {
   if (typeof value !== 'string') return value;
 
   let username = value.trim();
