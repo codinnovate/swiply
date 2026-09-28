@@ -1,6 +1,19 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  type MessageEvent,
+  Param,
+  Post,
+  Put,
+  Query,
+  Sse,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import type { Observable } from 'rxjs';
 
 import { Public } from '../../common/decorators/public.decorator';
 import {
@@ -12,13 +25,16 @@ import {
   UsernameQueryDto,
   CreatePostingChallengeDto,
   PostingChallengesQueryDto,
+  RegisterPushDeviceDto,
   RespondPostingChallengeDto,
+  UnregisterPushDeviceDto,
   XpConfigDto,
 } from './dto/virality.dto';
 import { AdminTokenGuard } from './guards/admin-token.guard';
 import { LeaderboardService } from './services/leaderboard.service';
 import { PostHistoryService } from './services/post-history.service';
 import { PostingChallengesService } from './services/posting-challenges.service';
+import { PushDevicesService } from './services/push-devices.service';
 import { XpConfigService } from './services/xp-config.service';
 // Paused: live X research requires xAI; the current setup uses OpenAI only.
 // import { PostSuggestionsService } from './services/post-suggestions.service';
@@ -30,6 +46,7 @@ export class ViralityController {
     private readonly history: PostHistoryService,
     private readonly leaderboard: LeaderboardService,
     private readonly challenges: PostingChallengesService,
+    private readonly pushDevices: PushDevicesService,
     // private readonly suggestions: PostSuggestionsService,
   ) {}
 
@@ -106,10 +123,41 @@ export class ViralityController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
+  @Sse('challenges/stream')
+  @ApiOperation({
+    summary: 'Server-sent challenge updates for an install',
+    description:
+      'Sends a `challenges` event with the full visible list on connect and whenever one changes (new posts, accept/decline, expiry), and a `ping` every 25 seconds.',
+  })
+  streamChallenges(@Query() query: PostingChallengesQueryDto): Observable<MessageEvent> {
+    return this.challenges.stream(query);
+  }
+
+  @Public()
   @Put('challenges/:id/respond')
   @ApiOperation({ summary: 'Accept or decline a challenge invitation' })
   respondToChallenge(@Param('id') id: string, @Body() dto: RespondPostingChallengeDto) {
     return this.challenges.respond(id, dto);
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @Put('push/devices')
+  @ApiOperation({
+    summary: "Register an install's APNs token for duel alerts",
+    description: 'Alerts go out when a duel rival posts or takes the lead.',
+  })
+  registerPushDevice(@Body() dto: RegisterPushDeviceDto) {
+    return this.pushDevices.register(dto);
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @Delete('push/devices')
+  @ApiOperation({ summary: 'Stop duel alerts for an install' })
+  unregisterPushDevice(@Body() dto: UnregisterPushDeviceDto) {
+    return this.pushDevices.unregister(dto.installId);
   }
 }
 
