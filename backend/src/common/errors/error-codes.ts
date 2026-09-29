@@ -86,6 +86,11 @@ export const ErrorCode = {
 
   // POSTLOCK public X verification
   X_PROFILE_PROVIDER_FAILED: 'X_PROFILE_PROVIDER_FAILED',
+
+  // POSTLOCK virality scoring & leaderboard
+  VIRALITY_SCORING_UNAVAILABLE: 'VIRALITY_SCORING_UNAVAILABLE',
+  VIRALITY_SCORING_FAILED: 'VIRALITY_SCORING_FAILED',
+  LEADERBOARD_USERNAME_CLAIMED: 'LEADERBOARD_USERNAME_CLAIMED',
 } as const;
 
 export type ErrorCodeValue = (typeof ErrorCode)[keyof typeof ErrorCode];

@@ -85,6 +85,17 @@ export const postingConsistencyConfig = registerAs('postingConsistency', () => (
   providerTimeoutMs: parseInt(process.env.POSTING_PROVIDER_TIMEOUT_MS ?? '8000', 10),
 }));
 
+export const viralityConfig = registerAs('virality', () => ({
+  aiProvider: process.env.POSTLOCK_AI_PROVIDER ?? 'openai',
+  // Blank uses the provider's default model.
+  aiModel: process.env.POSTLOCK_AI_MODEL,
+  openaiApiKey: process.env.OPENAI_API_KEY,
+  xaiApiKey: process.env.XAI_API_KEY,
+  adminToken: process.env.POSTLOCK_ADMIN_TOKEN,
+  maxScoresPerSync: parseInt(process.env.POSTLOCK_MAX_SCORES_PER_SYNC ?? '10', 10),
+  jobsEnabled: process.env.POSTLOCK_JOBS_ENABLED !== 'false',
+}));
+
 export const configurations = [
   appConfig,
   databaseConfig,
@@ -94,4 +105,5 @@ export const configurations = [
   storageConfig,
   researchConfig,
   postingConsistencyConfig,
+  viralityConfig,
 ];
