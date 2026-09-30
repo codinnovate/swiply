@@ -4,6 +4,8 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(AppSession.self) private var session
     @Environment(PurchasesService.self) private var purchases
+    @Environment(ViralityStore.self) private var virality
+    @State private var nicheDraft = ""
     @State private var showChangeConfirmation = false
     @State private var showUsernameSetup = false
     @State private var showScheduleSetup = false
@@ -14,6 +16,7 @@ struct SettingsView: View {
             accountSection
             subscriptionSection
             commitmentSection
+            leaderboardSection
             blockingSection
             simulatorSection
             privacySection
@@ -76,6 +79,38 @@ struct SettingsView: View {
                 Button("Change Schedule") { showScheduleSetup = true }
             }
         }
+    }
+
+    private var leaderboardSection: some View {
+        Section {
+            Toggle("Show me on the leaderboard", isOn: Binding(
+                get: { virality.isOptedIn },
+                set: { optedIn in Task { await virality.setOptedIn(optedIn, username: username, timezone: timezone) } }
+            ))
+            .disabled(virality.isUpdatingParticipation)
+            TextField("Your niche, e.g. indie SaaS growth", text: $nicheDraft)
+                .textInputAutocapitalization(.never)
+                .submitLabel(.done)
+                .onSubmit { saveNiche() }
+            if let error = virality.participationError {
+                Text(error).font(.footnote).foregroundStyle(Theme.danger)
+            }
+        } header: {
+            Text("Scoring & leaderboard")
+        } footer: {
+            Text("Your niche helps POSTLOCK judge whether a post fits your lane. You're only ranked publicly if you opt in, and turning this off removes you right away.")
+        }
+        .onAppear { nicheDraft = virality.niche }
+        .onDisappear { saveNiche() }
+    }
+
+    private var username: String { session.profile?.username ?? "" }
+    private var timezone: String { session.commitment?.timezoneIdentifier ?? TimeZone.current.identifier }
+
+    private func saveNiche() {
+        let trimmed = nicheDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed != virality.niche else { return }
+        Task { await virality.setNiche(trimmed, username: username, timezone: timezone) }
     }
 
     private var blockingSection: some View {

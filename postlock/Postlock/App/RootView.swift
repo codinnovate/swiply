@@ -33,29 +33,15 @@ struct MainTabView: View {
             TodayView()
             .tabItem { Label("Today", systemImage: "sun.max") }
 
-            PlaceholderView(
-                title: "History",
-                message: "Your posting history will appear here.",
-                icon: "chart.bar"
-            )
-            .tabItem { Label("History", systemImage: "clock.arrow.circlepath") }
+            HistoryView()
+                .tabItem { Label("History", systemImage: "clock.arrow.circlepath") }
+
+            LeaderboardView()
+                .tabItem { Label("Leaderboard", systemImage: "trophy") }
 
             NavigationStack { SettingsView() }
                 .tabItem { Label("Settings", systemImage: "gearshape") }
         }
         .tint(Theme.accent)
-    }
-}
-
-struct PlaceholderView: View {
-    let title: String
-    let message: String
-    let icon: String
-
-    var body: some View {
-        NavigationStack {
-            ContentUnavailableView(title, systemImage: icon, description: Text(message))
-                .navigationTitle(title)
-        }
     }
 }
