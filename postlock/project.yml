@@ -32,6 +32,8 @@ targets:
       path: Postlock/Resources/Info.plist
       properties:
         CFBundleDisplayName: POSTLOCK
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         UILaunchScreen: {}
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
@@ -73,6 +75,8 @@ targets:
       path: PostlockDeviceActivityMonitor/Info.plist
       properties:
         CFBundleDisplayName: POSTLOCK Deadline Monitor
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.deviceactivity.monitor-extension
           NSExtensionPrincipalClass: "$(PRODUCT_MODULE_NAME).PostlockDeviceActivityMonitor"
