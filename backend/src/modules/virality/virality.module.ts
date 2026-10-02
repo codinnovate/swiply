@@ -20,6 +20,7 @@ import { createViralityLlm, VIRALITY_LLM } from './services/llm-providers';
 import { ViralityScorerService } from './services/virality-scorer.service';
 import { ViralityAdminController, ViralityController } from './virality.controller';
 import { ViralityJobs } from './virality.jobs';
+import { PostSuggestionsService } from './services/post-suggestions.service';
 
 /** POSTLOCK virality scores, pattern insights, and the leaderboard. */
 @Module({
@@ -40,6 +41,7 @@ import { ViralityJobs } from './virality.jobs';
     LeaderboardService,
     AdminTokenGuard,
     ViralityJobs,
+    PostSuggestionsService,
   ],
 })
 export class ViralityModule {}
