@@ -13,6 +13,7 @@ import {
 import { AdminTokenGuard } from './guards/admin-token.guard';
 import { LeaderboardService } from './services/leaderboard.service';
 import { PostHistoryService } from './services/post-history.service';
+import { PostSuggestionsService } from './services/post-suggestions.service';
 
 @ApiTags('postlock-virality')
 @Controller('v1/postlock')
@@ -20,7 +21,16 @@ export class ViralityController {
   constructor(
     private readonly history: PostHistoryService,
     private readonly leaderboard: LeaderboardService,
+    private readonly suggestions: PostSuggestionsService,
   ) {}
+
+  @Public()
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
+  @Post('suggestions')
+  @ApiOperation({ summary: 'Niche-specific post ideas grounded in recent X search sources' })
+  suggest(@Body() dto: SyncHistoryDto) {
+    return this.suggestions.suggest(dto.niche);
+  }
 
   @Public()
   @Throttle({ default: { limit: 6, ttl: 60_000 } })

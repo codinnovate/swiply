@@ -91,6 +91,7 @@ export const viralityConfig = registerAs('virality', () => ({
   aiModel: process.env.POSTLOCK_AI_MODEL,
   openaiApiKey: process.env.OPENAI_API_KEY,
   xaiApiKey: process.env.XAI_API_KEY,
+  researchModel: process.env.POSTLOCK_RESEARCH_MODEL ?? 'grok-4.7',
   adminToken: process.env.POSTLOCK_ADMIN_TOKEN,
   maxScoresPerSync: parseInt(process.env.POSTLOCK_MAX_SCORES_PER_SYNC ?? '10', 10),
   jobsEnabled: process.env.POSTLOCK_JOBS_ENABLED !== 'false',
