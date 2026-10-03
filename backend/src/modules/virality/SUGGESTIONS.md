@@ -1,5 +1,7 @@
 # POSTLOCK post suggestions
 
+Currently disabled: the Home section, controller route, dependency injection and provider registration are commented out while the app uses OpenAI only. The implementation and assets are retained for later. Re-enable those integration points together when live X research is configured.
+
 Additive route: `POST /api/v1/postlock/suggestions`, body `{ "username": "handle", "niche": "product design" }`. Existing history, scoring and leaderboard contracts are unchanged. Returns an unwrapped `{ generatedAt, niche, ideas }` payload like the other POSTLOCK routes. Each idea has `id`, `title`, `topic`, `draft`, `whyNow`, `angle` and `sourceUrls`.
 
 Uses the existing server-side `XAI_API_KEY` and optional `POSTLOCK_RESEARCH_MODEL` (default `grok-4.7`). Calls the xAI Responses API with `x_search`, a last-two-calendar-days date filter, and the existing virality framework incorporated into a new research prompt. It researches niche conversations, not a global trending chart. No guarantee of virality. Source links are retained only when their X post IDs appear in provider citations. Date filters have calendar-day granularity; the prompt asks for the last 48 hours.
