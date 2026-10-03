@@ -20,7 +20,7 @@ import { createViralityLlm, VIRALITY_LLM } from './services/llm-providers';
 import { ViralityScorerService } from './services/virality-scorer.service';
 import { ViralityAdminController, ViralityController } from './virality.controller';
 import { ViralityJobs } from './virality.jobs';
-import { PostSuggestionsService } from './services/post-suggestions.service';
+// import { PostSuggestionsService } from './services/post-suggestions.service';
 
 /** POSTLOCK virality scores, pattern insights, and the leaderboard. */
 @Module({
@@ -41,7 +41,7 @@ import { PostSuggestionsService } from './services/post-suggestions.service';
     LeaderboardService,
     AdminTokenGuard,
     ViralityJobs,
-    PostSuggestionsService,
+    // PostSuggestionsService, // Paused until live X research is available.
   ],
 })
 export class ViralityModule {}
