@@ -55,7 +55,11 @@ interface FxTwitterStatus {
 interface FxTwitterTimelineResponse {
   code: number;
   results?: FxTwitterStatus[];
+  cursor?: { top?: string; bottom?: string };
 }
+
+/** Hard ceiling on timeline pages per call, whatever the caller asks for. */
+const MAX_TIMELINE_PAGES = 20;
 
 /** Public, read-only X profile lookup. No user or developer OAuth is involved. */
 @Injectable()
@@ -116,16 +120,71 @@ export class FxTwitterXPostProvider implements XPostProvider {
       .map(({ id, createdAt, kind }) => ({ id, createdAt, kind }));
   }
 
-  listRecentPosts(username: string): Promise<XPostDetail[]> {
-    return this.fetchTimeline(username);
+  listRecentPosts(username: string, options?: { pages?: number }): Promise<XPostDetail[]> {
+    return this.fetchTimeline(username, undefined, options?.pages);
   }
 
   /**
    * With replies enabled the timeline interleaves other people's posts from the
    * same conversations, so only posts owned by `username` are kept — authored
    * by them, or reposted by them.
+   *
+   * Later pages follow the `bottom` cursor. FxTwitter's pages overlap and
+   * aren't strictly ordered, so posts are de-duplicated by id and paging stops
+   * at the first page that is empty, has no cursor, or adds nothing new.
+   *
+   * The other people's posts are still read for one thing: what they were
+   * replying to, which becomes `parentReplyTo` on the owner's answer.
    */
-  private async fetchTimeline(username: string, since?: Date): Promise<XPostDetail[]> {
+  private async fetchTimeline(username: string, since?: Date, pages = 1): Promise<XPostDetail[]> {
+    const owner = username.toLowerCase();
+    const unique = new Map<string, XPostDetail>();
+    const seen = new Map<string, FxTwitterStatus>();
+    let cursor: string | undefined;
+    for (let page = 0; page < Math.min(Math.max(pages, 1), MAX_TIMELINE_PAGES); page += 1) {
+      let response: FxTwitterTimelineResponse | null;
+      try {
+        response = await this.fetchTimelinePage(username, since, cursor);
+      } catch (error) {
+        // A failed deeper page keeps what earlier pages already returned.
+        if (page === 0) throw error;
+        break;
+      }
+      const before = unique.size;
+      for (const post of response?.results ?? []) {
+        seen.set(post.id, post);
+        const postOwner = (
+          post.reposted_by?.screen_name ?? post.author?.screen_name
+        )?.toLowerCase();
+        if (postOwner !== owner) continue;
+        unique.set(post.id, this.toDetail(post, owner));
+      }
+      const next = response?.cursor?.bottom;
+      if (unique.size === before || !next || next === cursor) break;
+      cursor = next;
+    }
+    return [...unique.values()]
+      .map((post) => {
+        const parent = post.replyToPostId ? seen.get(post.replyToPostId) : undefined;
+        const answering = parent?.replying_to;
+        return answering?.screen_name
+          ? {
+              ...post,
+              parentReplyTo: {
+                username: answering.screen_name.toLowerCase(),
+                postId: answering.status,
+              },
+            }
+          : post;
+      })
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  private async fetchTimelinePage(
+    username: string,
+    since: Date | undefined,
+    cursor: string | undefined,
+  ): Promise<FxTwitterTimelineResponse | null> {
     const baseUrl = this.config.get<string>(
       'postingConsistency.providerBaseUrl',
       'https://api.fxtwitter.com',
@@ -135,6 +194,7 @@ export class FxTwitterXPostProvider implements XPostProvider {
     url.searchParams.set('count', '100');
     url.searchParams.set('with_replies', 'true');
     if (since) url.searchParams.set('since', String(Math.floor(since.getTime() / 1000)));
+    if (cursor) url.searchParams.set('cursor', cursor);
 
     try {
       const response = await firstValueFrom(
@@ -143,19 +203,9 @@ export class FxTwitterXPostProvider implements XPostProvider {
           headers: { Accept: 'application/json', 'User-Agent': 'POSTLOCK/1.0 post-verification' },
         }),
       );
-      if (response.status === 204) return [];
-      const owner = username.toLowerCase();
-      const unique = new Map<string, XPostDetail>();
-      for (const post of response.data.results ?? []) {
-        const postOwner = (
-          post.reposted_by?.screen_name ?? post.author?.screen_name
-        )?.toLowerCase();
-        if (postOwner !== owner) continue;
-        unique.set(post.id, this.toDetail(post, owner));
-      }
-      return [...unique.values()].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      return response.status === 204 ? null : response.data;
     } catch (error) {
-      if (error instanceof AxiosError && error.response?.status === 204) return [];
+      if (error instanceof AxiosError && error.response?.status === 204) return null;
       throw ApiException.unprocessable(
         'X_PROFILE_PROVIDER_FAILED',
         'We could not check public X posts right now. Please try again.',

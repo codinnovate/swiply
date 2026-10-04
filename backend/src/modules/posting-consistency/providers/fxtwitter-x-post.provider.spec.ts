@@ -1,7 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { AxiosResponse } from 'axios';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { FxTwitterXPostProvider } from './fxtwitter-x-post.provider';
 
@@ -109,5 +109,106 @@ describe('FxTwitterXPostProvider', () => {
       replyToPostId: '9',
       hasExternalLink: true,
     });
+  });
+  it('follows the bottom cursor for extra pages, de-duplicating overlapping results', async () => {
+    const page = (ids: string[], bottom?: string) =>
+      of({
+        data: {
+          code: 200,
+          results: ids.map((id) => ({
+            id,
+            created_timestamp: 1_790_000_000 - Number(id),
+            author: { screen_name: 'sam' },
+          })),
+          cursor: bottom ? { bottom } : undefined,
+        },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: { headers: {} },
+      } as AxiosResponse);
+    const get = jest
+      .fn()
+      .mockReturnValueOnce(page(['1', '2'], 'c1'))
+      .mockReturnValueOnce(page(['2', '3'], 'c2'))
+      .mockReturnValueOnce(page(['3'], 'c3'))
+      .mockReturnValueOnce(page(['4']));
+    const config = {
+      get: jest.fn((_key: string, fallback: unknown) => fallback),
+    } as unknown as ConfigService;
+    const provider = new FxTwitterXPostProvider({ get } as unknown as HttpService, config);
+
+    const posts = await provider.listRecentPosts('sam', { pages: 5 });
+
+    // The third page added nothing new, so paging stopped before the fourth.
+    expect(posts.map((post) => post.id)).toEqual(['1', '2', '3']);
+    expect(get).toHaveBeenCalledTimes(3);
+    expect(get.mock.calls[1][0]).toContain('cursor=c1');
+  });
+
+  it('keeps earlier pages when a deeper page fails', async () => {
+    const first = of({
+      data: {
+        code: 200,
+        results: [{ id: '1', created_timestamp: 1_790_000_000, author: { screen_name: 'sam' } }],
+        cursor: { bottom: 'c1' },
+      },
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config: { headers: {} },
+    } as AxiosResponse);
+    const get = jest
+      .fn()
+      .mockReturnValueOnce(first)
+      .mockReturnValueOnce(throwError(() => new Error('timeout')));
+    const config = {
+      get: jest.fn((_key: string, fallback: unknown) => fallback),
+    } as unknown as ConfigService;
+    const provider = new FxTwitterXPostProvider({ get } as unknown as HttpService, config);
+
+    const posts = await provider.listRecentPosts('sam', { pages: 3 });
+    expect(posts.map((post) => post.id)).toEqual(['1']);
+  });
+
+  it("records what a reply's parent was answering, from other people's posts in the timeline", async () => {
+    const at = 1_790_000_000;
+    const get = jest.fn().mockReturnValue(
+      of({
+        data: {
+          code: 200,
+          results: [
+            { id: '1', created_timestamp: at, author: { screen_name: 'sam' } },
+            {
+              id: '2',
+              created_timestamp: at + 60,
+              author: { screen_name: 'ana' },
+              replying_to: { screen_name: 'Sam', status: '1' },
+            },
+            {
+              id: '3',
+              created_timestamp: at + 120,
+              author: { screen_name: 'sam' },
+              replying_to: { screen_name: 'ana', status: '2' },
+            },
+          ],
+        },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: { headers: {} },
+      } as AxiosResponse),
+    );
+    const config = {
+      get: jest.fn((_key: string, fallback: unknown) => fallback),
+    } as unknown as ConfigService;
+    const provider = new FxTwitterXPostProvider({ get } as unknown as HttpService, config);
+
+    const posts = await provider.listRecentPosts('sam');
+
+    // Ana's reply itself isn't returned; it only explains Sam's answer.
+    expect(posts.map((post) => post.id)).toEqual(['3', '1']);
+    expect(posts[0].parentReplyTo).toEqual({ username: 'sam', postId: '1' });
+    expect(posts[1].parentReplyTo).toBeUndefined();
   });
 });
