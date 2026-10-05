@@ -8,14 +8,15 @@ import {
   type XPostProvider,
 } from '../../posting-consistency/domain/x-post-provider.interface';
 import {
-  assignRanks,
   LEADERBOARD_WINDOW,
+  rankByPeriod,
   rankLeaderboard,
   type LeaderboardCandidate,
   type LeaderboardEntry,
 } from '../domain/leaderboard-ranking';
 import type {
   FeaturedAccountDto,
+  LeaderboardBreakdownQueryDto,
   LeaderboardParticipationDto,
   LeaderboardQueryDto,
 } from '../dto/virality.dto';
@@ -23,10 +24,23 @@ import { FeaturedAccount } from '../schemas/featured-account.schema';
 import { LeaderboardParticipant } from '../schemas/leaderboard-participant.schema';
 import { LeaderboardSnapshot } from '../schemas/leaderboard-snapshot.schema';
 import { ScoredPost } from '../schemas/scored-post.schema';
+import { XComment } from '../schemas/x-comment.schema';
+import { levelForXp, type XpConfig } from '../domain/xp';
 import { PostHistoryService } from './post-history.service';
+import { XpService } from './xp.service';
 
 const SNAPSHOTS_KEPT = 5;
 const ENTRIES_RETURNED = 100;
+/**
+ * FxTwitter timeline pages per refresh. An account's first sync backfills as
+ * far as the timeline pages back; later ones only need to cover the gap since
+ * the last refresh, with margin for pages that overlap.
+ */
+const BACKFILL_PAGES = 15;
+const REFRESH_PAGES = 4;
+/** Posts listed in an account's XP breakdown; the totals still cover every post. */
+const BREAKDOWN_POSTS_LIMIT = 100;
+const PERIOD_MS = { day: 86_400_000, week: 7 * 86_400_000, all: Number.POSITIVE_INFINITY };
 
 @Injectable()
 export class LeaderboardService {
@@ -35,25 +49,37 @@ export class LeaderboardService {
 
   constructor(
     @InjectModel(ScoredPost.name) private readonly posts: Model<ScoredPost>,
+    @InjectModel(XComment.name) private readonly comments: Model<XComment>,
     @InjectModel(FeaturedAccount.name) private readonly featured: Model<FeaturedAccount>,
     @InjectModel(LeaderboardParticipant.name)
     private readonly participants: Model<LeaderboardParticipant>,
     @InjectModel(LeaderboardSnapshot.name) private readonly snapshots: Model<LeaderboardSnapshot>,
     @Inject(X_POST_PROVIDER) private readonly provider: XPostProvider,
     private readonly history: PostHistoryService,
+    private readonly xp: XpService,
   ) {}
 
   async getLeaderboard(query: LeaderboardQueryDto) {
-    const snapshot =
-      (await this.snapshots.findOne().sort({ computedAt: -1 }).lean()) ?? (await this.recompute());
+    const xpConfig = await this.xp.config();
+    const snapshot = await this.currentSnapshot(xpConfig);
     const category = query.category ?? 'all';
     const niche = query.niche?.toLowerCase();
+    const period = query.period ?? 'all';
     const filtered = snapshot.entries.filter(
       (entry) =>
         (category === 'all' || (category === 'featured') === (entry.category === 'featured')) &&
         (!niche || entry.niche?.toLowerCase() === niche),
     );
-    const ranked = niche || category !== 'all' ? assignRanks(filtered) : filtered;
+    // Re-ranked for the requested period; the response carries only that
+    // period's activity, so the client only ever reads one set of fields.
+    const ranked = rankByPeriod(filtered, period).map(({ periods, ...entry }) => ({
+      ...entry,
+      level: levelForXp(periods.all.xp, xpConfig).level,
+      xp: periods[period].xp,
+      postsCounted: periods[period].posts,
+      commentsCounted: periods[period].comments,
+      repliesReceived: periods[period].repliesReceived,
+    }));
     const niches = [
       ...new Set(
         snapshot.entries.map((entry) => entry.niche).filter((value): value is string => !!value),
@@ -62,12 +88,88 @@ export class LeaderboardService {
     return {
       computedAt: snapshot.computedAt,
       window: LEADERBOARD_WINDOW,
+      xpRules: this.xp.rules(xpConfig),
       entries: ranked.slice(0, ENTRIES_RETURNED),
       niches,
       me: query.username
         ? (ranked.find((entry) => entry.username === query.username) ?? null)
         : null,
     };
+  }
+
+  /**
+   * How one ranked account's XP for a period adds up: every post in that
+   * period with its engagement and per-signal XP. Computed as of the ranking's
+   * snapshot time, so the total matches the XP the leaderboard ranked on.
+   */
+  async getBreakdown(query: LeaderboardBreakdownQueryDto) {
+    const xpConfig = await this.xp.config();
+    const snapshot = await this.currentSnapshot(xpConfig);
+    const entry = snapshot.entries.find((candidate) => candidate.username === query.username);
+    if (!entry) throw ApiException.notFound('Leaderboard entry', { username: query.username });
+
+    const period = query.period ?? 'day';
+    const now = new Date(snapshot.computedAt);
+    const since = now.getTime() - PERIOD_MS[period];
+    const postedAt = {
+      $lte: now,
+      ...(Number.isFinite(since) ? { $gt: new Date(since) } : {}),
+    };
+    const [xp, posts, totalPosts] = await Promise.all([
+      this.xp.forAccount(entry.username, xpConfig, now),
+      this.posts
+        .find({ username: entry.username, postedAt })
+        .sort({ postedAt: -1 })
+        .limit(BREAKDOWN_POSTS_LIMIT)
+        .select(
+          'postId url kind text threadTexts quotedUsername quotedText postedAt mediaType engagement',
+        )
+        .lean(),
+      this.posts.countDocuments({ username: entry.username, postedAt }),
+    ]);
+    return {
+      computedAt: snapshot.computedAt,
+      period,
+      username: entry.username,
+      displayName: entry.displayName,
+      avatarUrl: entry.avatarUrl ?? null,
+      category: entry.category,
+      level: levelForXp(entry.periods.all.xp, xpConfig).level,
+      xp: entry.periods[period].xp,
+      postsCounted: totalPosts,
+      xpRules: this.xp.rules(xpConfig),
+      posts: posts.map((post) => {
+        const postXp = xp.posts.get(post.postId);
+        return {
+          postId: post.postId,
+          url: post.url,
+          kind: post.kind,
+          text: post.text,
+          threadTexts: post.threadTexts,
+          quotedUsername: post.quotedUsername,
+          quotedText: post.quotedText,
+          postedAt: post.postedAt,
+          mediaType: post.mediaType,
+          engagement: post.engagement,
+          xp: postXp
+            ? {
+                xp: postXp.xp,
+                earnedXp: postXp.earnedXp,
+                penaltyXp: postXp.penaltyXp,
+                breakdown: postXp.breakdown,
+                duplicateOf: postXp.duplicateOf,
+                history: postXp.history,
+              }
+            : null,
+        };
+      }),
+    };
+  }
+
+  /** The newest ranking, rebuilt when it was computed under other XP weights (or none). */
+  private async currentSnapshot(xpConfig: XpConfig) {
+    const latest = await this.snapshots.findOne().sort({ computedAt: -1 }).lean();
+    return latest && latest.xpConfigVersion === xpConfig.version ? latest : this.recompute();
   }
 
   async setParticipation(dto: LeaderboardParticipationDto) {
@@ -111,7 +213,11 @@ export class LeaderboardService {
     );
     // Score what's there now so the user can appear without waiting for the next refresh.
     void this.history
-      .syncAndScore(dto.username, { niche: dto.niche, timezone: dto.timezone })
+      .syncAndScore(
+        dto.username,
+        { niche: dto.niche, timezone: dto.timezone },
+        { pages: existing?.lastSyncedAt ? REFRESH_PAGES : BACKFILL_PAGES },
+      )
       .then(() => this.recompute())
       .catch((error: unknown) =>
         this.logger.warn(`Opt-in sync for @${dto.username} failed: ${String(error)}`),
@@ -179,10 +285,11 @@ export class LeaderboardService {
     ];
     for (const { account, timezone, markSynced } of accounts) {
       try {
-        await this.history.syncAndScore(account.username, {
-          niche: account.niche ?? undefined,
-          timezone,
-        });
+        await this.history.syncAndScore(
+          account.username,
+          { niche: account.niche ?? undefined, timezone },
+          { pages: account.lastSyncedAt ? REFRESH_PAGES : BACKFILL_PAGES },
+        );
         await markSynced();
       } catch (error) {
         this.logger.warn(`Leaderboard refresh for @${account.username} failed: ${String(error)}`);
@@ -206,25 +313,43 @@ export class LeaderboardService {
       candidates.set(account.username, { ...this.candidateBase(account), category: 'featured' });
     }
 
-    const cutoff = new Date(Date.now() - LEADERBOARD_WINDOW.days * 86_400_000);
-    const posts = await this.posts
-      .find({
-        username: { $in: [...candidates.keys()] },
-        scoreStatus: 'scored',
-        postedAt: { $gte: cutoff },
-      })
-      .select('username postedAt score.total_score engagement.replies')
-      .lean();
+    // Not gated on scoreStatus: XP is earned from engagement, and a post
+    // counts the moment it's ingested, whether or not it has been (or ever
+    // gets) scored. No date cutoff — "all time" is everything recorded.
+    const usernames = [...candidates.keys()];
+    const xpConfig = await this.xp.config();
+    // One clock for the whole ranking, stored as computedAt, so a breakdown
+    // recomputed "as of" the snapshot reproduces its XP exactly.
+    const now = new Date();
+    const [posts, comments, xp] = await Promise.all([
+      this.posts
+        .find({ username: { $in: usernames } })
+        .select('postId username postedAt score.total_score engagement.replies')
+        .lean(),
+      this.comments
+        .find({ username: { $in: usernames } })
+        .select('username postedAt')
+        .lean(),
+      this.xp.forAccounts(usernames, xpConfig, now),
+    ]);
+    for (const comment of comments) {
+      candidates.get(comment.username)?.comments.push({ postedAt: comment.postedAt });
+    }
     for (const post of posts) {
       candidates.get(post.username)?.posts.push({
         postedAt: post.postedAt,
         totalScore: post.score?.total_score ?? 0,
         replies: post.engagement?.replies ?? 0,
+        xp: xp.get(post.username)?.posts.get(post.postId)?.xp ?? 0,
       });
     }
 
-    const entries: LeaderboardEntry[] = rankLeaderboard([...candidates.values()]);
-    const snapshot = await this.snapshots.create({ computedAt: new Date(), entries });
+    const entries: LeaderboardEntry[] = rankLeaderboard([...candidates.values()], now);
+    const snapshot = await this.snapshots.create({
+      computedAt: now,
+      entries,
+      xpConfigVersion: xpConfig.version,
+    });
     const stale = await this.snapshots
       .find()
       .sort({ computedAt: -1 })
@@ -249,6 +374,7 @@ export class LeaderboardService {
       avatarUrl: account.avatarUrl ?? undefined,
       niche: account.niche ?? undefined,
       posts: [] as LeaderboardCandidate['posts'],
+      comments: [] as LeaderboardCandidate['comments'],
     };
   }
 }

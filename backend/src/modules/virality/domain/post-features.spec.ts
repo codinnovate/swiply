@@ -2,6 +2,7 @@ import type { XPostDetail } from '../../posting-consistency/domain/x-post-provid
 import {
   buildScoreablePosts,
   buildScoringInput,
+  conversationSignals,
   highActivityWindows,
   topicLabel,
 } from './post-features';
@@ -129,5 +130,58 @@ describe('topicLabel', () => {
   it('uses the first non-empty line, truncated', () => {
     expect(topicLabel('\nPricing lessons\nmore')).toBe('Pricing lessons');
     expect(topicLabel('x'.repeat(100))).toHaveLength(80);
+  });
+});
+
+describe('conversationSignals', () => {
+  const at = (minute: number) => new Date(Date.UTC(2026, 8, 20, 12, minute));
+
+  it("counts the author's direct replies and whom they replied back to, per thread start", () => {
+    const signals = conversationSignals(
+      [
+        post({ id: '1', text: 'part one' }),
+        post({ id: '2', kind: 'reply', replyToUsername: 'sam', replyToPostId: '1' }),
+        // Answering Ana, who replied to the thread's second part.
+        post({
+          id: '10',
+          kind: 'reply',
+          replyToUsername: 'ana',
+          replyToPostId: '9',
+          parentReplyTo: { username: 'sam', postId: '2' },
+          createdAt: at(30),
+        }),
+        // A second answer to Ana on the same post keeps the first time.
+        post({
+          id: '12',
+          kind: 'reply',
+          replyToUsername: 'ana',
+          replyToPostId: '11',
+          parentReplyTo: { username: 'sam', postId: '1' },
+          createdAt: at(45),
+        }),
+        // Answering Bo, who replied to an older post not in this timeline.
+        post({
+          id: '14',
+          kind: 'reply',
+          replyToUsername: 'bo',
+          replyToPostId: '13',
+          parentReplyTo: { username: 'sam', postId: 'old' },
+          createdAt: at(50),
+        }),
+        // A comment on someone else's post, not a reply-back.
+        post({
+          id: '16',
+          kind: 'reply',
+          replyToUsername: 'cy',
+          replyToPostId: '15',
+          parentReplyTo: { username: 'dee', postId: '99' },
+        }),
+      ],
+      'sam',
+    );
+
+    expect(signals.get('1')).toEqual({ authorDirectReplies: 1, authorReplies: { ana: at(30) } });
+    expect(signals.get('old')).toEqual({ authorDirectReplies: 0, authorReplies: { bo: at(50) } });
+    expect(signals.size).toBe(2);
   });
 });

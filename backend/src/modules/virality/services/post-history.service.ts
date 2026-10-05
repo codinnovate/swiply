@@ -6,14 +6,17 @@ import type { AnyBulkWriteOperation, Model } from 'mongoose';
 import { ApiException } from '../../../common/errors/api.exception';
 import {
   X_POST_PROVIDER,
+  type XPostDetail,
   type XPostProvider,
 } from '../../posting-consistency/domain/x-post-provider.interface';
 import { buildInsights, type InsightsResult } from '../domain/insights';
 import {
   buildScoreablePosts,
   buildScoringInput,
+  conversationSignals,
   highActivityWindows,
   topicLabel,
+  type ConversationSignals,
   type ScoreablePost,
 } from '../domain/post-features';
 import { SCORING_PROMPT_VERSION } from '../domain/prompts';
@@ -23,11 +26,18 @@ import {
   type EngagementReading,
   type ScoredPostDocument,
 } from '../schemas/scored-post.schema';
+import { XComment } from '../schemas/x-comment.schema';
 import { ViralityScorerService } from './virality-scorer.service';
+import { XpService } from './xp.service';
 
 export interface ScoringOptions {
   niche?: string;
   timezone?: string;
+}
+
+export interface IngestOptions {
+  /** Timeline pages to pull; more reaches further back. */
+  pages?: number;
 }
 
 const HOUR = 3_600_000;
@@ -49,8 +59,10 @@ export class PostHistoryService {
 
   constructor(
     @InjectModel(ScoredPost.name) private readonly posts: Model<ScoredPost>,
+    @InjectModel(XComment.name) private readonly comments: Model<XComment>,
     @Inject(X_POST_PROVIDER) private readonly provider: XPostProvider,
     private readonly scorer: ViralityScorerService,
+    private readonly xp: XpService,
     config: ConfigService,
   ) {
     this.maxScoresPerSync = config.get<number>('virality.maxScoresPerSync', 10);
@@ -64,15 +76,21 @@ export class PostHistoryService {
   }
 
   /** Pulls and scores to completion — for scheduled leaderboard refreshes. */
-  async syncAndScore(username: string, options: ScoringOptions): Promise<void> {
-    await this.ingest(username);
+  async syncAndScore(
+    username: string,
+    options: ScoringOptions,
+    ingestOptions: IngestOptions = {},
+  ): Promise<void> {
+    await this.ingest(username, ingestOptions);
     await this.runScoring(username, options);
   }
 
   async getHistory(username: string) {
-    const [posts, scored] = await Promise.all([
+    const xpConfig = await this.xp.config();
+    const [posts, scored, xp] = await Promise.all([
       this.posts.find({ username }).sort({ postedAt: -1 }).limit(HISTORY_LIMIT).lean(),
       this.posts.find({ username, scoreStatus: 'scored' }).sort({ postedAt: -1 }).limit(100).lean(),
+      this.xp.forAccount(username, xpConfig),
     ]);
     const insights: InsightsResult = buildInsights(
       scored.map((post) => ({ ...post, score: post.score as ViralityScore })),
@@ -101,8 +119,11 @@ export class PostHistoryService {
         scoreStatus: post.scoreStatus,
         score: post.score,
         scoredAt: post.scoredAt,
+        xp: xp.posts.get(post.postId) ?? null,
       })),
       insights,
+      xp: xp.account,
+      xpRules: this.xp.rules(xpConfig),
     };
   }
 
@@ -124,9 +145,20 @@ export class PostHistoryService {
     return { variants };
   }
 
-  /** Upserts the account's recent posts and refreshes their public metrics. */
-  async ingest(username: string): Promise<ScoreablePost[]> {
-    const scoreable = buildScoreablePosts(await this.provider.listRecentPosts(username), username);
+  /**
+   * Upserts the account's recent posts and refreshes their public metrics, and
+   * records the replies it left on other people's posts (its comments).
+   */
+  async ingest(username: string, options: IngestOptions = {}): Promise<ScoreablePost[]> {
+    const timeline = await this.provider.listRecentPosts(username, { pages: options.pages });
+    await this.recordComments(username, timeline);
+    const scoreable = buildScoreablePosts(timeline, username);
+    const conversations = conversationSignals(timeline, username);
+    const inTimeline = new Set(scoreable.map((post) => post.postId));
+    await this.recordConversations(
+      username,
+      new Map([...conversations].filter(([postId]) => !inTimeline.has(postId))),
+    );
     if (scoreable.length === 0) return scoreable;
 
     const existing = new Map(
@@ -168,6 +200,7 @@ export class PostHistoryService {
               engagement: reading,
               ...(milestone ? { [`engagementSnapshots.${milestone.key}`]: reading } : {}),
             },
+            ...this.conversationUpdate(conversations.get(post.postId)),
             $setOnInsert: { scoreStatus: 'pending', scoreAttempts: 0, score: null },
           },
           upsert: true,
@@ -176,6 +209,59 @@ export class PostHistoryService {
     });
     await this.posts.bulkWrite(operations, { ordered: false });
     return scoreable;
+  }
+
+  /**
+   * Conversation evidence only accumulates: a reply-back stays counted after
+   * it scrolls off the timeline pages a sync reads.
+   */
+  private conversationUpdate(signals: ConversationSignals | undefined) {
+    if (!signals) return {};
+    const answered = Object.entries(signals.authorReplies).map(([replier, at]) => [
+      `authorReplies.${replier}`,
+      at,
+    ]);
+    return {
+      $max: { authorDirectReplies: signals.authorDirectReplies },
+      ...(answered.length > 0 ? { $min: Object.fromEntries(answered) } : {}),
+    };
+  }
+
+  /** Reply-backs landing on posts that are stored but no longer in the timeline. */
+  private async recordConversations(
+    username: string,
+    conversations: Map<string, ConversationSignals>,
+  ): Promise<void> {
+    if (conversations.size === 0) return;
+    await this.posts.bulkWrite(
+      [...conversations].map(([postId, signals]) => ({
+        updateOne: {
+          filter: { postId, username: username.toLowerCase() },
+          update: this.conversationUpdate(signals),
+        },
+      })),
+      { ordered: false },
+    );
+  }
+
+  /** Replies to other accounts only — replies to itself are thread continuations. */
+  private async recordComments(username: string, timeline: XPostDetail[]): Promise<void> {
+    const owner = username.toLowerCase();
+    const comments = timeline.filter(
+      (post) =>
+        post.kind === 'reply' && post.authorUsername === owner && post.replyToUsername !== owner,
+    );
+    if (comments.length === 0) return;
+    await this.comments.bulkWrite(
+      comments.map((comment) => ({
+        updateOne: {
+          filter: { postId: comment.id },
+          update: { $set: { username: owner, postedAt: comment.createdAt } },
+          upsert: true,
+        },
+      })),
+      { ordered: false },
+    );
   }
 
   private scoreInBackground(username: string, options: ScoringOptions): void {

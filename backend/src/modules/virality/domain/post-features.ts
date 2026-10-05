@@ -38,20 +38,13 @@ export interface ScoreablePost {
  */
 export function buildScoreablePosts(posts: XPostDetail[], username: string): ScoreablePost[] {
   const owner = username.toLowerCase();
-  const byId = new Map(posts.map((post) => [post.id, post]));
-  const isSelfReply = (post: XPostDetail) =>
-    post.kind === 'reply' && post.replyToUsername === owner;
+  const rootOf = threadRoots(posts, owner);
 
   const continuations = new Map<string, XPostDetail[]>();
-  for (const post of posts.filter(isSelfReply)) {
-    let root: XPostDetail | undefined = post;
-    const visited = new Set<string>();
-    while (root && isSelfReply(root) && root.replyToPostId && !visited.has(root.id)) {
-      visited.add(root.id);
-      root = byId.get(root.replyToPostId);
-    }
-    if (!root || isSelfReply(root)) continue;
-    continuations.set(root.id, [...(continuations.get(root.id) ?? []), post]);
+  for (const post of posts) {
+    const root = rootOf.get(post.id);
+    if (!root || root === post.id) continue;
+    continuations.set(root, [...(continuations.get(root) ?? []), post]);
   }
 
   return posts
@@ -89,6 +82,77 @@ export function buildScoreablePosts(posts: XPostDetail[], username: string): Sco
       };
       return { ...scoreable, contentHash: contentHash(scoreable) };
     });
+}
+
+/**
+ * Maps each of the owner's posts that starts or continues a thread to the id
+ * of the post that starts it. Self-replies whose start isn't in the timeline
+ * are left out.
+ */
+function threadRoots(posts: XPostDetail[], owner: string): Map<string, string> {
+  const byId = new Map(posts.map((post) => [post.id, post]));
+  const isSelfReply = (post: XPostDetail) =>
+    post.kind === 'reply' && post.replyToUsername === owner;
+  const roots = new Map<string, string>();
+  for (const post of posts) {
+    if (post.authorUsername !== owner || post.kind === 'repost') continue;
+    let root: XPostDetail | undefined = post;
+    const visited = new Set<string>();
+    while (root && isSelfReply(root) && root.replyToPostId && !visited.has(root.id)) {
+      visited.add(root.id);
+      root = byId.get(root.replyToPostId);
+    }
+    if (root && !isSelfReply(root) && root.kind !== 'reply') roots.set(post.id, root.id);
+  }
+  return roots;
+}
+
+export interface ConversationSignals {
+  /** The author's own replies directly under the post (a thread's next part). */
+  authorDirectReplies: number;
+  /** Replier handle → when the author first replied back to them. */
+  authorReplies: Record<string, Date>;
+}
+
+/**
+ * The author's side of each post's conversation, keyed by the id of the post
+ * that starts it: how many replies X counts on the post are the author's own,
+ * and whom the author replied back to. A reply-back is the author answering a
+ * post that was itself a reply to one of the author's posts (or thread parts).
+ * The post it lands on may be older than this timeline, so keys aren't
+ * guaranteed to be in it.
+ */
+export function conversationSignals(
+  posts: XPostDetail[],
+  username: string,
+): Map<string, ConversationSignals> {
+  const owner = username.toLowerCase();
+  const rootOf = threadRoots(posts, owner);
+  const signals = new Map<string, ConversationSignals>();
+  const entry = (rootId: string) => {
+    const existing = signals.get(rootId);
+    if (existing) return existing;
+    const created: ConversationSignals = { authorDirectReplies: 0, authorReplies: {} };
+    signals.set(rootId, created);
+    return created;
+  };
+
+  for (const post of posts) {
+    if (post.kind !== 'reply' || post.authorUsername !== owner || !post.replyToPostId) continue;
+    if (post.replyToUsername === owner) {
+      if (rootOf.get(post.replyToPostId) === post.replyToPostId) {
+        entry(post.replyToPostId).authorDirectReplies += 1;
+      }
+      continue;
+    }
+    const answered = post.parentReplyTo;
+    if (!post.replyToUsername || answered?.username !== owner || !answered.postId) continue;
+    const rootId = rootOf.get(answered.postId) ?? answered.postId;
+    const replies = entry(rootId).authorReplies;
+    const previous = replies[post.replyToUsername];
+    if (!previous || post.createdAt < previous) replies[post.replyToUsername] = post.createdAt;
+  }
+  return signals;
 }
 
 /** Changes whenever anything the scorer sees changes, e.g. a thread grows. */
