@@ -14,10 +14,16 @@ import {
   LeaderboardSnapshotSchema,
 } from './schemas/leaderboard-snapshot.schema';
 import { ScoredPost, ScoredPostSchema } from './schemas/scored-post.schema';
+import { XComment, XCommentSchema } from './schemas/x-comment.schema';
+import { PostingChallenge, PostingChallengeSchema } from './schemas/posting-challenge.schema';
+import { XpSettings, XpSettingsSchema } from './schemas/xp-settings.schema';
 import { LeaderboardService } from './services/leaderboard.service';
 import { PostHistoryService } from './services/post-history.service';
 import { createViralityLlm, VIRALITY_LLM } from './services/llm-providers';
 import { ViralityScorerService } from './services/virality-scorer.service';
+import { PostingChallengesService } from './services/posting-challenges.service';
+import { XpConfigService } from './services/xp-config.service';
+import { XpService } from './services/xp.service';
 import { ViralityAdminController, ViralityController } from './virality.controller';
 import { ViralityJobs } from './virality.jobs';
 // import { PostSuggestionsService } from './services/post-suggestions.service';
@@ -28,17 +34,23 @@ import { ViralityJobs } from './virality.jobs';
     PostingConsistencyModule,
     MongooseModule.forFeature([
       { name: ScoredPost.name, schema: ScoredPostSchema },
+      { name: PostingChallenge.name, schema: PostingChallengeSchema },
       { name: FeaturedAccount.name, schema: FeaturedAccountSchema },
       { name: LeaderboardParticipant.name, schema: LeaderboardParticipantSchema },
       { name: LeaderboardSnapshot.name, schema: LeaderboardSnapshotSchema },
+      { name: XComment.name, schema: XCommentSchema },
+      { name: XpSettings.name, schema: XpSettingsSchema },
     ]),
   ],
   controllers: [ViralityController, ViralityAdminController],
   providers: [
     { provide: VIRALITY_LLM, inject: [ConfigService], useFactory: createViralityLlm },
     ViralityScorerService,
+    XpConfigService,
+    XpService,
     PostHistoryService,
     LeaderboardService,
+    PostingChallengesService,
     AdminTokenGuard,
     ViralityJobs,
     // PostSuggestionsService, // Paused until live X research is available.

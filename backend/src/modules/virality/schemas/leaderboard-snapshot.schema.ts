@@ -8,6 +8,8 @@ import type { LeaderboardEntry } from '../domain/leaderboard-ranking';
 export class LeaderboardSnapshot {
   @Prop({ required: true, index: true }) computedAt: Date;
   @Prop({ type: SchemaTypes.Mixed, required: true }) entries: LeaderboardEntry[];
+  /** The XP config the entries were computed with; a retune invalidates them. */
+  @Prop({ type: Number }) xpConfigVersion?: number;
 }
 export type LeaderboardSnapshotDocument = HydratedDocument<LeaderboardSnapshot>;
 export const LeaderboardSnapshotSchema = SchemaFactory.createForClass(LeaderboardSnapshot);

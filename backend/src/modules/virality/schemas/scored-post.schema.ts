@@ -40,6 +40,15 @@ export class ScoredPost {
   @Prop({ type: SchemaTypes.Mixed, default: {} })
   engagementSnapshots: Partial<Record<'h1' | 'h24' | 'd7', EngagementReading>>;
 
+  /**
+   * The author's side of the conversation, for XP. No defaults: ingest only
+   * ever raises these with $max/$min, which a default on insert would clash with.
+   */
+  /** The author's own replies directly under the post, which X counts as replies. */
+  @Prop({ type: Number }) authorDirectReplies?: number;
+  /** Replier handle → when the author first replied back to them on this post. */
+  @Prop({ type: SchemaTypes.Mixed }) authorReplies?: Record<string, Date>;
+
   @Prop({ type: String, enum: ['pending', 'scored', 'failed'], default: 'pending' })
   scoreStatus: 'pending' | 'scored' | 'failed';
   @Prop({ type: SchemaTypes.Mixed, default: null }) score: ViralityScore | null;
