@@ -107,6 +107,24 @@ export default function TermsPage() {
 
         <div>
           <h2 className="mb-2 text-base font-semibold text-foreground">
+            Leaderboard and challenges
+          </h2>
+          <p>
+            Joining the leaderboard is optional and makes your X display
+            name, @username, profile photo, level, XP, and rank visible to
+            other POSTLOCK users. You can leave at any time in Settings.
+            Challenges are meant to be friendly. Do not use them to harass,
+            spam, or impersonate anyone, and do not try to inflate your XP
+            or challenge score through fake engagement, coordinated
+            engagement groups, automated accounts, or by deleting and
+            reposting the same content. We may adjust scores, remove
+            leaderboard entries, or end challenges that we reasonably
+            believe break these rules.
+          </p>
+        </div>
+
+        <div>
+          <h2 className="mb-2 text-base font-semibold text-foreground">
             Dependence on X and Apple Screen Time
           </h2>
           <p>
@@ -136,6 +154,15 @@ export default function TermsPage() {
             POSTLOCK does not promise or guarantee follower growth,
             engagement, revenue, virality, or any other business or
             personal result from using the app.
+          </p>
+          <p className="mt-3">
+            Post scores, insights, rewrite suggestions, and post ideas are
+            generated with the help of AI and are estimates, not
+            predictions of how a post will perform on X. XP and levels are
+            calculated from public engagement data available to POSTLOCK
+            and do not reflect X&apos;s own ranking or any metric published
+            by X. Scores, XP weights, and levels may change as we improve
+            the app. You are responsible for anything you choose to post.
           </p>
         </div>
 
@@ -169,8 +196,9 @@ export default function TermsPage() {
             Third-party services
           </h2>
           <p>
-            POSTLOCK relies on third-party services, including X and
-            Apple&apos;s operating system frameworks, and is hosted on
+            POSTLOCK relies on third-party services, including X,
+            FxTwitter, OpenAI, RevenueCat, and Apple&apos;s operating system
+            frameworks, and is hosted on
             third-party infrastructure. We are not responsible for the
             availability or conduct of those third-party services.
           </p>
@@ -240,7 +268,7 @@ export default function TermsPage() {
             License Agreement also applies:{" "}
             <a
               href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
-              className="font-semibold text-lime hover:underline"
+              className="font-semibold text-accent hover:underline"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -257,7 +285,7 @@ export default function TermsPage() {
             Questions about these Terms can be sent to{" "}
             <a
               href={`mailto:${SUPPORT_EMAIL}`}
-              className="font-semibold text-lime hover:underline"
+              className="font-semibold text-accent hover:underline"
             >
               {SUPPORT_EMAIL}
             </a>

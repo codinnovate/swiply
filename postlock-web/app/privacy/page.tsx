@@ -5,7 +5,7 @@ import { LAST_UPDATED, OWNER_NAME, SUPPORT_EMAIL } from "../lib/site";
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
-    "How POSTLOCK handles your public X username, posting schedule, and Screen Time permissions.",
+    "How POSTLOCK handles your public X username and posts, post scores, leaderboard and challenge data, and Screen Time permissions.",
 };
 
 export default function PrivacyPage() {
@@ -54,6 +54,106 @@ export default function PrivacyPage() {
               follow, or send messages on your behalf, and cannot access
               anything that isn&apos;t already publicly visible on X.
             </p>
+            <p className="mt-3">
+              Public posts are fetched through FxTwitter, a third-party
+              service that returns publicly visible X data; POSTLOCK does
+              not use the X API. To score your posts and calculate XP, our
+              backend stores details of your public posts: the post text
+              (including thread and quoted-post text), when it was posted,
+              media type, links and hashtags, and public engagement counts
+              such as replies, reposts, likes, and views. It also records
+              the IDs and times of replies you post on other people&apos;s
+              public posts, which count toward your XP. Your public display
+              name and profile photo URL are stored so they can be shown in
+              the app.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="mb-2 text-base font-semibold text-foreground">
+              Post scores, insights, and AI processing
+            </h2>
+            <p>
+              POSTLOCK scores each post out of 100, generates insights, and
+              can suggest rewritten versions of a post or post ideas for a
+              niche you choose. To do this, our backend sends the text of
+              your public posts (and, for post ideas, your chosen niche) to
+              a third-party AI model provider, currently OpenAI, and stores
+              the resulting scores and insights with your post history. We
+              send only the post content and details needed for scoring,
+              not your device information or Screen Time data. AI-generated
+              scores, insights, and suggestions are estimates and may be
+              inaccurate.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="mb-2 text-base font-semibold text-foreground">
+              Leaderboard (optional)
+            </h2>
+            <p>
+              The leaderboard is off until you choose to join it. When you
+              join, your X display name, @username, profile photo, level,
+              XP, and rank become visible to other POSTLOCK users. We also
+              store your chosen niche and timezone to group and time the
+              rankings. You can leave the leaderboard at any time in
+              Settings, which removes you from the rankings shown to other
+              users. To also delete the stored record, contact us as
+              described in{" "}
+              <a
+                href="#privacy-choices"
+                className="font-semibold text-accent hover:underline"
+              >
+                Privacy choices
+              </a>
+              .
+            </p>
+          </div>
+
+          <div>
+            <h2 className="mb-2 text-base font-semibold text-foreground">
+              Challenges
+            </h2>
+            <p>
+              You can challenge any public X account to a 24-hour or 7-day
+              posting duel. When you start a challenge, our backend stores
+              both usernames, public display names, and profile photo URLs,
+              the challenge duration and status, and a count of each
+              side&apos;s qualifying public posts during the challenge.
+              Both participants can see each other&apos;s public name,
+              photo, and score. If the other person uses POSTLOCK, they can
+              accept or decline. Profile photos for active challenges are
+              saved on your device so the challenge can appear in a Live
+              Activity on your Lock Screen.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="mb-2 text-base font-semibold text-foreground">
+              Install identifier
+            </h2>
+            <p>
+              The app creates a random install ID and sends it to our
+              backend when you join or leave the leaderboard or take part
+              in a challenge. It is used only to confirm that requests to
+              change your leaderboard entry or respond to a challenge come
+              from the same install. It is not an advertising identifier and is
+              not used to track you across other apps or websites.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="mb-2 text-base font-semibold text-foreground">
+              Notifications and Live Activities
+            </h2>
+            <p>
+              If you allow notifications, POSTLOCK schedules deadline
+              reminders on your device. These are local notifications: we
+              do not collect a push notification token. Challenge Live
+              Activities are also created and updated on your device. You
+              can turn either off at any time in iOS Settings or in
+              POSTLOCK&apos;s Settings.
+            </p>
           </div>
 
           <div>
@@ -94,7 +194,7 @@ export default function PrivacyPage() {
             </h2>
             <p>
               The POSTLOCK iOS app does not include any third-party
-              analytics or crash-reporting SDKs. Our backend, like most web
+              analytics, advertising, or crash-reporting SDKs. Our backend, like most web
               servers, generates standard server logs (such as request
               timestamps and IP address) as part of normal operation; these
               are used only to operate and secure the service.
@@ -106,9 +206,10 @@ export default function PrivacyPage() {
               Infrastructure
             </h2>
             <p>
-              The POSTLOCK backend is hosted on Railway. We do not use
-              third-party analytics, advertising, or tracking services in
-              the app.
+              The POSTLOCK backend is hosted on Railway, and its database on
+              MongoDB Atlas.
+              We do not use third-party analytics, advertising, or tracking
+              services in the app.
             </p>
           </div>
 
@@ -119,9 +220,13 @@ export default function PrivacyPage() {
             <p>
               POSTLOCK offers optional paid subscriptions. All payments are
               processed by Apple through the App Store; we do not receive
-              or store your payment card details. Apple&apos;s handling of
-              your payment information is governed by Apple&apos;s own
-              privacy policy, not this one.
+              or store your payment card details. The app uses RevenueCat
+              to check your subscription status. RevenueCat receives an
+              anonymous app user ID, your App Store purchase and
+              subscription history, and basic device details such as iOS
+              version and region. It does not receive your X username.
+              Apple&apos;s and RevenueCat&apos;s handling of this
+              information is governed by their own privacy policies.
             </p>
           </div>
 
@@ -133,7 +238,10 @@ export default function PrivacyPage() {
               We process this information solely to operate POSTLOCK: to
               set up your posting plan, to check your public posting
               activity against your goal, to determine whether to shield
-              other apps, and to keep the service secure and reliable.
+              other apps, to score your posts and calculate XP, to run the
+              leaderboard and challenges you choose to take part in, to
+              send the reminders you turn on, and to keep the service
+              secure and reliable.
             </p>
           </div>
 
@@ -142,12 +250,24 @@ export default function PrivacyPage() {
               Data sharing
             </h2>
             <p>
-              We do not sell your information. We do not share your X
-              username, posting schedule, or verification data with third
-              parties, except with infrastructure providers (such as our
-              hosting provider) strictly to operate the service, or where
-              required by law.
+              We do not sell your information and do not share it for
+              advertising. We share information only:
             </p>
+            <ul className="mt-3 list-inside list-disc space-y-2">
+              <li>
+                With service providers that help us run POSTLOCK, strictly
+                to operate the service: Railway (hosting), MongoDB Atlas
+                (database),
+                FxTwitter (fetching public X data), OpenAI (post scoring,
+                insights, and suggestions), and RevenueCat (subscription
+                status).
+              </li>
+              <li>
+                With other POSTLOCK users, when you join the leaderboard or
+                take part in a challenge, as described above.
+              </li>
+              <li>Where required by law.</li>
+            </ul>
           </div>
 
           <div>
@@ -155,13 +275,15 @@ export default function PrivacyPage() {
               Data retention
             </h2>
             <p>
-              We retain your username, posting plan, and verification
-              history on our backend for as long as your POSTLOCK setup is
-              active, so the app can continue checking your progress. You
+              We retain your username, posting plan, verification history,
+              scored posts, XP, leaderboard record, and challenge history
+              on our backend for as long as your POSTLOCK setup is active,
+              so the app can continue checking your progress and showing
+              your history. You
               can request deletion at any time &mdash; see{" "}
               <a
                 href="#privacy-choices"
-                className="font-semibold text-lime hover:underline"
+                className="font-semibold text-accent hover:underline"
               >
                 Privacy choices
               </a>
@@ -191,7 +313,7 @@ export default function PrivacyPage() {
               access through iOS. See{" "}
               <a
                 href="#privacy-choices"
-                className="font-semibold text-lime hover:underline"
+                className="font-semibold text-accent hover:underline"
               >
                 Privacy choices
               </a>{" "}
@@ -241,7 +363,7 @@ export default function PrivacyPage() {
               Questions about this policy can be sent to{" "}
               <a
                 href={`mailto:${SUPPORT_EMAIL}`}
-                className="font-semibold text-lime hover:underline"
+                className="font-semibold text-accent hover:underline"
               >
                 {SUPPORT_EMAIL}
               </a>
@@ -276,7 +398,7 @@ export default function PrivacyPage() {
                 supplied, by emailing{" "}
                 <a
                   href={`mailto:${SUPPORT_EMAIL}`}
-                  className="font-semibold text-lime hover:underline"
+                  className="font-semibold text-accent hover:underline"
                 >
                   {SUPPORT_EMAIL}
                 </a>
@@ -284,8 +406,20 @@ export default function PrivacyPage() {
               </li>
               <li>
                 Request correction or deletion of any server-held
-                information tied to your username by emailing the same
-                address.
+                information tied to your username, including scored posts,
+                XP, leaderboard records, and challenges, by emailing the
+                same address. If someone challenged your public X account
+                and you don&apos;t use POSTLOCK, you can ask us to delete
+                that challenge the same way.
+              </li>
+              <li>
+                Leave the leaderboard at any time in POSTLOCK&apos;s
+                Settings.
+              </li>
+              <li>
+                Decline challenges you receive, and turn reminders off in
+                POSTLOCK&apos;s Settings or iOS Settings &rarr;
+                Notifications.
               </li>
               <li>
                 Revoke Screen Time access at any time in iOS Settings &rarr;

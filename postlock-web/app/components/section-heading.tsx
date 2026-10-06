@@ -10,7 +10,7 @@ export function SectionHeading({
   return (
     <div className="mb-8">
       {eyebrow ? (
-        <p className="mb-2 text-xs font-semibold tracking-[0.2em] text-lime uppercase">
+        <p className="mb-2 text-xs font-semibold tracking-[0.2em] text-accent uppercase">
           {eyebrow}
         </p>
       ) : null}
