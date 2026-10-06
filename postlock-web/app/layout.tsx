@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const siteUrl = "https://postlock.up.railway.app";
+const siteUrl = "https://postlock-app.up.railway.app";
 const description =
-  "POSTLOCK is an iOS app that helps you keep a consistent posting habit on X. Set a posting goal and schedule, and POSTLOCK helps you stay focused on X when you miss a deadline.";
+  "POSTLOCK is an iOS app that helps you grow on X by posting consistently. Set daily posting goals, see scores and XP for every post, climb an opt-in creator leaderboard, and challenge other creators to posting duels.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  themeColor: "#0a0a0a",
+  themeColor: "#0d0e14",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -91,7 +91,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               {APP_STORE_URL ? (
                 <a
                   href={APP_STORE_URL}
-                  className="hidden h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-lime px-5 text-sm font-semibold text-lime-foreground transition-opacity hover:opacity-90 sm:inline-flex"
+                  className="hidden h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-accent px-5 text-sm font-semibold text-accent-foreground transition-opacity hover:opacity-90 sm:inline-flex"
                 >
                   Download on the App Store
                 </a>
