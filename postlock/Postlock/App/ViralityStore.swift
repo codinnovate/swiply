@@ -17,6 +17,10 @@ final class ViralityStore {
     private(set) var niche: String
     private(set) var isUpdatingParticipation = false
     private(set) var participationError: String?
+    private(set) var challenges: [PostingChallenge] = []
+    private(set) var isLoadingChallenges = false
+    private(set) var challengeError: String?
+    private(set) var isUpdatingChallenge = false
 
     private let client: any ViralityClient
     private let preferences: any LeaderboardPreferencesStoring
@@ -31,6 +35,64 @@ final class ViralityStore {
     private var nicheOrNil: String? {
         let trimmed = niche.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? nil : trimmed
+    }
+
+    var installID: UUID { preferences.installID }
+
+    var activeChallenges: [PostingChallenge] { challenges.filter { $0.status == .active } }
+    var challengeInvitations: [PostingChallenge] { challenges.filter { $0.status == .pending && $0.requiresResponse } }
+    var outgoingChallenges: [PostingChallenge] { challenges.filter { $0.status == .pending && !$0.requiresResponse } }
+    var completedChallenges: [PostingChallenge] { challenges.filter { $0.status == .completed } }
+
+    func loadChallenges(username: String) async {
+        guard !username.isEmpty else { return }
+        isLoadingChallenges = true
+        challengeError = nil
+        defer { isLoadingChallenges = false }
+        do {
+            challenges = try await client.fetchChallenges(username: username, installID: installID)
+            for challenge in challenges {
+                if challenge.status == .active { await ChallengeLiveActivity.sync(challenge) }
+                if challenge.status == .completed { await ChallengeLiveActivity.end(challenge) }
+            }
+        } catch is CancellationError {
+            return
+        } catch let error as URLError where error.code == .cancelled {
+            return
+        } catch {
+            challengeError = (error as? LocalizedError)?.errorDescription ?? "We couldn't load your challenges."
+        }
+    }
+
+    func createChallenge(challenger: String, opponent: String, duration: PostingChallenge.Duration) async -> Bool {
+        guard !isUpdatingChallenge else { return false }
+        isUpdatingChallenge = true
+        challengeError = nil
+        defer { isUpdatingChallenge = false }
+        do {
+            let challenge = try await client.createChallenge(challenger: challenger, opponent: opponent, duration: duration, installID: installID)
+            challenges.removeAll { $0.id == challenge.id }
+            challenges.insert(challenge, at: 0)
+            if challenge.status == .active { await ChallengeLiveActivity.sync(challenge) }
+            return true
+        } catch {
+            challengeError = (error as? LocalizedError)?.errorDescription ?? "We couldn't start that challenge."
+            return false
+        }
+    }
+
+    func respond(to challenge: PostingChallenge, username: String, accept: Bool) async {
+        guard !isUpdatingChallenge else { return }
+        isUpdatingChallenge = true
+        challengeError = nil
+        defer { isUpdatingChallenge = false }
+        do {
+            let updated = try await client.respondToChallenge(id: challenge.id, username: username, installID: installID, accept: accept)
+            challenges = challenges.map { $0.id == updated.id ? updated : $0 }
+            if updated.status == .active { await ChallengeLiveActivity.sync(updated) }
+        } catch {
+            challengeError = (error as? LocalizedError)?.errorDescription ?? "We couldn't update that invitation."
+        }
     }
 
     // MARK: History
@@ -52,6 +114,8 @@ final class ViralityStore {
             }
         } catch is CancellationError {
             return
+        } catch let error as URLError where error.code == .cancelled {
+            return
         } catch {
             // Keep showing the last good history; surface the failure above it.
             historyError = (error as? LocalizedError)?.errorDescription ?? "We couldn't load your posts."
@@ -64,6 +128,11 @@ final class ViralityStore {
 
     // MARK: Leaderboard
 
+    /// Fetched per sheet rather than cached: it's only read while the sheet is open.
+    func leaderboardBreakdown(username: String, period: LeaderboardFilter) async throws -> LeaderboardBreakdown {
+        try await client.fetchLeaderboardBreakdown(username: username, period: period)
+    }
+
     func loadLeaderboard(filter: LeaderboardFilter, niche: String?, username: String?) async {
         isLoadingLeaderboard = true
         leaderboardError = nil
@@ -71,6 +140,8 @@ final class ViralityStore {
         do {
             leaderboard = try await client.fetchLeaderboard(filter: filter, niche: niche, username: username)
         } catch is CancellationError {
+            return
+        } catch let error as URLError where error.code == .cancelled {
             return
         } catch {
             leaderboardError = (error as? LocalizedError)?.errorDescription ?? "We couldn't load the leaderboard."

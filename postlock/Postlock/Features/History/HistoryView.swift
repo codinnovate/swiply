@@ -1,4 +1,5 @@
 import SwiftUI
+import Charts
 
 struct HistoryView: View {
     @Environment(AppSession.self) private var session
@@ -11,8 +12,9 @@ struct HistoryView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
+            ScrollView(showsIndicators: false) {
                 LazyVStack(alignment: .leading, spacing: Spacing.large) {
+                    DashboardHeading(title: "Analytics")
                     if let error = store.historyError {
                         Label(error, systemImage: "wifi.exclamationmark")
                             .font(.footnote).foregroundStyle(Theme.danger)
@@ -22,13 +24,15 @@ struct HistoryView: View {
                     } else if store.isSyncing {
                         ProgressView("Checking your recent posts...")
                             .frame(maxWidth: .infinity).padding(.top, 80)
+                    } else {
+                        ContentUnavailableView("Your story starts here", systemImage: "chart.xyaxis.line", description: Text("Check your posts to see scores and insights."))
                     }
                 }
                 .padding(.horizontal, Spacing.large)
                 .padding(.bottom, Spacing.huge)
             }
             .background(Theme.background)
-            .navigationTitle("History")
+            .toolbar(.hidden, for: .navigationBar)
             .refreshable { await store.refreshHistory(username: username, timezone: timezone) }
             .task(id: username) { await store.refreshHistory(username: username, timezone: timezone) }
             .sheet(item: $rewriting) { post in
@@ -53,7 +57,14 @@ struct HistoryView: View {
             )
             .padding(.top, 60)
         } else {
+            if let xp = history.xp { XPLevelCard(xp: xp, rules: history.xpRules) }
+            AnalyticsOverview(posts: history.posts)
             InsightsCard(insights: history.insights)
+            HStack {
+                Text("Recent posts").font(.headline)
+                Spacer()
+                Text("\(history.posts.count) posts").font(.caption).foregroundStyle(Theme.secondaryText)
+            }.padding(.top, 8)
             ForEach(history.posts) { post in
                 PostScoreCard(
                     post: post,
@@ -65,6 +76,166 @@ struct HistoryView: View {
                     },
                     rewrite: { rewriting = post }
                 )
+            }
+        }
+    }
+}
+
+private struct AnalyticsOverview: View {
+    let posts: [ScoredPost]
+    private var scored: [ScoredPost] { posts.filter { $0.score != nil }.sorted { $0.postedAt < $1.postedAt } }
+    private var average: Int { scored.isEmpty ? 0 : scored.compactMap { $0.score?.totalScore }.reduce(0, +) / scored.count }
+
+    var body: some View {
+        VStack(spacing: 14) {
+            SurfaceCard {
+                VStack(alignment: .leading, spacing: 20) {
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Average post score").font(.subheadline).foregroundStyle(Theme.secondaryText)
+                            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                                Text("\(average)").font(.system(size: 48, weight: .semibold)).tracking(-2)
+                                Text("/ 100").foregroundStyle(Theme.secondaryText)
+                            }
+                        }
+                        Spacer()
+                        Text("RECENT POSTS").font(.system(size: 9, weight: .bold)).tracking(1)
+                            .padding(9).background(Theme.secondarySurface, in: Capsule())
+                    }
+                    Chart(scored) { post in
+                        AreaMark(x: .value("Date", post.postedAt), yStart: .value("Base", 0), yEnd: .value("Score", post.score?.totalScore ?? 0))
+                            .foregroundStyle(LinearGradient(colors: [Theme.accent.opacity(0.25), Theme.accent.opacity(0.01)], startPoint: .top, endPoint: .bottom))
+                        LineMark(x: .value("Date", post.postedAt), y: .value("Score", post.score?.totalScore ?? 0))
+                            .foregroundStyle(Theme.accent).lineStyle(StrokeStyle(lineWidth: 2.5))
+                    }
+                    .chartYScale(domain: 0...100)
+                    .chartYAxis { AxisMarks(position: .leading, values: [0, 50, 100]) }
+                    .chartXAxis { AxisMarks(values: .automatic(desiredCount: 4)) { _ in AxisValueLabel(format: .dateTime.month(.abbreviated).day()) } }
+                    .frame(height: 135)
+                }
+            }
+            HStack(spacing: 12) {
+                metric("Total views", value: posts.compactMap { $0.engagement.views }.reduce(0, +).formatted(.number.notation(.compactName)), icon: "eye")
+                metric("Conversations", value: "\(posts.map { $0.engagement.replies }.reduce(0, +))", icon: "bubble.left.and.bubble.right")
+            }
+        }
+    }
+
+    private func metric(_ title: String, value: String, icon: String) -> some View {
+        SurfaceCard {
+            VStack(alignment: .leading, spacing: 10) {
+                Image(systemName: icon).foregroundStyle(Theme.mint)
+                Text(value).font(.system(size: 25, weight: .semibold))
+                Text(title).font(.caption).foregroundStyle(Theme.secondaryText)
+            }
+        }
+    }
+}
+
+// MARK: - XP
+
+private struct XPLevelCard: View {
+    let xp: AccountXP
+    let rules: XPRules?
+
+    var body: some View {
+        SurfaceCard {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .bottom) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("LEVEL").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.accent)
+                        Text("\(xp.level.level)").font(.system(size: 44, weight: .semibold, design: .rounded))
+                    }
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text("\(xp.total.xpFormatted) XP").font(.headline)
+                        Text("\(xp.level.xpForNextLevel.xpFormatted) XP to level \(xp.level.level + 1)")
+                            .font(.caption).foregroundStyle(Theme.secondaryText)
+                    }
+                }
+                ProgressView(value: xp.level.progress).tint(Theme.accent)
+                HStack(spacing: 12) {
+                    window("Last 7 days", xp.last7Days)
+                    window("Last 30 days", xp.last30Days)
+                }
+                if let rules {
+                    DisclosureGroup("How XP is earned") {
+                        VStack(alignment: .leading, spacing: 6) {
+                            ForEach(earningSignals(rules), id: \.key) { signal, weight in
+                                HStack {
+                                    Text(XPLine(signal: signal, count: 0, weight: weight, xp: 0, availability: "").title)
+                                    Spacer()
+                                    Text("\(weight.xpFormatted) XP each").monospacedDigit()
+                                }
+                            }
+                            Text(rules.note).foregroundStyle(Theme.secondaryText).padding(.top, 4)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }.font(.caption).padding(.top, 8)
+                    }
+                    .font(.caption.weight(.semibold)).tint(Theme.secondaryText)
+                }
+            }
+        }
+    }
+
+    /// Only what FxTwitter can actually see, most valuable first.
+    private func earningSignals(_ rules: XPRules) -> [(key: String, value: Double)] {
+        rules.weights
+            .filter { rules.availability[$0.key] != "unavailable" && $0.value > 0 }
+            .sorted { $0.value > $1.value }
+    }
+
+    private func window(_ title: String, _ value: Double) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text("+\(value.xpFormatted) XP").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.mint)
+            Text(title).font(.caption2).foregroundStyle(Theme.secondaryText)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10).background(Theme.secondarySurface, in: RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+struct XPBreakdownView: View {
+    let xp: PostXP
+    let predictedScore: Int?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.small) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("XP earned").font(.headline)
+                Spacer()
+                Text("\(xp.xp.xpFormatted) XP").font(.headline).foregroundStyle(Theme.mint)
+            }
+            if let predictedScore {
+                Text("Predicted \(predictedScore)/100 → Actual \(xp.xp.xpFormatted) XP")
+                    .font(.caption).foregroundStyle(Theme.secondaryText)
+            }
+            if xp.duplicateOf != nil {
+                Label("Repeats an earlier post, so its XP only counts once.", systemImage: "doc.on.doc")
+                    .font(.caption).foregroundStyle(.orange)
+            }
+            ForEach(xp.breakdown.filter(\.isAvailable), id: \.signal) { line in
+                HStack {
+                    Text(line.title)
+                    Spacer()
+                    Text("\(line.count.xpFormatted) × \(line.weight.xpFormatted)").foregroundStyle(Theme.secondaryText)
+                    Text(line.xp.xpFormatted).fontWeight(.semibold).frame(minWidth: 48, alignment: .trailing)
+                }
+                .font(.subheadline.monospacedDigit())
+            }
+            if xp.history.count > 1 {
+                HStack(spacing: 8) {
+                    ForEach(xp.history, id: \.milestone) { point in
+                        VStack(spacing: 2) {
+                            Text(point.xp.xpFormatted).font(.caption.weight(.semibold)).monospacedDigit()
+                            Text(point.title).font(.caption2).foregroundStyle(Theme.secondaryText)
+                        }
+                        .frame(maxWidth: .infinity).padding(.vertical, 8)
+                        .background(Theme.secondarySurface, in: RoundedRectangle(cornerRadius: 10))
+                    }
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("XP growth: " + xp.history.map { "\($0.title) \($0.xp.xpFormatted)" }.joined(separator: ", "))
             }
         }
     }
@@ -141,6 +312,10 @@ private struct PostScoreCard: View {
                 .buttonStyle(.plain)
                 .accessibilityHint(isExpanded ? "Hides the score breakdown" : "Shows the score breakdown")
 
+            if isExpanded, let xp = post.xp {
+                Divider().overlay(Color.white.opacity(0.08))
+                XPBreakdownView(xp: xp, predictedScore: post.score?.totalScore)
+            }
             if isExpanded, let score = post.score {
                 Divider().overlay(Color.white.opacity(0.08))
                 ScoreBreakdownView(score: score)
@@ -178,6 +353,12 @@ private struct PostScoreCard: View {
                     Text(post.postedAt, format: .relative(presentation: .named))
                     if post.isThread { Text("· Thread of \(post.threadLength)") }
                     Spacer(minLength: 0)
+                    if let xp = post.xp {
+                        Text("+\(xp.xp.xpFormatted) XP")
+                            .foregroundStyle(xp.duplicateOf == nil ? Theme.mint : Theme.secondaryText)
+                            .padding(.horizontal, 7).padding(.vertical, 3)
+                            .background(Theme.mint.opacity(0.1), in: Capsule())
+                    }
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                 }
                 .font(.caption.weight(.semibold))
@@ -268,7 +449,7 @@ private struct RewriteSheet: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
+            ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: Spacing.large) {
                     if let error {
                         ContentUnavailableView("Couldn't rewrite", systemImage: "exclamationmark.bubble", description: Text(error))

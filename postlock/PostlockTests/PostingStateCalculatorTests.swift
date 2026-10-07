@@ -76,7 +76,8 @@ struct PostingDayRefreshTests {
             commitmentStore: store,
             profileClient: URLSessionPostingProfileClient(baseURL: URL(string: "https://example.invalid")!),
             verificationClient: URLSessionPostVerificationClient(baseURL: URL(string: "https://example.invalid")!),
-            screenTime: ScreenTimeService()
+            screenTime: ScreenTimeService(),
+            streakDefaults: defaults
         )
         session.save(.suggested(goal: 3, timezoneIdentifier: "UTC"))
         session.setVerifiedCount(3)
@@ -87,5 +88,33 @@ struct PostingDayRefreshTests {
         #expect(session.verifiedCount == 0)
         #expect(store.loadVerifiedCount() == 0)
         #expect(session.todayState(now: tomorrow)?.status != .completed)
+    }
+}
+
+struct PostingStreakTests {
+    private let now = ISO8601DateFormatter().date(from: "2026-09-24T12:00:00Z")!
+
+    @Test func todayCanStillBeCompleted() {
+        let plan = PostingCommitment.suggested(goal: 3, timezoneIdentifier: "UTC")
+        #expect(PostingStreakCalculator.count(completedDates: ["2026-09-22", "2026-09-23"], commitment: plan, now: now) == 2)
+        #expect(PostingStreakCalculator.count(completedDates: ["2026-09-22", "2026-09-23", "2026-09-24"], commitment: plan, now: now) == 3)
+    }
+
+    @Test func missedPostingDayResetsStreak() {
+        let plan = PostingCommitment.suggested(goal: 3, timezoneIdentifier: "UTC")
+        #expect(PostingStreakCalculator.count(completedDates: ["2026-09-22"], commitment: plan, now: now) == 0)
+        #expect(PostingStreakCalculator.count(completedDates: ["2026-09-22", "2026-09-24"], commitment: plan, now: now) == 1)
+    }
+
+    @Test func restDaysPreserveButDoNotIncreaseStreak() {
+        var plan = PostingCommitment.suggested(goal: 3, timezoneIdentifier: "UTC")
+        plan.postingDays = [3, 5]
+        #expect(PostingStreakCalculator.count(completedDates: ["2026-09-22"], commitment: plan, now: now) == 1)
+    }
+
+    @Test func usesScheduleTimezoneAcrossMidnight() {
+        let plan = PostingCommitment.suggested(goal: 3, timezoneIdentifier: "Asia/Tokyo")
+        let date = ISO8601DateFormatter().date(from: "2026-09-24T23:30:00Z")!
+        #expect(PostingStreakCalculator.count(completedDates: ["2026-09-23"], commitment: plan, now: date) == 0)
     }
 }

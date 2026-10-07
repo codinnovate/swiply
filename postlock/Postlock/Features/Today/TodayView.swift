@@ -4,15 +4,22 @@ struct TodayView: View {
     @Environment(AppSession.self) private var session
     @Environment(\.scenePhase) private var scenePhase
     @State private var feedback = 0
+    @State private var showingStreak = false
 
     var body: some View {
         NavigationStack {
-            ScrollView {
+            ScrollView(showsIndicators: false) {
                 TimelineView(.periodic(from: .now, by: 60)) { context in
                     Group {
                         if let commitment = session.commitment,
                            let state = session.todayState(now: context.date) {
-                            TodayChallengeView(
+                            VStack(spacing: 0) {
+                                ProfileHeader(profile: session.profile, date: context.date,
+                                    timezone: TimeZone(identifier: commitment.timezoneIdentifier) ?? .current,
+                                    streak: session.currentStreak(now: context.date),
+                                    openStreak: { showingStreak = true })
+                                    .padding(.horizontal, 24).padding(.top, 12).padding(.bottom, 8)
+                                TodayChallengeView(
                                 commitment: commitment, state: state, now: context.date,
                                 username: session.profile?.username,
                                 isVerifying: session.isVerifying,
@@ -25,7 +32,8 @@ struct TodayView: View {
                                         if session.verifiedCount > previous { feedback += 1 }
                                     }
                                 }
-                            )
+                                )
+                            }
                         } else {
                             ContentUnavailableView {
                                 Label("Start your daily challenge", systemImage: "flag.checkered")
@@ -44,6 +52,9 @@ struct TodayView: View {
             .background(Theme.background)
             .toolbar(.hidden, for: .navigationBar)
             .sensoryFeedback(.success, trigger: feedback)
+            .sheet(isPresented: $showingStreak) {
+                StreakDetailView().presentationDetents([.medium, .large]).presentationDragIndicator(.visible)
+            }
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active { session.reconcileEnforcement() }
             }
@@ -55,7 +66,9 @@ struct TodayView: View {
         return "App protection requires an iPhone"
         #else
         if session.screenTime.authorizationStatus != .approved { return "App protection needs permission" }
-        if !session.screenTime.hasValidXException { return "Choose X as the allowed app in Settings" }
+        if let issue = session.screenTime.allowedAppIssue {
+            return issue == .nothingSelected ? "Choose X as the allowed app in Settings" : "Pick only X (not All Apps) in Settings"
+        }
         return session.screenTime.isShielding ? "All apps except X are locked" : "All-app protection ready"
         #endif
     }
@@ -77,9 +90,8 @@ private struct TodayChallengeView: View {
     private var tint: Color { state.shouldBlock ? Theme.danger : Theme.accent }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 28) {
-            header
-            VStack(spacing: 20) {
+        VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: 16) {
                 HStack {
                     Label(isRest ? "RECOVERY DAY" : "DAILY CHALLENGE", systemImage: isRest ? "moon" : "bolt.fill")
                         .font(.caption.weight(.bold)).tracking(1.2)
@@ -88,36 +100,46 @@ private struct TodayChallengeView: View {
                 }
                 .foregroundStyle(Theme.accent)
 
-                if isRest {
-                    Image(systemName: "moon.stars")
-                        .font(.system(size: 64, weight: .light))
-                        .foregroundStyle(Theme.accent)
-                        .frame(height: 150)
+                HStack(spacing: 0) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        if isRest {
+                            Text("Rest day").font(.system(size: 30, weight: .semibold))
+                        } else {
+                            HStack(alignment: .firstTextBaseline, spacing: 5) {
+                                Text("\(state.verifiedCount)")
+                                    .font(.system(size: 54, weight: .semibold)).tracking(-2)
+                                Text("/ \(state.goal)").font(.system(size: 24, weight: .medium))
+                                    .foregroundStyle(Theme.secondaryText)
+                            }.monospacedDigit()
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel("\(state.verifiedCount) of \(state.goal) posts verified")
+                            .accessibilityIdentifier("dailyProgress")
+                            Text("posts checked in").font(.caption).foregroundStyle(Theme.secondaryText)
+                        }
+                    }
+                    Spacer(minLength: 0)
+                    Image("DailyMomentum")
+                        .resizable().scaledToFit()
+                        .frame(width: 150, height: 138)
                         .accessibilityHidden(true)
-                } else {
-                    DailyProgressRing(count: state.verifiedCount, goal: state.goal, tint: tint)
-                        .frame(height: 188)
-                        .animation(reduceMotion ? nil : .easeInOut(duration: 0.4), value: state.verifiedCount)
                 }
 
-                VStack(spacing: 8) {
-                    Text(headline)
-                        .font(.system(.title2, design: .rounded, weight: .bold))
-                    Text(detail)
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.secondaryText)
-                        .fixedSize(horizontal: false, vertical: true)
+                if !isRest {
+                    HStack(spacing: 5) {
+                        ForEach(0..<max(1, state.goal), id: \.self) { index in
+                            Capsule().fill(index < state.verifiedCount ? Theme.accent : .white.opacity(0.09))
+                                .frame(height: 4)
+                        }
+                    }.accessibilityHidden(true)
                 }
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity)
+                Text(detail).font(.subheadline).foregroundStyle(Theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 if !isRest && !completed {
                     PrimaryButton(title: isVerifying ? "Checking posts..." : "Check my posts", isLoading: isVerifying) {
                         verify()
                     }
                     .accessibilityIdentifier("checkPosts")
-                    Text("Publish on X, then check in here.")
-                        .font(.caption).foregroundStyle(Theme.secondaryText)
                 } else if completed {
                     Label("Daily goal complete", systemImage: "checkmark.seal.fill")
                         .font(.subheadline.weight(.semibold))
@@ -133,10 +155,13 @@ private struct TodayChallengeView: View {
                 }
             }
             .padding(20)
-            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 28))
-            .overlay { RoundedRectangle(cornerRadius: 28).strokeBorder(.white.opacity(0.07)) }
+            .background(LinearGradient(colors: [Theme.accent.opacity(0.13), Theme.surface], startPoint: .topLeading, endPoint: .bottomTrailing), in: RoundedRectangle(cornerRadius: 24))
+            .overlay { RoundedRectangle(cornerRadius: 24).strokeBorder(Theme.accent.opacity(0.15)) }
 
             if !isRest { checkpoints }
+
+            // Paused until live X research is available; currently using OpenAI only.
+            // PostSuggestionsSection()
 
             Label(protection, systemImage: "lock.shield")
                 .font(.footnote).foregroundStyle(Theme.secondaryText)
@@ -151,7 +176,7 @@ private struct TodayChallengeView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(dateLabel)
                     .font(.subheadline).foregroundStyle(Theme.secondaryText)
-                Text("Today").font(.system(.largeTitle, design: .rounded, weight: .bold))
+                Text("Make it count.").font(.system(size: 30, weight: .semibold)).tracking(-1)
             }
             Spacer()
             if let username {
@@ -166,20 +191,53 @@ private struct TodayChallengeView: View {
     }
 
     private var checkpoints: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Text("Today's checkpoints").font(.headline)
-                Spacer()
-                Text("\(min(state.verifiedCount, state.goal))/\(state.goal)")
-                    .font(.subheadline.monospacedDigit()).foregroundStyle(Theme.secondaryText)
-            }
-            VStack(spacing: 0) {
-                ForEach(Array(commitment.deadlineMinutes.sorted().enumerated()), id: \.offset) { index, minute in
-                    checkpoint(index: index, minute: minute)
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("Your schedule").font(.system(size: 20, weight: .semibold)).tracking(-0.5)
+                    Text(completed ? "Every checkpoint cleared" : "One checkpoint at a time")
+                        .font(.caption).foregroundStyle(Theme.secondaryText)
                 }
+                Spacer()
+                HStack(spacing: 5) {
+                    Image(systemName: "checkmark").font(.system(size: 10, weight: .bold))
+                    Text("\(min(state.verifiedCount, state.goal))/\(state.goal)")
+                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                }
+                .foregroundStyle(Theme.accent)
+                .padding(.horizontal, 10).padding(.vertical, 8)
+                .background(Theme.accent.opacity(0.08), in: Capsule())
             }
-            Text("Post ahead anytime. Each checkpoint counts your total posts. Times in \(timezone.identifier).")
-                .font(.caption).foregroundStyle(Theme.secondaryText)
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: 6) {
+                    Circle().fill(completed ? Theme.mint : Theme.accent).frame(width: 5, height: 5)
+                    Text("TODAY").tracking(1.8)
+                    Spacer()
+                    Text("\(commitment.goal) CHECKPOINTS").tracking(1.2)
+                }
+                .font(.system(size: 9, weight: .semibold)).foregroundStyle(Theme.secondaryText)
+                .padding(.horizontal, 18).padding(.top, 18).padding(.bottom, 14)
+
+                VStack(spacing: 0) {
+                    ForEach(Array(commitment.deadlineMinutes.sorted().enumerated()), id: \.offset) { index, minute in
+                        checkpoint(index: index, minute: minute)
+                    }
+                }.padding(.horizontal, 12)
+
+                HStack(spacing: 6) {
+                    Image(systemName: "globe").font(.system(size: 10))
+                    Text("\(timezone.identifier.split(separator: "/").last.map(String.init)?.replacingOccurrences(of: "_", with: " ") ?? timezone.identifier) time")
+                    Spacer()
+                    Text("Post ahead anytime")
+                }
+                .font(.system(size: 10, weight: .medium)).foregroundStyle(Theme.secondaryText)
+                .padding(.horizontal, 18).padding(.vertical, 14)
+            }
+            .background(LinearGradient(colors: [Theme.surface, Theme.background.opacity(0.7)], startPoint: .topLeading, endPoint: .bottomTrailing), in: RoundedRectangle(cornerRadius: 24))
+            .overlay {
+                RoundedRectangle(cornerRadius: 24)
+                    .stroke(LinearGradient(colors: [Theme.accent.opacity(0.2), .white.opacity(0.04), Theme.accent.opacity(0.08)], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1)
+            }
         }
     }
 
@@ -187,28 +245,55 @@ private struct TodayChallengeView: View {
         let done = state.verifiedCount > index
         let overdue = !done && state.passedDeadlineCount > index
         let next = !done && index == state.verifiedCount
-        let color = done ? Theme.accent : overdue ? Theme.danger : Theme.secondaryText
-        return HStack(alignment: .top, spacing: 14) {
-            VStack(spacing: 4) {
-                Image(systemName: done ? "checkmark.circle.fill" : overdue ? "exclamationmark.circle" : "circle")
-                    .font(.system(size: 22)).foregroundStyle(color)
-                if index < commitment.goal - 1 {
-                    Rectangle().fill(Theme.secondarySurface).frame(width: 2, height: 30)
+        let color = done ? Theme.mint : next ? Theme.accent : Theme.secondaryText
+        return HStack(spacing: 10) {
+            ZStack {
+                VStack(spacing: 0) {
+                    Rectangle().fill(index == 0 ? Color.clear : Theme.accent.opacity(0.18))
+                    Rectangle().fill(index == commitment.goal - 1 ? Color.clear : Theme.accent.opacity(0.18))
+                }.frame(width: 1)
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(next ? Theme.accent : Theme.secondarySurface)
+                    .frame(width: 30, height: 30)
+                    .overlay { RoundedRectangle(cornerRadius: 10).stroke(color.opacity(next ? 0 : 0.2), lineWidth: 1) }
+                if done {
+                    Image(systemName: "checkmark").font(.system(size: 12, weight: .bold)).foregroundStyle(Theme.mint)
+                } else {
+                    Text(String(format: "%02d", index + 1))
+                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .foregroundStyle(next ? Theme.background : Theme.secondaryText)
                 }
             }
+            .frame(width: 34)
             .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(timeString(minute)).font(.subheadline.weight(.semibold)).monospacedDigit()
-                    Spacer()
-                    Text(done ? "Verified" : overdue ? "Catch up" : next ? "Up next" : "Upcoming")
-                        .font(.caption.weight(.semibold)).foregroundStyle(color)
+            HStack(spacing: 8) {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(timeString(minute))
+                        .font(.system(size: 19, weight: .medium, design: .monospaced)).tracking(-0.8)
+                        .foregroundStyle(done ? Theme.secondaryText : .white)
+                    Text("\(index + 1) \(index == 0 ? "post" : "posts") total")
+                        .font(.system(size: 11)).foregroundStyle(Theme.secondaryText)
                 }
-                Text("\(index + 1) \(index == 0 ? "post" : "posts") total")
-                    .font(.caption).foregroundStyle(Theme.secondaryText)
+                Spacer(minLength: 0)
+                VStack(alignment: .trailing, spacing: 5) {
+                    Text(done ? "Complete" : overdue ? "Due" : next ? "Up next" : "Later")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(overdue ? Theme.danger : color)
+                        .padding(.horizontal, 9).padding(.vertical, 5)
+                        .background((overdue ? Theme.danger : color).opacity(0.08), in: Capsule())
+                    if next {
+                        Text("CHECK IN NEXT").font(.system(size: 7, weight: .semibold)).tracking(0.8)
+                            .foregroundStyle(Theme.accent.opacity(0.8))
+                    }
+                }
             }
-            .padding(.bottom, 18)
+            .padding(.horizontal, 12).padding(.vertical, 14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(next ? Theme.accent.opacity(0.08) : Color.clear, in: RoundedRectangle(cornerRadius: 16))
+            .overlay { RoundedRectangle(cornerRadius: 16).stroke(next ? Theme.accent.opacity(0.22) : .clear, lineWidth: 1) }
+            .padding(.vertical, 3)
         }
+        .fixedSize(horizontal: false, vertical: true)
         .accessibilityElement(children: .combine)
     }
 
@@ -222,15 +307,15 @@ private struct TodayChallengeView: View {
     }
 
     private var detail: String {
-        if isRest { return "No posts due today. Your next challenge is coming." }
-        if completed { return "Every checkpoint cleared. See you tomorrow." }
+        if isRest { return "Take a breather. No posts due today." }
+        if completed { return "All done. See you tomorrow." }
         if state.shouldBlock {
             let remaining = max(1, state.passedDeadlineCount - state.verifiedCount)
-            return "Verify \(remaining) more \(remaining == 1 ? "post" : "posts") to catch up on your deadlines."
+            return "\(remaining) \(remaining == 1 ? "post" : "posts") to catch up. You've got this."
         }
         let deadlines = commitment.deadlineMinutes.sorted()
         if deadlines.indices.contains(state.verifiedCount) {
-            return "\(state.verifiedCount + 1) \(state.verifiedCount == 0 ? "post" : "posts") total by \(timeString(deadlines[state.verifiedCount])). You've got this."
+            return "Next check-in by \(timeString(deadlines[state.verifiedCount]))."
         }
         return "Your first post starts today's progress."
     }
@@ -278,12 +363,12 @@ private struct DailyProgressRing: View {
                     .rotationEffect(.degrees(-90))
             }
             VStack(spacing: 2) {
-                Text("\(count)").font(.system(size: 62, weight: .bold, design: .rounded)).monospacedDigit()
-                Text("OF \(goal) POSTS").font(.caption.weight(.semibold)).tracking(1.5)
+                Text("\(count)").font(.system(size: 36, weight: .semibold)).monospacedDigit()
+                Text("of \(goal) posts").font(.system(size: 10, weight: .medium))
                     .foregroundStyle(Theme.secondaryText)
             }
         }
-        .frame(width: 178, height: 178)
+        .frame(width: 104, height: 104)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(count) of \(goal) posts verified")
         .accessibilityIdentifier("dailyProgress")
@@ -291,7 +376,7 @@ private struct DailyProgressRing: View {
 }
 
 #Preview("Daily challenge states") {
-    ScrollView {
+    ScrollView(showsIndicators: false) {
         ForEach([PostingDayStatus.active, .blocked, .completed, .paused], id: \.rawValue) { status in
             TodayChallengeView(
                 commitment: .suggested(goal: 3),
@@ -305,7 +390,7 @@ private struct DailyProgressRing: View {
 }
 
 #Preview("Partial progress") {
-    ScrollView {
+    ScrollView(showsIndicators: false) {
         TodayChallengeView(commitment: .suggested(goal: 3),
             state: .init(status: .active, goal: 3, verifiedCount: 1, passedDeadlineCount: 1, nextDeadline: nil, shouldBlock: false),
             now: .now, username: "creator")
@@ -313,7 +398,7 @@ private struct DailyProgressRing: View {
 }
 
 #Preview("Verification unavailable") {
-    ScrollView {
+    ScrollView(showsIndicators: false) {
         TodayChallengeView(commitment: .suggested(goal: 3),
             state: .init(status: .blocked, goal: 3, verifiedCount: 1, passedDeadlineCount: 3, nextDeadline: nil, shouldBlock: true),
             now: .now, username: "creator", message: "We couldn't check your public posts right now. Please try again.")
@@ -321,7 +406,7 @@ private struct DailyProgressRing: View {
 }
 
 #Preview("Checking posts") {
-    ScrollView {
+    ScrollView(showsIndicators: false) {
         TodayChallengeView(commitment: .suggested(goal: 3),
             state: .init(status: .active, goal: 3, verifiedCount: 0, passedDeadlineCount: 0, nextDeadline: nil, shouldBlock: false),
             now: .now, isVerifying: true)

@@ -5,7 +5,11 @@ protocol ViralityClient: Sendable {
     func fetchHistory(username: String) async throws -> PostHistory
     func rewrite(postID: String, username: String) async throws -> [String]
     func fetchLeaderboard(filter: LeaderboardFilter, niche: String?, username: String?) async throws -> Leaderboard
+    func fetchLeaderboardBreakdown(username: String, period: LeaderboardFilter) async throws -> LeaderboardBreakdown
     func setParticipation(username: String, installID: UUID, optedIn: Bool, niche: String?, timezone: String) async throws
+    func fetchChallenges(username: String, installID: UUID) async throws -> [PostingChallenge]
+    func createChallenge(challenger: String, opponent: String, duration: PostingChallenge.Duration, installID: UUID) async throws -> PostingChallenge
+    func respondToChallenge(id: String, username: String, installID: UUID, accept: Bool) async throws -> PostingChallenge
 }
 
 enum ViralityClientError: LocalizedError {
@@ -23,6 +27,10 @@ enum ViralityClientError: LocalizedError {
 struct URLSessionViralityClient: ViralityClient {
     let baseURL: URL
     var session: URLSession = .shared
+
+    func fetchSuggestions(username: String, niche: String) async throws -> PostSuggestions {
+        try await send("POST", "api/v1/postlock/suggestions", body: ["username": username, "niche": niche])
+    }
 
     func syncHistory(username: String, timezone: String, niche: String?) async throws -> PostHistory {
         try await send("POST", "api/v1/postlock/history/sync", body: [
@@ -42,7 +50,13 @@ struct URLSessionViralityClient: ViralityClient {
 
     func fetchLeaderboard(filter: LeaderboardFilter, niche: String?, username: String?) async throws -> Leaderboard {
         try await send("GET", "api/v1/postlock/leaderboard", query: [
-            "category": filter.rawValue, "niche": niche, "username": username,
+            "period": filter.rawValue, "niche": niche, "username": username,
+        ])
+    }
+
+    func fetchLeaderboardBreakdown(username: String, period: LeaderboardFilter) async throws -> LeaderboardBreakdown {
+        try await send("GET", "api/v1/postlock/leaderboard/breakdown", query: [
+            "username": username, "period": period.rawValue,
         ])
     }
 
@@ -50,6 +64,29 @@ struct URLSessionViralityClient: ViralityClient {
         let _: ParticipationResponse = try await send("PUT", "api/v1/postlock/leaderboard/participation", body: ParticipationBody(
             username: username, installId: installID.uuidString.lowercased(),
             optedIn: optedIn, niche: niche, timezone: timezone
+        ))
+    }
+
+    func fetchChallenges(username: String, installID: UUID) async throws -> [PostingChallenge] {
+        try await send("GET", "api/v1/postlock/challenges", query: [
+            "username": username, "installId": installID.uuidString.lowercased(),
+        ])
+    }
+
+    func createChallenge(challenger: String, opponent: String, duration: PostingChallenge.Duration, installID: UUID) async throws -> PostingChallenge {
+        try await send("POST", "api/v1/postlock/challenges", body: ChallengeBody(
+            challengerUsername: challenger,
+            challengerInstallId: installID.uuidString.lowercased(),
+            opponentUsername: opponent,
+            duration: duration.rawValue
+        ))
+    }
+
+    func respondToChallenge(id: String, username: String, installID: UUID, accept: Bool) async throws -> PostingChallenge {
+        try await send("PUT", "api/v1/postlock/challenges/\(id)/respond", body: ChallengeResponseBody(
+            username: username,
+            installId: installID.uuidString.lowercased(),
+            action: accept ? "accept" : "decline"
         ))
     }
 
@@ -64,6 +101,7 @@ struct URLSessionViralityClient: ViralityClient {
         if !items.isEmpty { components.queryItems = items }
         var request = URLRequest(url: components.url!)
         request.httpMethod = method
+        request.timeoutInterval = 75
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         if let body {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -104,6 +142,17 @@ struct URLSessionViralityClient: ViralityClient {
     }
 
     private struct ParticipationResponse: Decodable { let optedIn: Bool }
+    private struct ChallengeBody: Encodable {
+        let challengerUsername: String
+        let challengerInstallId: String
+        let opponentUsername: String
+        let duration: String
+    }
+    private struct ChallengeResponseBody: Encodable {
+        let username: String
+        let installId: String
+        let action: String
+    }
     private struct ErrorPayload: Decodable {
         struct Detail: Decodable { let message: String }
         let error: Detail

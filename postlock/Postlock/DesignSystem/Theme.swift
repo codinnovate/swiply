@@ -1,10 +1,11 @@
 import SwiftUI
 
 enum Theme {
-    static let background = Color(red: 11 / 255, green: 12 / 255, blue: 14 / 255)
-    static let surface = Color(red: 19 / 255, green: 21 / 255, blue: 24 / 255)
-    static let secondarySurface = Color(red: 25 / 255, green: 28 / 255, blue: 32 / 255)
-    static let accent = Color(red: 183 / 255, green: 1, blue: 60 / 255)
+    static let background = Color(red: 13 / 255, green: 14 / 255, blue: 20 / 255)
+    static let surface = Color(red: 23 / 255, green: 25 / 255, blue: 35 / 255)
+    static let secondarySurface = Color(red: 34 / 255, green: 36 / 255, blue: 49 / 255)
+    static let accent = Color(red: 187 / 255, green: 174 / 255, blue: 1)
+    static let mint = Color(red: 143 / 255, green: 224 / 255, blue: 194 / 255)
     static let secondaryText = Color(red: 152 / 255, green: 156 / 255, blue: 163 / 255)
     static let danger = Color(red: 1, green: 111 / 255, blue: 97 / 255)
 }
