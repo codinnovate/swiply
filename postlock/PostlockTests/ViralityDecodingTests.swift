@@ -75,6 +75,60 @@ struct ViralityDecodingTests {
         #expect(leaderboard.me == nil)
     }
 
+    @Test func decodesXPPayload() throws {
+        let json = """
+        {
+          "username": "sam", "scoringAvailable": true, "isScoring": false,
+          "posts": [{
+            "postId": "1", "url": "https://x.com/sam/status/1", "kind": "original", "text": "Hi",
+            "threadTexts": [], "postedAt": "2026-09-24T16:41:27.000Z", "mediaType": "none", "isThread": false,
+            "threadLength": 1, "linkLocation": "none", "hashtagCount": 0,
+            "engagement": { "likes": 10, "reposts": 0, "replies": 2, "quotes": 0, "bookmarks": 0, "views": 40 },
+            "scoreStatus": "pending", "score": null,
+            "xp": {
+              "postId": "1", "postedAt": "2026-09-24T16:41:27.000Z",
+              "xp": 107, "earnedXp": 107, "penaltyXp": 0, "duplicateOf": null,
+              "breakdown": [
+                { "signal": "like", "count": 10, "weight": 0.5, "xp": 5, "availability": "measured" },
+                { "signal": "authorReplyToReply", "count": 1, "weight": 75, "xp": 75, "availability": "partial" },
+                { "signal": "reported", "count": 0, "weight": -369, "xp": 0, "availability": "unavailable" }
+              ],
+              "history": [
+                { "milestone": "h1", "capturedAt": "2026-09-24T17:45:00.000Z", "xp": 1 },
+                { "milestone": "latest", "capturedAt": "2026-09-25T08:00:00.000Z", "xp": 107 }
+              ]
+            }
+          }],
+          "insights": { "status": "needs_more_posts", "scoredPostCount": 0, "minimumPosts": 5, "insights": [] },
+          "xp": {
+            "total": 260, "last7Days": 107, "last30Days": 260,
+            "level": { "level": 3, "levelStartXp": 200, "nextLevelXp": 450, "xpIntoLevel": 60, "xpForNextLevel": 190 }
+          },
+          "xpRules": {
+            "version": 0, "weights": { "like": 0.5, "authorReplyToReply": 75 },
+            "availability": { "like": "measured", "reported": "unavailable" },
+            "note": "XP reflects likes.", "levelBaseXp": 50
+          }
+        }
+        """
+        let history = try URLSessionViralityClient.decoder.decode(PostHistory.self, from: Data(json.utf8))
+
+        let xp = try #require(history.posts.first?.xp)
+        #expect(xp.xp == 107)
+        #expect(xp.breakdown.filter(\.isAvailable).map(\.title) == ["Likes", "Your replies back"])
+        #expect(xp.history.map(\.title) == ["1h", "Now"])
+        #expect(history.xp?.level.level == 3)
+        #expect(history.xp?.level.progress == 0.24)
+        #expect(history.xpRules?.weights["authorReplyToReply"] == 75)
+
+        let entry = try URLSessionViralityClient.decoder.decode(LeaderboardEntry.self, from: Data("""
+        { "rank": 1, "username": "sam", "displayName": "Sam", "avatarUrl": null, "niche": null,
+          "category": "user", "avgScore": 60, "avgReplies": 2, "postsCounted": 4, "level": 3, "xp": 260 }
+        """.utf8))
+        #expect(entry.xp == 260)
+        #expect(entry.level == 3)
+    }
+
     @Test(arguments: [(10.0, true), (50.0, false), (90.0, false)])
     func scoreColorRunsRedToGreen(score: Double, isReddest: Bool) {
         #expect((ScoreColor.color(for: score) == ScoreColor.color(for: 0)) == isReddest)

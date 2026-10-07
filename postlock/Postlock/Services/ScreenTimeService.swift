@@ -32,9 +32,24 @@ final class ScreenTimeService {
     }
 
     var hasValidXException: Bool {
-        selection.applicationTokens.count == 1
-            && selection.categoryTokens.isEmpty
-            && selection.webDomainTokens.isEmpty
+        allowedAppIssue == nil
+    }
+
+    /// The one app kept open while locked. Apple hides its identity from the
+    /// app, so the UI renders it with `Label(token)` for the user to confirm it's X.
+    var allowedAppToken: ApplicationToken? {
+        hasValidXException ? selection.applicationTokens.first : nil
+    }
+
+    /// Why the selection can't be used as the X exception, if it can't.
+    var allowedAppIssue: AllowedAppIssue? {
+        if !selection.categoryTokens.isEmpty { return .categoriesSelected }
+        if !selection.webDomainTokens.isEmpty { return .websitesSelected }
+        switch selection.applicationTokens.count {
+        case 0: return .nothingSelected
+        case 1: return nil
+        default: return .tooManyApps(selection.applicationTokens.count)
+        }
     }
 
     func requestAuthorization() async throws {
@@ -99,6 +114,24 @@ final class ScreenTimeService {
         formatter.timeZone = TimeZone(identifier: commitment.timezoneIdentifier) ?? .current
         formatter.dateFormat = "yyyy-MM-dd"
         defaults.set(formatter.string(from: .now), forKey: "postingVerifiedDate")
+    }
+}
+
+/// The picker chooses the app to keep open, not the apps to block, so picking
+/// "All Apps" or a category is the common mistake: it can't be an exception.
+enum AllowedAppIssue: Equatable {
+    case nothingSelected
+    case categoriesSelected
+    case websitesSelected
+    case tooManyApps(Int)
+
+    var message: String {
+        switch self {
+        case .nothingSelected: "Not set. Tap to choose X."
+        case .categoriesSelected: "Pick only X, not All Apps."
+        case .websitesSelected: "Pick only the X app, no websites."
+        case let .tooManyApps(count): "\(count) apps picked. Pick only X."
+        }
     }
 }
 

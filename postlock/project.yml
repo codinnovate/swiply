@@ -7,7 +7,7 @@ options:
 settings:
   base:
     SWIFT_VERSION: "6.0"
-    CURRENT_PROJECT_VERSION: 2
+    CURRENT_PROJECT_VERSION: 5
     MARKETING_VERSION: 1.0.0
     DEVELOPMENT_TEAM: 9WHCDKVKJQ
     REVENUECAT_API_KEY: "appl_TaphXKAhCAsvWtNloslQxezDOrk"
@@ -49,6 +49,7 @@ targets:
           - UIInterfaceOrientationLandscapeRight
         API_BASE_URL: "$(API_BASE_URL)"
         REVENUECAT_API_KEY: "$(REVENUECAT_API_KEY)"
+        NSSupportsLiveActivities: true
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
     settings:
@@ -65,7 +66,29 @@ targets:
     dependencies:
       - target: PostlockDeviceActivityMonitor
         embed: true
+      - target: PostlockChallengeWidget
+        embed: true
       - package: RevenueCat
+  PostlockChallengeWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: PostlockChallengeWidget
+      - path: Postlock/Models/PostingChallenge.swift
+    info:
+      path: PostlockChallengeWidget/Info.plist
+      properties:
+        CFBundleDisplayName: POSTLOCK Challenge
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.swiply.postlock.challenge-widget
+        CODE_SIGN_ENTITLEMENTS: PostlockChallengeWidget/PostlockChallengeWidget.entitlements
+        GENERATE_INFOPLIST_FILE: NO
+        SKIP_INSTALL: YES
   PostlockDeviceActivityMonitor:
     type: app-extension
     platform: iOS

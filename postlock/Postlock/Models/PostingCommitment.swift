@@ -1,5 +1,32 @@
 import Foundation
 
+enum PostingStreakCalculator {
+    static func count(completedDates: Set<String>, commitment: PostingCommitment, now: Date) -> Int {
+        guard commitment.goal > 0, !commitment.postingDays.isEmpty, !completedDates.isEmpty else { return 0 }
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: commitment.timezoneIdentifier) ?? .current
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = calendar.timeZone
+        formatter.dateFormat = "yyyy-MM-dd"
+        var day = calendar.startOfDay(for: now)
+        var count = 0
+        let oldest = completedDates.min() ?? formatter.string(from: day)
+        while formatter.string(from: day) >= oldest {
+            let key = formatter.string(from: day)
+            if completedDates.contains(key) {
+                count += 1
+            } else if !calendar.isDate(day, inSameDayAs: now), commitment.postingDays.contains(calendar.component(.weekday, from: day)) {
+                break
+            }
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: day) else { break }
+            day = previous
+        }
+        return count
+    }
+}
+
 struct PostingCommitment: Codable, Equatable, Sendable {
     struct QualifyingPostTypes: Codable, Equatable, Sendable {
         var originalPosts = true

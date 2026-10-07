@@ -48,16 +48,16 @@ struct UsernameSetupView: View {
     }
 
     private func entryView(_ viewModel: UsernameSetupViewModel) -> some View {
-        ScrollView {
+        ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: Spacing.extraLarge) {
                 brandMark
                     .padding(.bottom, Spacing.huge)
 
                 VStack(alignment: .leading, spacing: Spacing.medium) {
-                    Text("What's your X username?")
+                    Text("Which X account are you growing?")
                         .font(.system(size: 38, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
-                    Text("We use your public profile to check whether you've posted.")
+                    Text("Tell us where you post. Postlock will keep you showing up.")
                         .font(.title3)
                         .foregroundStyle(Theme.secondaryText)
                 }
@@ -112,7 +112,7 @@ struct UsernameSetupView: View {
         VStack(spacing: Spacing.extraLarge) {
             Spacer()
 
-            Text("Is this you?")
+            Text("Is this the account you want to grow?")
                 .font(.system(size: 36, weight: .bold, design: .rounded))
 
             SurfaceCard {
@@ -140,7 +140,7 @@ struct UsernameSetupView: View {
             Spacer()
 
             VStack(spacing: Spacing.medium) {
-                PrimaryButton(title: "Yes, Continue") {
+                PrimaryButton(title: "Yes, That's Mine") {
                     session.save(profile)
                     if mode == .change { dismiss() }
                 }
@@ -165,10 +165,10 @@ struct UsernameSetupView: View {
                 .background(Theme.surface, in: Circle())
 
             VStack(spacing: Spacing.medium) {
-                Text("POSTLOCK currently works with public X accounts.")
+                Text("Your posts need to be public.")
                     .font(.system(size: 30, weight: .bold, design: .rounded))
                     .multilineTextAlignment(.center)
-                Text("We need to see your public posting activity to verify your posting goals.")
+                Text("Postlock needs to see when you have posted. Make this account public, or choose another one.")
                     .font(.title3)
                     .foregroundStyle(Theme.secondaryText)
                     .multilineTextAlignment(.center)
@@ -183,8 +183,8 @@ struct UsernameSetupView: View {
 
     private var privacyCopy: some View {
         VStack(alignment: .leading, spacing: Spacing.small) {
-            Label("We only check public posts from the username you provide.", systemImage: "eye")
-            Label("We never post, like, follow, or access your X account.", systemImage: "lock.shield")
+            Label("We only look at posts anyone can already see.", systemImage: "eye")
+            Label("We never post or touch your X account.", systemImage: "lock.shield")
         }
         .font(.footnote)
         .foregroundStyle(Theme.secondaryText)
@@ -193,10 +193,11 @@ struct UsernameSetupView: View {
 
     private var brandMark: some View {
         HStack(spacing: Spacing.small) {
-            Image(systemName: "lock.fill")
-                .foregroundStyle(.black)
+            Image("BrandMark")
+                .resizable()
+                .scaledToFill()
                 .frame(width: 32, height: 32)
-                .background(Theme.accent, in: RoundedRectangle(cornerRadius: 9))
+                .clipShape(RoundedRectangle(cornerRadius: 9))
             Text(AppBrand.name)
                 .font(.subheadline.weight(.black))
                 .tracking(1.5)
