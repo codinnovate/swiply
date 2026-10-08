@@ -4,8 +4,8 @@
  * app views the same ranked set by three periods — today, this week, or all
  * time (everything POSTLOCK has recorded for the account) — each with its own
  * XP and rank. Ties break on average score over the most recent posts, then
- * average replies, then username. Accounts with fewer than 3 posts in the last
- * 30 days aren't ranked in any period.
+ * average replies, then username. Users with fewer than 3 posts in the last
+ * 30 days aren't ranked in any period; featured accounts are always listed.
  */
 export const LEADERBOARD_WINDOW = { posts: 10, days: 30, minimumPosts: 3 } as const;
 
@@ -84,12 +84,15 @@ export function rankLeaderboard(
     const recent = candidate.posts
       .filter((post) => post.postedAt.getTime() >= cutoff)
       .sort((a, b) => b.postedAt.getTime() - a.postedAt.getTime());
-    if (recent.length < LEADERBOARD_WINDOW.minimumPosts) return [];
+    const featured = candidate.category === 'featured';
+    if (!featured && recent.length < LEADERBOARD_WINDOW.minimumPosts) return [];
     // Average score/replies are a tiebreaker, sampled from the most recent
     // posts only — how active someone is ranks, not how well they score.
     const sample = recent.slice(0, LEADERBOARD_WINDOW.posts);
-    const sum = (pick: (post: (typeof sample)[number]) => number) =>
-      sample.reduce((total, post) => total + pick(post), 0);
+    const average = (pick: (post: (typeof sample)[number]) => number) =>
+      sample.length === 0
+        ? 0
+        : oneDecimal(sample.reduce((total, post) => total + pick(post), 0) / sample.length);
     return [
       {
         username: candidate.username,
@@ -97,8 +100,8 @@ export function rankLeaderboard(
         avatarUrl: candidate.avatarUrl,
         niche: candidate.niche,
         category: candidate.category,
-        avgScore: oneDecimal(sum((post) => post.totalScore) / sample.length),
-        avgReplies: oneDecimal(sum((post) => post.replies) / sample.length),
+        avgScore: average((post) => post.totalScore),
+        avgReplies: average((post) => post.replies),
         periods: {
           day: periodActivity(candidate, 'day', now),
           week: periodActivity(candidate, 'week', now),

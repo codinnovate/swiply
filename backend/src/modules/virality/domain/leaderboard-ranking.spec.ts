@@ -115,10 +115,22 @@ describe('rankLeaderboard', () => {
     expect(entries.map((entry) => entry.username)).toEqual(['talker', 'quiet']);
   });
 
-  it('leaves out accounts with fewer than three posts in the last 30 days', () => {
+  it('leaves out users with fewer than three posts in the last 30 days', () => {
     const stale = candidate('stale', [90, 90, 90]);
     stale.posts[2].postedAt = new Date(now.getTime() - 40 * DAY);
     expect(rankLeaderboard([stale, candidate('new', [99])], now)).toEqual([]);
+  });
+
+  it('always lists featured accounts, even with few or no recent posts', () => {
+    const ranked = rankLeaderboard(
+      [
+        candidate('quiet', [80], { category: 'featured' }),
+        candidate('silent', [], { category: 'featured' }),
+      ],
+      now,
+    );
+    expect(ranked.map((entry) => entry.username)).toEqual(['quiet', 'silent']);
+    expect(ranked[1]).toMatchObject({ avgScore: 0, avgReplies: 0, rank: 2 });
   });
 
   it('shares a rank on exact ties', () => {
