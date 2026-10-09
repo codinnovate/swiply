@@ -1,3 +1,6 @@
+import { firstValueFrom, take, toArray } from 'rxjs';
+
+import { ChallengeEventsService } from './challenge-events.service';
 import { PostingChallengesService } from './posting-challenges.service';
 
 const now = new Date('2026-09-25T08:00:00.000Z');
@@ -22,16 +25,22 @@ const challenge = {
   updatedAt: now,
 };
 
+const query = (result: unknown) => ({
+  sort: jest.fn().mockReturnThis(),
+  limit: jest.fn().mockReturnThis(),
+  select: jest.fn().mockReturnThis(),
+  lean: jest.fn().mockResolvedValue(result),
+});
+
 function makeService() {
-  const listQuery = {
-    sort: jest.fn().mockReturnThis(),
-    limit: jest.fn().mockReturnThis(),
-    lean: jest.fn().mockResolvedValue([challenge]),
-  };
+  const active = { ...challenge, status: 'active' as const };
   const challenges = {
     updateMany: jest.fn().mockResolvedValue({}),
     findOne: jest.fn().mockResolvedValue(null),
-    find: jest.fn().mockReturnValue(listQuery),
+    // Expiry sweeps find nothing; the watcher sees one active duel; listings see the fixture.
+    find: jest.fn((filter: { endsAt?: unknown; status?: string }) =>
+      query(filter.endsAt ? [] : filter.status === 'active' ? [active] : [challenge]),
+    ),
     findById: jest.fn(),
     create: jest.fn().mockResolvedValue({ toObject: () => challenge }),
   };
@@ -39,7 +48,10 @@ function makeService() {
     lean: jest.fn().mockResolvedValue({ installId: challenge.opponentInstallId }),
   };
   const participants = { findOne: jest.fn().mockReturnValue(participantQuery) };
-  const posts = { aggregate: jest.fn().mockResolvedValue([]) };
+  const posts = {
+    aggregate: jest.fn().mockResolvedValue([]),
+    countDocuments: jest.fn().mockResolvedValue(0),
+  };
   const provider = {
     getProfile: jest.fn((username: string) =>
       Promise.resolve({
@@ -50,15 +62,20 @@ function makeService() {
       }),
     ),
   };
-  const history = { syncAndScore: jest.fn().mockResolvedValue(undefined) };
+  const history = {
+    syncAndScore: jest.fn().mockResolvedValue(undefined),
+    ingest: jest.fn().mockResolvedValue([]),
+  };
+  const events = new ChallengeEventsService();
   const service = new PostingChallengesService(
     challenges as never,
     participants as never,
     posts as never,
     provider as never,
     history as never,
+    events,
   );
-  return { service, challenges, posts, history };
+  return { service, challenges, posts, history, events };
 }
 
 describe('PostingChallengesService', () => {
@@ -126,5 +143,68 @@ describe('PostingChallengesService', () => {
       }),
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
     expect(challenges.findById).not.toHaveBeenCalled();
+  });
+
+  it('announces a new challenge to both people', async () => {
+    const { service, events } = makeService();
+    const announced = jest.fn();
+    events.changesFor('bob').subscribe(announced);
+
+    await service.create({
+      challengerUsername: 'alice',
+      challengerInstallId: challenge.challengerInstallId,
+      opponentUsername: 'bob',
+      duration: 'day',
+    });
+
+    expect(announced).toHaveBeenCalledTimes(1);
+  });
+
+  it('streams the list on connect and again only when one of its challenges changes', async () => {
+    const { service, events } = makeService();
+    const received = firstValueFrom(
+      service
+        .stream({ username: 'bob', installId: challenge.opponentInstallId })
+        .pipe(take(2), toArray()),
+    );
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(events.watchedUsernames()).toEqual(['bob']);
+    events.changed('carol');
+    events.changed('alice', 'bob');
+
+    const [first, second] = await received;
+    expect(first).toMatchObject({ type: 'challenges', data: [{ requiresResponse: true }] });
+    expect(second.type).toBe('challenges');
+    expect(events.watchedUsernames()).toEqual([]);
+  });
+
+  it('polls only watched duels and announces the people who posted', async () => {
+    const { service, events, history, posts } = makeService();
+    const release = events.watch('bob');
+    // alice's count grows across her ingest; bob's stays flat.
+    posts.countDocuments.mockImplementation(({ username }: { username: string }) =>
+      Promise.resolve(username === 'alice' && history.ingest.mock.calls.length > 0 ? 3 : 2),
+    );
+    const forAlice = jest.fn();
+    const forBob = jest.fn();
+    events.changesFor('alice').subscribe(forAlice);
+    events.changesFor('bob').subscribe(forBob);
+
+    await service.pollWatched();
+
+    expect(history.ingest).toHaveBeenCalledWith('alice', { pages: 1 });
+    expect(history.ingest).toHaveBeenCalledWith('bob', { pages: 1 });
+    expect(forAlice).toHaveBeenCalledTimes(1);
+    expect(forBob).not.toHaveBeenCalled();
+    release();
+  });
+
+  it('skips polling when nobody has a stream open', async () => {
+    const { service, history } = makeService();
+
+    await service.pollWatched();
+
+    expect(history.ingest).not.toHaveBeenCalled();
   });
 });

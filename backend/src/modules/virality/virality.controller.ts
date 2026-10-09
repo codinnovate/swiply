@@ -1,6 +1,19 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  type MessageEvent,
+  Param,
+  Post,
+  Put,
+  Query,
+  Sse,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import type { Observable } from 'rxjs';
 
 import { Public } from '../../common/decorators/public.decorator';
 import {
@@ -103,6 +116,18 @@ export class ViralityController {
   @ApiOperation({ summary: 'Challenge invitations and active challenges for an install' })
   listChallenges(@Query() query: PostingChallengesQueryDto) {
     return this.challenges.list(query);
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
+  @Sse('challenges/stream')
+  @ApiOperation({
+    summary: 'Server-sent challenge updates for an install',
+    description:
+      'Sends a `challenges` event with the full visible list on connect and whenever one changes (new posts, accept/decline, expiry), and a `ping` every 25 seconds.',
+  })
+  streamChallenges(@Query() query: PostingChallengesQueryDto): Observable<MessageEvent> {
+    return this.challenges.stream(query);
   }
 
   @Public()
