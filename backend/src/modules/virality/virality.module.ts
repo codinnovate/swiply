@@ -21,6 +21,7 @@ import { LeaderboardService } from './services/leaderboard.service';
 import { PostHistoryService } from './services/post-history.service';
 import { createViralityLlm, VIRALITY_LLM } from './services/llm-providers';
 import { ViralityScorerService } from './services/virality-scorer.service';
+import { ChallengeEventsService } from './services/challenge-events.service';
 import { PostingChallengesService } from './services/posting-challenges.service';
 import { XpConfigService } from './services/xp-config.service';
 import { XpService } from './services/xp.service';
@@ -50,6 +51,7 @@ import { ViralityJobs } from './virality.jobs';
     XpService,
     PostHistoryService,
     LeaderboardService,
+    ChallengeEventsService,
     PostingChallengesService,
     AdminTokenGuard,
     ViralityJobs,
