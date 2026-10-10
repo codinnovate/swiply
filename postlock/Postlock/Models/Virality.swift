@@ -33,66 +33,6 @@ enum DesignPreviewData {
         false
         #endif
     }
-
-    private static func previewXP(likes: Int, reposts: Int, replies: Int, replyBacks: Int, postedAt: Date) -> PostXP {
-        let lines = [
-            XPLine(signal: "like", count: Double(likes), weight: 0.5, xp: Double(likes) * 0.5, availability: "measured"),
-            XPLine(signal: "repost", count: Double(reposts), weight: 1, xp: Double(reposts), availability: "measured"),
-            XPLine(signal: "replyReceived", count: Double(replies), weight: 13.5, xp: Double(replies) * 13.5, availability: "measured"),
-            XPLine(signal: "authorReplyToReply", count: Double(replyBacks), weight: 75, xp: Double(replyBacks) * 75, availability: "partial"),
-            XPLine(signal: "profileClickToEngagement", count: 0, weight: 12, xp: 0, availability: "unavailable"),
-            XPLine(signal: "conversationClickEngagement", count: 0, weight: 11, xp: 0, availability: "unavailable"),
-        ]
-        let total = lines.map(\.xp).reduce(0, +)
-        return PostXP(xp: total, earnedXp: total, penaltyXp: 0, breakdown: lines, duplicateOf: nil, history: [
-            XPHistoryPoint(milestone: "h1", capturedAt: postedAt.addingTimeInterval(3600), xp: (total * 0.3).rounded()),
-            XPHistoryPoint(milestone: "h24", capturedAt: postedAt.addingTimeInterval(86400), xp: (total * 0.85).rounded()),
-            XPHistoryPoint(milestone: "latest", capturedAt: .now, xp: total),
-        ].filter { $0.capturedAt <= .now })
-    }
-
-    static let leaderboard = Leaderboard(computedAt: .now, window: .init(posts: 10, days: 30, minimumPosts: 3), entries: [
-        entry(1, "Elon Musk", "elonmusk", 41, .featured),
-        entry(2, "Pieter Levels", "levelsio", 33, .featured),
-        entry(3, "Marc Lou", "marclou", 29, .featured),
-        entry(4, "Kai Morgan", "kaimakes", 24, .user),
-        entry(5, "Jacob Rodriguez", "jacobrodri_", 21, .featured),
-        entry(6, "Sofia Park", "sofiaspaces", 18, .user)
-    ], niches: [], me: nil)
-
-    static let xpRules = XPRules(
-        version: 0,
-        weights: ["like": 0.5, "repost": 1, "replyReceived": 13.5, "profileClickToEngagement": 12, "conversationClickEngagement": 11, "authorReplyToReply": 75, "mutedOrBlocked": -74, "reported": -369],
-        availability: ["like": "measured", "repost": "measured", "replyReceived": "measured", "authorReplyToReply": "partial", "profileClickToEngagement": "unavailable", "conversationClickEngagement": "unavailable", "mutedOrBlocked": "unavailable", "reported": "unavailable"],
-        note: "XP reflects likes, reposts, replies, and your replies back to people who replied. Profile-click, conversation-click, mute, block, and report data isn't public, so those count as zero.",
-        levelBaseXp: 50, replierDecayWindowDays: 30, duplicateWindowDays: 7)
-
-    /// A sample breakdown for a sample leaderboard entry; its XP is the sum of its posts.
-    static func breakdown(for entry: LeaderboardEntry, period: LeaderboardFilter) -> LeaderboardBreakdown {
-        let samples: [(text: String, quote: (String, String)?, hoursAgo: Double, likes: Int, reposts: Int, replies: Int, replyBacks: Int, views: Int)] = [
-            ("Shipped the new onboarding today. Cut it from 6 screens to 2 and signups are already up.", nil, 2, 184, 21, 36, 4, 12_400),
-            ("What's one tool you'd never build yourself?", nil, 6, 96, 8, 58, 6, 8_900),
-            ("This is the way.", ("indiehacker", "Nobody cares about your tech stack. Ship the thing and talk to users."), 11, 240, 33, 19, 1, 21_300),
-            ("Small daily progress beats the occasional heroic sprint. Every time.", nil, 19, 131, 17, 22, 2, 9_700),
-        ]
-        let posts = samples.enumerated().map { index, sample in
-            let postedAt = Date.now.addingTimeInterval(-sample.hoursAgo * 3600)
-            return LeaderboardBreakdown.Post(
-                postId: "sample-\(entry.username)-\(index)", url: URL(string: "https://x.com/\(entry.username)")!,
-                kind: sample.quote == nil ? "original" : "quote", text: sample.text, threadTexts: [],
-                quotedUsername: sample.quote?.0, quotedText: sample.quote?.1, postedAt: postedAt, mediaType: "none",
-                engagement: PostEngagement(likes: sample.likes, reposts: sample.reposts, replies: sample.replies, quotes: 2, bookmarks: 9, views: sample.views),
-                xp: previewXP(likes: sample.likes, reposts: sample.reposts, replies: sample.replies, replyBacks: sample.replyBacks, postedAt: postedAt))
-        }
-        return LeaderboardBreakdown(
-            computedAt: .now, period: period, username: entry.username, displayName: entry.displayName,
-            avatarUrl: entry.avatarUrl, category: entry.category, level: entry.level ?? 1,
-            xp: posts.compactMap(\.xp?.xp).reduce(0, +), postsCounted: posts.count, xpRules: xpRules, posts: posts)
-    }
-
-    private static func entry(_ rank: Int, _ name: String, _ handle: String, _ posts: Int, _ category: LeaderboardEntry.Category) -> LeaderboardEntry {
-        .init(rank: rank, username: handle, displayName: name, avatarUrl: nil, niche: "Building in public", category: category, avgScore: Double(70 + rank), avgReplies: Double(42 - rank * 4), postsCounted: posts, xp: Double(posts * 180), level: Int(Double(posts * 180 / 50).squareRoot()) + 1)
-    }
 }
 
 /// A post's virality score, in the scoring engine's JSON shape.

@@ -10,6 +10,35 @@ protocol ViralityClient: Sendable {
     func fetchChallenges(username: String, installID: UUID) async throws -> [PostingChallenge]
     func createChallenge(challenger: String, opponent: String, duration: PostingChallenge.Duration, installID: UUID) async throws -> PostingChallenge
     func respondToChallenge(id: String, username: String, installID: UUID, accept: Bool) async throws -> PostingChallenge
+    /// The install's visible challenges, re-sent by the server whenever one changes. Ends when the connection drops.
+    func challengeUpdates(username: String, installID: UUID) -> AsyncThrowingStream<[PostingChallenge], Error>
+}
+
+/// Reads a server-sent event stream line by line. `URLSession.AsyncBytes.lines`
+/// drops the blank line that ends each event, so an event is emitted on its
+/// `data:` line; the POSTLOCK server always sends single-line JSON data.
+struct ServerSentEventParser {
+    struct Event: Equatable {
+        let name: String
+        let data: String
+    }
+
+    private var name = "message"
+
+    mutating func consume(_ line: String) -> Event? {
+        if line.hasPrefix("event:") {
+            name = Self.value(of: line, after: "event:")
+            return nil
+        }
+        guard line.hasPrefix("data:") else { return nil }
+        defer { name = "message" }
+        return Event(name: name, data: Self.value(of: line, after: "data:"))
+    }
+
+    private static func value(of line: String, after field: String) -> String {
+        let value = line.dropFirst(field.count)
+        return String(value.first == " " ? value.dropFirst() : value)
+    }
 }
 
 enum ViralityClientError: LocalizedError {
@@ -88,6 +117,39 @@ struct URLSessionViralityClient: ViralityClient {
             installId: installID.uuidString.lowercased(),
             action: accept ? "accept" : "decline"
         ))
+    }
+
+    func challengeUpdates(username: String, installID: UUID) -> AsyncThrowingStream<[PostingChallenge], Error> {
+        var components = URLComponents(url: baseURL.appending(path: "api/v1/postlock/challenges/stream"), resolvingAgainstBaseURL: false)!
+        components.queryItems = [
+            URLQueryItem(name: "username", value: username),
+            URLQueryItem(name: "installId", value: installID.uuidString.lowercased()),
+        ]
+        var request = URLRequest(url: components.url!)
+        request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
+        // Idle timeout between bytes; the server pings every 25 seconds.
+        request.timeoutInterval = 60
+        let session = session, streamRequest = request
+
+        return AsyncThrowingStream { continuation in
+            let task = Task {
+                do {
+                    let (bytes, response) = try await session.bytes(for: streamRequest)
+                    guard let http = response as? HTTPURLResponse, (200 ..< 300).contains(http.statusCode) else {
+                        throw ViralityClientError.unavailable
+                    }
+                    var parser = ServerSentEventParser()
+                    for try await line in bytes.lines {
+                        guard let event = parser.consume(line), event.name == "challenges" else { continue }
+                        continuation.yield(try Self.decoder.decode([PostingChallenge].self, from: Data(event.data.utf8)))
+                    }
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+            continuation.onTermination = { _ in task.cancel() }
+        }
     }
 
     private func send<Response: Decodable>(

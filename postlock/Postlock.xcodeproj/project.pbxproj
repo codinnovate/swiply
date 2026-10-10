@@ -19,6 +19,7 @@
 		37CFF9E5D0B19B327C78097E /* LeaderboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFCEA46917A58D69C436E2EF /* LeaderboardView.swift */; };
 		423242C51190D2658D9F871A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB7A238548284B34578D950 /* SettingsView.swift */; };
 		4A3E572F39904FB9AC4AFCC6 /* PurchasesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F7E4A37086A728C77BE757B /* PurchasesService.swift */; };
+		597739DA527586B01FCCCC68 /* ServerSentEventParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B8E5EA2B0D76A20BD463E1A /* ServerSentEventParserTests.swift */; };
 		5C4355EF66AB75CF7F55ED16 /* PostingProfileClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76D4DA3A70CA7E06AECA4F75 /* PostingProfileClient.swift */; };
 		5DDBB647DDFB3FDFC2D2B99E /* PostingStateCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB363665E73796C6B9E1B32 /* PostingStateCalculatorTests.swift */; };
 		6915D3BF577FA79D309BFCD3 /* PostlockChallengeWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EC6E8B68F020CFC27F7181A /* PostlockChallengeWidget.swift */; };
@@ -35,6 +36,7 @@
 		8F70EC7DE76E1B51542D4B91 /* PostlockFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B956ED9090F8880FE867CD4 /* PostlockFlowUITests.swift */; };
 		9257B3B318E10BD8B121338F /* ViralityClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B219A04B54C09679AD4EDBE /* ViralityClient.swift */; };
 		95A562DD8172029D0FA7399C /* UsernameSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC85E3CC2D7D9F8DD5B65E66 /* UsernameSetupView.swift */; };
+		9C24657FD4AAAE2D95DC6A20 /* ViralityStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B926F11BE71195FDD5749D9 /* ViralityStoreTests.swift */; };
 		9F9C53CF3868F985EAAA786F /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1866EDADF2C072F499850FB /* AppConfiguration.swift */; };
 		A95D805CAD460F8C681FE9D7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F8633D16CA1A99FEB71FC318 /* Assets.xcassets */; };
 		AD96B5C47F8846864A4F9F6E /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4DB2F876028C1FA093A0ABC /* HistoryView.swift */; };
@@ -104,6 +106,7 @@
 
 /* Begin PBXFileReference section */
 		0ADB82CD24DC37B5B0D17E4C /* UsernameNormalizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsernameNormalizer.swift; sourceTree = "<group>"; };
+		0B926F11BE71195FDD5749D9 /* ViralityStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViralityStoreTests.swift; sourceTree = "<group>"; };
 		12BE695C9B38D376C4217EA9 /* PostlockDeviceActivityMonitor.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = PostlockDeviceActivityMonitor.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		15CEAA010499F25A7C6B89EC /* PostlockChallengeWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PostlockChallengeWidget.entitlements; sourceTree = "<group>"; };
 		1B2D54450AAF5FB462455DC2 /* PostlockChallengeWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = PostlockChallengeWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -136,6 +139,7 @@
 		73F01FCD66146E857A3CB637 /* ChallengeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChallengeView.swift; sourceTree = "<group>"; };
 		755653B2CF91C78C3AB8D629 /* UsernameNormalizerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsernameNormalizerTests.swift; sourceTree = "<group>"; };
 		76D4DA3A70CA7E06AECA4F75 /* PostingProfileClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostingProfileClient.swift; sourceTree = "<group>"; };
+		7B8E5EA2B0D76A20BD463E1A /* ServerSentEventParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerSentEventParserTests.swift; sourceTree = "<group>"; };
 		8643366B70F42E806757AF42 /* PostingCommitmentStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostingCommitmentStore.swift; sourceTree = "<group>"; };
 		9B219A04B54C09679AD4EDBE /* ViralityClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViralityClient.swift; sourceTree = "<group>"; };
 		9C8AB2B8F214987303159D28 /* Postlock.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Postlock.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -271,8 +275,10 @@
 			children = (
 				AAB363665E73796C6B9E1B32 /* PostingStateCalculatorTests.swift */,
 				A6D2A12C45123549059E3C3F /* ReminderPlannerTests.swift */,
+				7B8E5EA2B0D76A20BD463E1A /* ServerSentEventParserTests.swift */,
 				755653B2CF91C78C3AB8D629 /* UsernameNormalizerTests.swift */,
 				29D677AD5C6DBF0CD3307864 /* ViralityDecodingTests.swift */,
+				0B926F11BE71195FDD5749D9 /* ViralityStoreTests.swift */,
 			);
 			path = PostlockTests;
 			sourceTree = "<group>";
@@ -601,8 +607,10 @@
 			files = (
 				5DDBB647DDFB3FDFC2D2B99E /* PostingStateCalculatorTests.swift in Sources */,
 				F7AB0B1548C91DC53BDB0148 /* ReminderPlannerTests.swift in Sources */,
+				597739DA527586B01FCCCC68 /* ServerSentEventParserTests.swift in Sources */,
 				B57BB52F0FB021DCF2382700 /* UsernameNormalizerTests.swift in Sources */,
 				E7038DB0C2936CCFC255A3F2 /* ViralityDecodingTests.swift in Sources */,
+				9C24657FD4AAAE2D95DC6A20 /* ViralityStoreTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
