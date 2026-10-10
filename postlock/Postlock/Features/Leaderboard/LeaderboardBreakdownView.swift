@@ -5,7 +5,6 @@ import SwiftUI
 struct LeaderboardBreakdownSheet: View {
     let entry: LeaderboardEntry
     let period: LeaderboardFilter
-    let isPreview: Bool
 
     @Environment(ViralityStore.self) private var store
     @Environment(\.dismiss) private var dismiss
@@ -66,10 +65,6 @@ struct LeaderboardBreakdownSheet: View {
 
     private func load() async {
         error = nil
-        if isPreview {
-            breakdown = DesignPreviewData.breakdown(for: entry, period: period)
-            return
-        }
         do {
             breakdown = try await store.leaderboardBreakdown(username: entry.username, period: period)
         } catch {

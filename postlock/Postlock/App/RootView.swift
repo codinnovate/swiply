@@ -73,6 +73,8 @@ struct MainTabView: View {
     }
 
     @Environment(AppSession.self) private var session
+    @Environment(ViralityStore.self) private var virality
+    @Environment(\.scenePhase) private var scenePhase
     @State private var selected = Self.initialTab
 
     var body: some View {
@@ -95,6 +97,11 @@ struct MainTabView: View {
         }
         .tint(Theme.accent)
         .onChange(of: session.notifications.openTodayRequests) { selected = 0 }
+        // Challenge scores stream in while the app is in the foreground; leaving it closes the connection.
+        .task(id: "\(session.profile?.username ?? "")|\(scenePhase == .active)") {
+            guard scenePhase == .active, let username = session.profile?.username else { return }
+            await virality.watchChallenges(username: username)
+        }
     }
 
     private func tabIcon(_ name: String, label: String) -> some View {

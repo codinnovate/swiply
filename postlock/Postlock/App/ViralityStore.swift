@@ -24,6 +24,8 @@ final class ViralityStore {
 
     private let client: any ViralityClient
     private let preferences: any LeaderboardPreferencesStoring
+    /// First wait before reconnecting a dropped challenge stream; doubles up to 30 seconds.
+    var reconnectDelay: Duration = .seconds(2)
 
     init(client: any ViralityClient, preferences: any LeaderboardPreferencesStoring) {
         self.client = client
@@ -50,17 +52,40 @@ final class ViralityStore {
         challengeError = nil
         defer { isLoadingChallenges = false }
         do {
-            challenges = try await client.fetchChallenges(username: username, installID: installID)
-            for challenge in challenges {
-                if challenge.status == .active { await ChallengeLiveActivity.sync(challenge) }
-                if challenge.status == .completed { await ChallengeLiveActivity.end(challenge) }
-            }
+            await apply(try await client.fetchChallenges(username: username, installID: installID))
         } catch is CancellationError {
             return
         } catch let error as URLError where error.code == .cancelled {
             return
         } catch {
             challengeError = (error as? LocalizedError)?.errorDescription ?? "We couldn't load your challenges."
+        }
+    }
+
+    /// Keeps challenges live while the app is open: applies every server push and
+    /// reconnects with backoff when the stream drops. Returns when the task is cancelled.
+    func watchChallenges(username: String) async {
+        guard !username.isEmpty else { return }
+        var delay = reconnectDelay
+        while !Task.isCancelled {
+            do {
+                for try await update in client.challengeUpdates(username: username, installID: installID) {
+                    await apply(update)
+                    delay = reconnectDelay
+                }
+            } catch {
+                // Dropped connections, server restarts, and offline periods all just retry.
+            }
+            try? await Task.sleep(for: delay)
+            delay = min(delay * 2, .seconds(30))
+        }
+    }
+
+    private func apply(_ updated: [PostingChallenge]) async {
+        challenges = updated
+        for challenge in updated {
+            if challenge.status == .active { await ChallengeLiveActivity.sync(challenge) }
+            if challenge.status == .completed { await ChallengeLiveActivity.end(challenge) }
         }
     }
 

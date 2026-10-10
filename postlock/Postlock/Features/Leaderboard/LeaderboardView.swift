@@ -8,11 +8,10 @@ struct LeaderboardView: View {
     @State private var showingInfo = false
     @State private var showingChallenges = false
     @State private var inspecting: LeaderboardEntry?
-    @AppStorage("designPreviewData") private var previewData = DesignPreviewData.enabledByDefault
 
     private var username: String { session.profile?.username ?? "" }
     private var timezone: String { session.commitment?.timezoneIdentifier ?? TimeZone.current.identifier }
-    private var board: Leaderboard? { previewData ? DesignPreviewData.leaderboard : store.leaderboard }
+    private var board: Leaderboard? { store.leaderboard }
 
     var body: some View {
         NavigationStack {
@@ -31,13 +30,13 @@ struct LeaderboardView: View {
                             Button("Try again") { Task { await load() } }.frame(minHeight: 44)
                         }.frame(maxWidth: .infinity).padding(.vertical, 40)
                     }
-                    if !previewData && !store.isOptedIn { optIn }
+                    if !store.isOptedIn { optIn }
                 }.padding(.horizontal, 20).padding(.bottom, 28)
             }
             .background(Theme.background)
             .toolbar(.hidden, for: .navigationBar)
             .refreshable { await load() }
-            .task(id: "\(filter.rawValue)|\(niche ?? "")|\(store.isOptedIn)|\(previewData)") { await load() }
+            .task(id: "\(filter.rawValue)|\(niche ?? "")|\(store.isOptedIn)") { await load() }
             .task(id: username) { await store.loadChallenges(username: username) }
             .sheet(isPresented: $showingInfo) {
                 NavigationStack {
@@ -50,12 +49,6 @@ struct LeaderboardView: View {
                                 Text("Post at least \(board.window.minimumPosts) times in \(board.window.days) days to qualify.")
                                 Text("Updated \(board.computedAt.formatted(.relative(presentation: .named))).")
                             }
-                            if previewData { Text("You're viewing fictional creators and sample data.").foregroundStyle(Theme.accent) }
-                            Button(previewData ? "Use live rankings" : "Show sample leaderboard") {
-                                previewData.toggle()
-                                showingInfo = false
-                            }
-                            .foregroundStyle(Theme.accent).frame(minHeight: 44)
                             Text("Featured accounts are prolific X posters, curated by us. Start better conversations than them and you'll rank above them. You appear publicly only when you join, and can leave in Settings.")
                         }.font(.subheadline).foregroundStyle(Theme.secondaryText).padding(24)
                     }.background(Theme.background)
@@ -63,7 +56,7 @@ struct LeaderboardView: View {
                 }.presentationDetents([.medium, .large]).presentationDragIndicator(.visible).tint(Theme.accent)
             }
             .sheet(item: $inspecting) { entry in
-                LeaderboardBreakdownSheet(entry: entry, period: filter, isPreview: previewData)
+                LeaderboardBreakdownSheet(entry: entry, period: filter)
                     .presentationDetents([.large]).presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $showingChallenges) {
@@ -138,10 +131,6 @@ struct LeaderboardView: View {
                     Text(rankingLabel(board)).tracking(1.4)
                 }
                 Spacer()
-                Button { previewData.toggle() } label: {
-                    Text(previewData ? "Sample · Go live" : "Preview")
-                        .foregroundStyle(Theme.accent).frame(minHeight: 32)
-                }.accessibilityLabel(previewData ? "Sample rankings. Switch to live data" : "Show sample rankings")
             }.font(.system(size: 9, weight: .semibold)).foregroundStyle(Theme.secondaryText)
             if top.isEmpty {
                 ContentUnavailableView("No rankings yet", systemImage: "trophy")
@@ -161,7 +150,7 @@ struct LeaderboardView: View {
                 inspectable(me) { LeaderboardRow(entry: me, isMe: true) }
                     .padding(14).background(Theme.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 18))
                     .overlay { RoundedRectangle(cornerRadius: 18).stroke(Theme.accent.opacity(0.25), lineWidth: 1) }
-            } else if !previewData && store.isOptedIn {
+            } else if store.isOptedIn {
                 Text("Post \(board.window.minimumPosts) times in \(board.window.days) days to enter the rankings.")
                     .font(.caption).foregroundStyle(Theme.secondaryText)
             }
@@ -174,7 +163,7 @@ struct LeaderboardView: View {
                     .padding(.horizontal, 14).padding(.top, 6)
                 VStack(spacing: 0) {
                     ForEach(remaining) { entry in
-                        inspectable(entry) { LeaderboardRow(entry: entry, isMe: !previewData && entry.username == username) }
+                        inspectable(entry) { LeaderboardRow(entry: entry, isMe: entry.username == username) }
                             .padding(.vertical, 16)
                         if entry.id != remaining.last?.id { Divider().overlay(.white.opacity(0.04)).padding(.leading, 40) }
                     }
@@ -182,10 +171,10 @@ struct LeaderboardView: View {
                     .background(Theme.surface, in: RoundedRectangle(cornerRadius: 22))
                     .overlay { RoundedRectangle(cornerRadius: 22).stroke(.white.opacity(0.05), lineWidth: 1) }
             }
-            if !previewData, let error = store.leaderboardError {
+            if let error = store.leaderboardError {
                 Text(error).font(.caption).foregroundStyle(Theme.danger)
             }
-            if !previewData, !board.niches.isEmpty {
+            if !board.niches.isEmpty {
                 Menu {
                     Picker("Niche", selection: $niche) {
                         Text("All niches").tag(String?.none)
@@ -259,7 +248,6 @@ struct LeaderboardView: View {
     }
 
     private func load() async {
-        guard !previewData else { return }
         await store.loadLeaderboard(filter: filter, niche: niche, username: username)
     }
 }
