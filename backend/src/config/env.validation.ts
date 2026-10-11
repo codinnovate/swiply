@@ -144,6 +144,13 @@ export class EnvironmentVariables {
   POSTLOCK_MAX_SCORES_PER_SYNC = 10;
 
   @IsIn(['true', 'false']) @IsOptional() POSTLOCK_JOBS_ENABLED?: string;
+
+  // --- POSTLOCK duel push notifications (APNs token auth) ---
+  // Optional: without all three credentials, duel alerts are skipped.
+  @IsString() @IsOptional() APNS_KEY_ID?: string;
+  @IsString() @IsOptional() APNS_TEAM_ID?: string;
+  @IsString() @IsOptional() APNS_PRIVATE_KEY?: string;
+  @IsString() @IsOptional() APNS_BUNDLE_ID = 'com.swiply.postlock';
 }
 
 export function validateEnv(raw: Record<string, unknown>): EnvironmentVariables {
