@@ -88,6 +88,21 @@ export class RespondPostingChallengeDto extends PostingChallengesQueryDto {
   @IsIn(['accept', 'decline']) action: 'accept' | 'decline';
 }
 
+export class RegisterPushDeviceDto {
+  @XUsername() username: string;
+  @IsUUID() installId: string;
+  /** Hex APNs device token. */
+  @Transform(({ value }) => (typeof value === 'string' ? value.toLowerCase() : value))
+  @IsString()
+  @Matches(/^[0-9a-f]{64,200}$/, { message: 'token must be a hex APNs device token' })
+  token: string;
+  @IsIn(['sandbox', 'production']) environment: 'sandbox' | 'production';
+}
+
+export class UnregisterPushDeviceDto {
+  @IsUUID() installId: string;
+}
+
 const XpWeight = () =>
   applyDecorators(
     IsOptional(),
