@@ -17,10 +17,14 @@ import { LeaderboardParticipant } from '../schemas/leaderboard-participant.schem
 import { PostingChallenge } from '../schemas/posting-challenge.schema';
 import { ScoredPost } from '../schemas/scored-post.schema';
 import { ChallengeEventsService } from './challenge-events.service';
+import { challengeScores } from './challenge-scores';
+import { DuelAlertsService } from './duel-alerts.service';
 import { PostHistoryService } from './post-history.service';
 
 /** Keeps idle proxies (Railway, carriers) from closing an open stream. */
 const HEARTBEAT_MS = 25_000;
+/** A duel that starts now alerts on its first post instead of just recording a baseline. */
+const FRESH_BASELINE = { challenger: 0, opponent: 0 };
 
 @Injectable()
 export class PostingChallengesService {
@@ -35,6 +39,7 @@ export class PostingChallengesService {
     @Inject(X_POST_PROVIDER) private readonly provider: XPostProvider,
     private readonly history: PostHistoryService,
     private readonly events: ChallengeEventsService,
+    private readonly alerts: DuelAlertsService,
   ) {}
 
   async create(dto: CreatePostingChallengeDto) {
@@ -75,6 +80,7 @@ export class PostingChallengesService {
         status: participant ? 'pending' : 'active',
         startsAt,
         endsAt,
+        notifiedScores: participant ? null : FRESH_BASELINE,
       });
       this.events.changed(dto.challengerUsername, dto.opponentUsername);
       return this.present(challenge.toObject(), dto.challengerUsername);
@@ -99,6 +105,7 @@ export class PostingChallengesService {
     await Promise.allSettled(
       activeUsernames.map((username) => this.history.syncAndScore(username, {})),
     );
+    await this.alerts.checkDuels(activeUsernames);
     // The sync may have found new posts; the rival's open stream should see them too.
     this.events.changed(...activeUsernames);
     return Promise.all(visible.map((item) => this.present(item, query.username)));
@@ -128,25 +135,45 @@ export class PostingChallengesService {
 
   /**
    * Pulls the newest timeline page for everyone in an active challenge that
-   * has an open stream, and announces the usernames whose posts changed.
-   * Overlapping calls share one run.
+   * has an open stream, sends duel alerts, and announces the usernames whose
+   * posts changed. Overlapping calls share one run.
    */
   pollWatched(): Promise<void> {
-    this.polling ??= this.runPoll().finally(() => {
+    return this.startPoll('watched');
+  }
+
+  /**
+   * The same for every active duel, so alerts reach people without the app
+   * open. Waits out a poll already in flight rather than skipping this round.
+   */
+  async pollActive(): Promise<void> {
+    await this.polling?.catch(() => undefined);
+    return this.startPoll('all');
+  }
+
+  private startPoll(scope: 'watched' | 'all'): Promise<void> {
+    this.polling ??= this.runPoll(scope).finally(() => {
       this.polling = null;
     });
     return this.polling;
   }
 
-  private async runPoll(): Promise<void> {
+  private async runPoll(scope: 'watched' | 'all'): Promise<void> {
     await this.finishExpired();
     const watched = this.events.watchedUsernames();
-    if (watched.length === 0) return;
+    if (scope === 'watched' && watched.length === 0) return;
     const active = await this.challenges
-      .find({
-        status: 'active',
-        $or: [{ challengerUsername: { $in: watched } }, { opponentUsername: { $in: watched } }],
-      })
+      .find(
+        scope === 'watched'
+          ? {
+              status: 'active',
+              $or: [
+                { challengerUsername: { $in: watched } },
+                { opponentUsername: { $in: watched } },
+              ],
+            }
+          : { status: 'active' },
+      )
       .select('challengerUsername opponentUsername')
       .lean();
     const usernames = [
@@ -164,7 +191,9 @@ export class PostingChallengesService {
         }
       }),
     );
-    this.events.changed(...changed.filter((username): username is string => username !== null));
+    const posted = changed.filter((username): username is string => username !== null);
+    await this.alerts.checkDuels(posted);
+    this.events.changed(...posted);
   }
 
   private async visibleTo(query: PostingChallengesQueryDto) {
@@ -196,6 +225,7 @@ export class PostingChallengesService {
     challenge.status = dto.action === 'accept' ? 'active' : 'declined';
     challenge.respondedAt = new Date();
     if (dto.action === 'accept') {
+      challenge.notifiedScores = FRESH_BASELINE;
       challenge.startsAt = new Date();
       challenge.endsAt = new Date(
         challenge.startsAt.getTime() + (challenge.duration === 'day' ? 1 : 7) * 86_400_000,
@@ -222,29 +252,20 @@ export class PostingChallengesService {
   }
 
   private async present(challenge: PostingChallenge & { _id: unknown }, viewerUsername: string) {
-    const counts = await this.posts.aggregate<{ _id: string; score: number }>([
-      {
-        $match: {
-          username: { $in: [challenge.challengerUsername, challenge.opponentUsername] },
-          postedAt: { $gte: challenge.startsAt, $lte: challenge.endsAt },
-        },
-      },
-      { $group: { _id: '$username', score: { $sum: 1 } } },
-    ]);
-    const score = new Map(counts.map((item) => [item._id, item.score]));
+    const scores = await challengeScores(this.posts, challenge);
     return {
       id: String(challenge._id),
       challenger: {
         username: challenge.challengerUsername,
         displayName: challenge.challengerDisplayName,
         avatarUrl: challenge.challengerAvatarUrl,
-        score: score.get(challenge.challengerUsername) ?? 0,
+        score: scores.challenger,
       },
       opponent: {
         username: challenge.opponentUsername,
         displayName: challenge.opponentDisplayName,
         avatarUrl: challenge.opponentAvatarUrl,
-        score: score.get(challenge.opponentUsername) ?? 0,
+        score: scores.opponent,
       },
       duration: challenge.duration,
       status: challenge.status,

@@ -9,11 +9,14 @@ const REFRESH_INTERVAL_MS = 3 * 60 * 60 * 1000;
 const FIRST_RUN_DELAY_MS = 2 * 60 * 1000;
 /** How often duels with an open stream check X for new posts. */
 const CHALLENGE_POLL_MS = 30 * 1000;
+/** How often every active duel is checked, so push alerts arrive with the app closed. */
+const DUEL_ALERT_POLL_MS = 2 * 60 * 1000;
 
 /**
  * Refreshes the leaderboard every three hours — rankings are recomputed on a
  * schedule rather than live, to keep scoring cost bounded. Watched posting
- * challenges are polled every 30 seconds so their streams stay live. A plain timer: the
+ * challenges are polled every 30 seconds so their streams stay live, and every
+ * active duel every two minutes for push alerts. A plain timer: the
  * installed @nestjs/schedule is ESM-only and this backend is CommonJS.
  */
 @Injectable()
@@ -32,10 +35,12 @@ export class ViralityJobs implements OnApplicationBootstrap, OnModuleDestroy {
     const first = setTimeout(() => void this.refreshLeaderboard(), FIRST_RUN_DELAY_MS);
     const recurring = setInterval(() => void this.refreshLeaderboard(), REFRESH_INTERVAL_MS);
     const challenges = setInterval(() => void this.pollChallenges(), CHALLENGE_POLL_MS);
+    const duels = setInterval(() => void this.pollDuelAlerts(), DUEL_ALERT_POLL_MS);
     first.unref();
     recurring.unref();
     challenges.unref();
-    this.timers = [first, recurring, challenges];
+    duels.unref();
+    this.timers = [first, recurring, challenges, duels];
   }
 
   onModuleDestroy(): void {
@@ -58,6 +63,14 @@ export class ViralityJobs implements OnApplicationBootstrap, OnModuleDestroy {
       await this.challenges.pollWatched();
     } catch (error) {
       this.logger.error(`Challenge poll failed: ${String(error)}`);
+    }
+  }
+
+  async pollDuelAlerts(): Promise<void> {
+    try {
+      await this.challenges.pollActive();
+    } catch (error) {
+      this.logger.error(`Duel alert poll failed: ${String(error)}`);
     }
   }
 }
