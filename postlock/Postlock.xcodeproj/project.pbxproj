@@ -19,6 +19,7 @@
 		37CFF9E5D0B19B327C78097E /* LeaderboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFCEA46917A58D69C436E2EF /* LeaderboardView.swift */; };
 		423242C51190D2658D9F871A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB7A238548284B34578D950 /* SettingsView.swift */; };
 		4A3E572F39904FB9AC4AFCC6 /* PurchasesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F7E4A37086A728C77BE757B /* PurchasesService.swift */; };
+		587FA8C2A6116AAB58D4B79B /* XPostCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFE5B3F8A0C88B8707520C29 /* XPostCard.swift */; };
 		597739DA527586B01FCCCC68 /* ServerSentEventParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B8E5EA2B0D76A20BD463E1A /* ServerSentEventParserTests.swift */; };
 		5C4355EF66AB75CF7F55ED16 /* PostingProfileClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76D4DA3A70CA7E06AECA4F75 /* PostingProfileClient.swift */; };
 		5DDBB647DDFB3FDFC2D2B99E /* PostingStateCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB363665E73796C6B9E1B32 /* PostingStateCalculatorTests.swift */; };
@@ -53,6 +54,7 @@
 		E35B957A60805F701B2D20AE /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00F019C192F66158AFF1CBB /* Components.swift */; };
 		E67FDFF8147F0737A8247D5D /* PostingCommitmentStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8643366B70F42E806757AF42 /* PostingCommitmentStore.swift */; };
 		E7038DB0C2936CCFC255A3F2 /* ViralityDecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29D677AD5C6DBF0CD3307864 /* ViralityDecodingTests.swift */; };
+		EB1D4A72ED2E8E2D6EA8115A /* XPostFormatTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4427F4BB2B11DC7234DFA77 /* XPostFormatTests.swift */; };
 		ED2409074B3646E70538B3FA /* UsernameSetupViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F0D577C736C1ED168D11F8E /* UsernameSetupViewModel.swift */; };
 		F150F9C9FD617E9927EEC954 /* PostingProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 508BCFABB8FC0CA1847A74A2 /* PostingProfile.swift */; };
 		F7AB0B1548C91DC53BDB0148 /* ReminderPlannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D2A12C45123549059E3C3F /* ReminderPlannerTests.swift */; };
@@ -156,6 +158,8 @@
 		C9377C946925A9840766F399 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		D31985A3555EA8B9DB3918F4 /* ScoreComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreComponents.swift; sourceTree = "<group>"; };
 		DAEA3DF8D20BC809FB25DFBB /* PostlockUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = PostlockUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DFE5B3F8A0C88B8707520C29 /* XPostCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XPostCard.swift; sourceTree = "<group>"; };
+		E4427F4BB2B11DC7234DFA77 /* XPostFormatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XPostFormatTests.swift; sourceTree = "<group>"; };
 		F00F019C192F66158AFF1CBB /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		F1866EDADF2C072F499850FB /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
 		F403205AAD4405E5E2C68AD9 /* LeaderboardBreakdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardBreakdownView.swift; sourceTree = "<group>"; };
@@ -279,6 +283,7 @@
 				755653B2CF91C78C3AB8D629 /* UsernameNormalizerTests.swift */,
 				29D677AD5C6DBF0CD3307864 /* ViralityDecodingTests.swift */,
 				0B926F11BE71195FDD5749D9 /* ViralityStoreTests.swift */,
+				E4427F4BB2B11DC7234DFA77 /* XPostFormatTests.swift */,
 			);
 			path = PostlockTests;
 			sourceTree = "<group>";
@@ -309,6 +314,7 @@
 			isa = PBXGroup;
 			children = (
 				B4DB2F876028C1FA093A0ABC /* HistoryView.swift */,
+				DFE5B3F8A0C88B8707520C29 /* XPostCard.swift */,
 			);
 			path = History;
 			sourceTree = "<group>";
@@ -598,6 +604,7 @@
 				103764D2F50FD6145BE54FA5 /* Virality.swift in Sources */,
 				9257B3B318E10BD8B121338F /* ViralityClient.swift in Sources */,
 				191F805F57673AA377879DA7 /* ViralityStore.swift in Sources */,
+				587FA8C2A6116AAB58D4B79B /* XPostCard.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -611,6 +618,7 @@
 				B57BB52F0FB021DCF2382700 /* UsernameNormalizerTests.swift in Sources */,
 				E7038DB0C2936CCFC255A3F2 /* ViralityDecodingTests.swift in Sources */,
 				9C24657FD4AAAE2D95DC6A20 /* ViralityStoreTests.swift in Sources */,
+				EB1D4A72ED2E8E2D6EA8115A /* XPostFormatTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -798,7 +806,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 9WHCDKVKJQ;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -910,7 +918,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 9WHCDKVKJQ;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
