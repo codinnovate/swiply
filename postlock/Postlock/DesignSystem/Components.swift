@@ -371,6 +371,7 @@ struct AvatarView: View {
     let url: URL?
     let displayName: String
     var size: CGFloat = 64
+    var showsBorder = true
 
     var body: some View {
         AsyncImage(url: url) { phase in
@@ -387,13 +388,14 @@ struct AvatarView: View {
         }
         .frame(width: size, height: size)
         .clipShape(Circle())
-        .overlay { Circle().stroke(.white.opacity(0.12), lineWidth: 1) }
+        .overlay { Circle().stroke(.white.opacity(showsBorder ? 0.12 : 0), lineWidth: 1) }
         .accessibilityLabel("\(displayName)'s profile photo")
     }
 }
 
 struct VerificationBadge: View {
     let type: PostingProfile.VerificationType?
+    var size: CGFloat = 18
 
     private var color: Color {
         switch type {
@@ -413,7 +415,7 @@ struct VerificationBadge: View {
 
     var body: some View {
         Image(systemName: "checkmark.seal.fill")
-            .font(.system(size: 18, weight: .semibold))
+            .font(.system(size: size, weight: .semibold))
             .foregroundStyle(color)
             .accessibilityLabel(label)
     }

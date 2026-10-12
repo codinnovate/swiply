@@ -65,18 +65,25 @@ struct HistoryView: View {
                 Spacer()
                 Text("\(history.posts.count) posts").font(.caption).foregroundStyle(Theme.secondaryText)
             }.padding(.top, 8)
-            ForEach(history.posts) { post in
-                PostScoreCard(
-                    post: post,
-                    isExpanded: expandedPostID == post.postId,
-                    toggle: {
-                        withAnimation(.easeInOut(duration: 0.25)) {
-                            expandedPostID = expandedPostID == post.postId ? nil : post.postId
-                        }
-                    },
-                    rewrite: { rewriting = post }
-                )
+            // Edge-to-edge rows with hairline dividers, like the X timeline.
+            LazyVStack(spacing: 0) {
+                ForEach(history.posts) { post in
+                    XPostCard(
+                        post: post,
+                        author: XPostAuthor(profile: session.profile, username: username),
+                        isExpanded: expandedPostID == post.postId,
+                        toggle: {
+                            withAnimation(.easeInOut(duration: 0.25)) {
+                                expandedPostID = expandedPostID == post.postId ? nil : post.postId
+                            }
+                        },
+                        rewrite: { rewriting = post }
+                    )
+                    Rectangle().fill(XPalette.border).frame(height: 0.5)
+                }
             }
+            .overlay(alignment: .top) { Rectangle().fill(XPalette.border).frame(height: 0.5) }
+            .padding(.horizontal, -Spacing.large)
         }
     }
 }
@@ -295,144 +302,6 @@ private struct InsightRow: View {
             }
         }
         .accessibilityElement(children: .combine)
-    }
-}
-
-// MARK: - Post
-
-private struct PostScoreCard: View {
-    let post: ScoredPost
-    let isExpanded: Bool
-    let toggle: () -> Void
-    let rewrite: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.medium) {
-            Button(action: toggle) { summary }
-                .buttonStyle(.plain)
-                .accessibilityHint(isExpanded ? "Hides the score breakdown" : "Shows the score breakdown")
-
-            if isExpanded, let xp = post.xp {
-                Divider().overlay(Color.white.opacity(0.08))
-                XPBreakdownView(xp: xp, predictedScore: post.score?.totalScore)
-            }
-            if isExpanded, let score = post.score {
-                Divider().overlay(Color.white.opacity(0.08))
-                ScoreBreakdownView(score: score)
-                suggestions(score)
-                HStack(spacing: Spacing.medium) {
-                    Button(action: rewrite) {
-                        Label("Rewrite with AI", systemImage: "wand.and.stars")
-                            .fontWeight(.semibold).frame(maxWidth: .infinity).frame(minHeight: 44)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(Theme.accent)
-                    .foregroundStyle(.black)
-                    Link(destination: post.url) {
-                        Label("Open on X", systemImage: "arrow.up.right")
-                            .fontWeight(.semibold).frame(minHeight: 44)
-                    }
-                    .buttonStyle(.bordered)
-                }
-            }
-        }
-        .padding(Spacing.large)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 22))
-        .overlay { RoundedRectangle(cornerRadius: 22).stroke(.white.opacity(0.07), lineWidth: 1) }
-    }
-
-    private var summary: some View {
-        HStack(alignment: .top, spacing: Spacing.medium) {
-            if let score = post.score {
-                ScoreBadge(score: Double(score.totalScore))
-            } else {
-                PendingScoreBadge(failed: post.scoreStatus == .failed)
-            }
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 6) {
-                    Text(post.postedAt, format: .relative(presentation: .named))
-                    if post.isThread { Text("· Thread of \(post.threadLength)") }
-                    Spacer(minLength: 0)
-                    if let xp = post.xp {
-                        Text("+\(xp.xp.xpFormatted) XP")
-                            .foregroundStyle(xp.duplicateOf == nil ? Theme.mint : Theme.secondaryText)
-                            .padding(.horizontal, 7).padding(.vertical, 3)
-                            .background(Theme.mint.opacity(0.1), in: Capsule())
-                    }
-                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                }
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(Theme.secondaryText)
-
-                Text(post.text)
-                    .font(.subheadline)
-                    .lineLimit(isExpanded ? nil : 3)
-                    .multilineTextAlignment(.leading)
-
-                if let score = post.score {
-                    Label(score.topStrength, systemImage: "hand.thumbsup.fill")
-                        .labelStyle(TakeawayLabelStyle(tint: Theme.accent))
-                    Label(score.topWeakness, systemImage: "arrow.down.forward")
-                        .labelStyle(TakeawayLabelStyle(tint: .orange))
-                } else {
-                    Text(post.scoreStatus == .failed ? "We couldn't score this post yet. We'll retry on the next refresh." : "Scoring...")
-                        .font(.caption).foregroundStyle(Theme.secondaryText)
-                }
-
-                EngagementLine(engagement: post.engagement)
-            }
-        }
-        .contentShape(Rectangle())
-    }
-
-    private func suggestions(_ score: ViralityScore) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.small) {
-            Text("How to improve it").font(.headline)
-            ForEach(Array(score.suggestions.enumerated()), id: \.offset) { index, suggestion in
-                HStack(alignment: .top, spacing: Spacing.small) {
-                    Text("\(index + 1)")
-                        .font(.caption.weight(.bold)).foregroundStyle(.black)
-                        .frame(width: 20, height: 20)
-                        .background(Theme.accent, in: Circle())
-                    Text(suggestion).font(.subheadline)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-        }
-    }
-}
-
-private struct TakeawayLabelStyle: LabelStyle {
-    let tint: Color
-
-    func makeBody(configuration: Configuration) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 6) {
-            configuration.icon.foregroundStyle(tint).font(.caption2)
-            configuration.title.font(.caption).foregroundStyle(.white.opacity(0.85))
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-}
-
-private struct EngagementLine: View {
-    let engagement: PostEngagement
-
-    var body: some View {
-        HStack(spacing: Spacing.medium) {
-            metric("bubble.left", engagement.replies, "replies")
-            metric("arrow.2.squarepath", engagement.reposts, "reposts")
-            metric("heart", engagement.likes, "likes")
-            if let views = engagement.views { metric("chart.bar", views, "views") }
-        }
-        .font(.caption.monospacedDigit())
-        .foregroundStyle(Theme.secondaryText)
-        .padding(.top, 2)
-    }
-
-    private func metric(_ icon: String, _ value: Int, _ label: String) -> some View {
-        Label(value.formatted(.number.notation(.compactName)), systemImage: icon)
-            .labelStyle(.titleAndIcon)
-            .accessibilityLabel("\(value) \(label)")
     }
 }
 
