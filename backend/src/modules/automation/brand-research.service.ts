@@ -13,11 +13,7 @@ import {
   resizePostingTimes,
   timezoneForCountry,
 } from './posting-times';
-import {
-  assertPublicHttpUrl,
-  extractWebsiteText,
-  formatWebsiteCorpus,
-} from './website-text';
+import { assertPublicHttpUrl, extractWebsiteText, formatWebsiteCorpus } from './website-text';
 
 const researchSchema = z.object({
   productName: z.string().min(1),
@@ -53,13 +49,42 @@ export class BrandResearchService {
     private readonly config: ConfigService,
   ) {}
 
-  async research(_workspaceId: string, userId: string, websiteUrl: string) {
-    const url = assertPublicHttpUrl(websiteUrl);
-    const [{ corpus, extracted }, credential] = await Promise.all([
-      this.fetchWebsite(url),
+  async research(
+    _workspaceId: string,
+    userId: string,
+    input: { websiteUrl?: string; businessDescription?: string; creativePrompt?: string },
+  ) {
+    const websiteUrl = input.websiteUrl?.trim();
+    const businessDescription = input.businessDescription?.trim();
+    const creativePrompt = input.creativePrompt?.trim();
+    if (!websiteUrl && !businessDescription && !creativePrompt) {
+      throw ApiException.unprocessable(
+        'BRAND_SOURCE_REQUIRED',
+        'Enter a website, describe your business, or tell AI what to create.',
+      );
+    }
+
+    const url = websiteUrl ? assertPublicHttpUrl(websiteUrl) : null;
+    const sourceMaterial = businessDescription || creativePrompt || '';
+    const [source, credential] = await Promise.all([
+      url
+        ? this.fetchWebsite(url)
+        : Promise.resolve({
+            corpus: sourceMaterial,
+            extracted: {
+              title: '',
+              description: sourceMaterial,
+              headings: [] as string[],
+              body: sourceMaterial,
+            },
+          }),
       this.credentials.resolve(userId),
     ]);
-    const evidence = await this.scanTiktokCompetitors(url.hostname, extracted.title, extracted.headings);
+    const evidence = await this.scanTiktokCompetitors(
+      url?.hostname || '',
+      source.extracted.title || sourceMaterial,
+      source.extracted.headings,
+    );
     const researched = await this.providers.completeStructured(
       credential.provider,
       credential.apiKey,
@@ -69,15 +94,18 @@ export class BrandResearchService {
         maxTokens: 8192,
         system:
           'You are researching a product so Swiply can post TikTok Photo Mode slideshows. ' +
-          'First learn the business from the website copy. Then use the TikTok posts (captions, accounts, play/like counts) to describe how competitors in that niche post — hooks, listicles, before/after, wait-for-it closes — and how this product can beat them without copying captions. ' +
+          'First infer the subject, audience, and intended outcome from the supplied website copy, business description, or creative brief. For a creative brief, turn the user’s idea into a complete repeatable slideshow strategy without requiring a business or product. Then use the TikTok posts (captions, accounts, play/like counts) to describe how creators in that niche post — hooks, listicles, before/after, wait-for-it closes — and how these slideshows can stand out without copying captions. ' +
           'Name real @accounts from the evidence. Do not invent view counts. If evidence is thin, say so. ' +
           'Keep suggestedAngles to one punchy sentence each (under 140 characters). Keep valueProps short. ' +
           'Return JSON with keys: productName, oneLiner, audience, valueProps (string[]), websiteBrief, competitors (string[]), tiktokInsights, suggestedAngles (string[]), competitorAccounts (string[] of @handles). Use empty arrays when unknown.',
         user:
-          'Website URL: ' +
-          url.toString() +
-          '\n\nExtracted website copy:\n' +
-          corpus +
+          (url
+            ? 'Website URL: ' + url.toString()
+            : creativePrompt
+              ? 'Creative brief supplied by the user.'
+              : 'Business description supplied by the owner.') +
+          '\n\nSource material:\n' +
+          source.corpus +
           '\n\nTikTok posts currently ranking in this niche:\n' +
           (evidence || 'No TikTok posts were returned for this niche.'),
       },
@@ -95,7 +123,7 @@ export class BrandResearchService {
       competitors: clipList(researched.competitors, 120),
       suggestedAngles: clipList(researched.suggestedAngles, 500),
       competitorAccounts: clipList(researched.competitorAccounts, 80),
-      websiteUrl: url.toString(),
+      websiteUrl: url?.toString() || '',
       model: credential.model,
     };
   }
@@ -160,7 +188,10 @@ export class BrandResearchService {
       .map((value) => value?.replace(/\s+/g, ' ').trim())
       .find((value) => value && value.length > 2);
     if (!query) return '';
-    const hashtag = query.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 24);
+    const hashtag = query
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '')
+      .slice(0, 24);
     const posts = await searchTiktokViaApi({
       apiKey,
       query,

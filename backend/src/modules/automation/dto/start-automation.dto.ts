@@ -1,5 +1,21 @@
 import { Transform, Type } from 'class-transformer';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsIn, IsInt, IsMongoId, IsOptional, IsString, IsUrl, Matches, Max, MaxLength, Min } from 'class-validator';
+import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
+  IsIn,
+  IsInt,
+  IsMongoId,
+  IsOptional,
+  IsString,
+  IsUrl,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+  MinLength,
+  ValidateIf,
+} from 'class-validator';
 
 function clipEach(max: number) {
   return Transform(({ value }) =>
@@ -14,7 +30,30 @@ function clipString(max: number) {
 }
 
 export class ResearchBrandDto {
-  @IsUrl({ require_tld: false }) websiteUrl: string;
+  @ValidateIf(
+    (dto: ResearchBrandDto) =>
+      !!dto.websiteUrl?.trim() || (!dto.businessDescription?.trim() && !dto.creativePrompt?.trim()),
+  )
+  @IsUrl({ require_tld: false })
+  websiteUrl?: string;
+
+  @ValidateIf(
+    (dto: ResearchBrandDto) =>
+      !!dto.businessDescription?.trim() || (!dto.websiteUrl?.trim() && !dto.creativePrompt?.trim()),
+  )
+  @IsString()
+  @MinLength(20)
+  @MaxLength(8000)
+  businessDescription?: string;
+
+  @ValidateIf(
+    (dto: ResearchBrandDto) =>
+      !!dto.creativePrompt?.trim() || (!dto.websiteUrl?.trim() && !dto.businessDescription?.trim()),
+  )
+  @IsString()
+  @MinLength(10)
+  @MaxLength(5000)
+  creativePrompt?: string;
 }
 
 export class SuggestPostingTimesDto {
@@ -27,7 +66,9 @@ export class SuggestPostingTimesDto {
 
 export class SaveAutomationDraftDto {
   @IsOptional() @IsMongoId() scheduleId?: string;
-  @IsUrl({ require_tld: false }) websiteUrl: string;
+  @IsOptional() @IsUrl({ require_tld: false }) websiteUrl?: string;
+  @IsOptional() @IsString() @MaxLength(8000) businessDescription?: string;
+  @IsOptional() @IsString() @MaxLength(5000) creativePrompt?: string;
   @IsOptional() @IsString() @MaxLength(8000) websiteBrief?: string;
   @IsOptional() @IsString() @MaxLength(4000) tiktokInsights?: string;
   @IsOptional() @clipString(160) @IsString() @MaxLength(160) productName?: string;
@@ -39,10 +80,28 @@ export class SaveAutomationDraftDto {
   @IsString({ each: true })
   @MaxLength(500, { each: true })
   suggestedAngles?: string[];
-  @IsOptional() @clipEach(120) @IsArray() @ArrayMaxSize(8) @IsString({ each: true }) @MaxLength(120, { each: true }) competitors?: string[];
-  @IsOptional() @clipEach(80) @IsArray() @ArrayMaxSize(8) @IsString({ each: true }) @MaxLength(80, { each: true }) competitorAccounts?: string[];
+  @IsOptional()
+  @clipEach(120)
+  @IsArray()
+  @ArrayMaxSize(8)
+  @IsString({ each: true })
+  @MaxLength(120, { each: true })
+  competitors?: string[];
+  @IsOptional()
+  @clipEach(80)
+  @IsArray()
+  @ArrayMaxSize(8)
+  @IsString({ each: true })
+  @MaxLength(80, { each: true })
+  competitorAccounts?: string[];
   @IsOptional() @clipString(2000) @IsString() @MaxLength(2000) audience?: string;
-  @IsOptional() @clipEach(400) @IsArray() @ArrayMaxSize(8) @IsString({ each: true }) @MaxLength(400, { each: true }) valueProps?: string[];
+  @IsOptional()
+  @clipEach(400)
+  @IsArray()
+  @ArrayMaxSize(8)
+  @IsString({ each: true })
+  @MaxLength(400, { each: true })
+  valueProps?: string[];
   @IsOptional() @IsMongoId() socialAccountId?: string;
   @IsOptional() @IsIn(['daily', 'weekly']) cadence?: 'daily' | 'weekly';
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(7) postsPerPeriod?: number;
@@ -59,7 +118,28 @@ export class SaveAutomationDraftDto {
 
 export class StartAutomationDto {
   @IsOptional() @IsMongoId() scheduleId?: string;
-  @IsUrl({ require_tld: false }) websiteUrl: string;
+  @ValidateIf(
+    (dto: StartAutomationDto) =>
+      !!dto.websiteUrl?.trim() || (!dto.businessDescription?.trim() && !dto.creativePrompt?.trim()),
+  )
+  @IsUrl({ require_tld: false })
+  websiteUrl?: string;
+  @ValidateIf(
+    (dto: StartAutomationDto) =>
+      !!dto.businessDescription?.trim() || (!dto.websiteUrl?.trim() && !dto.creativePrompt?.trim()),
+  )
+  @IsString()
+  @MinLength(20)
+  @MaxLength(8000)
+  businessDescription?: string;
+  @ValidateIf(
+    (dto: StartAutomationDto) =>
+      !!dto.creativePrompt?.trim() || (!dto.websiteUrl?.trim() && !dto.businessDescription?.trim()),
+  )
+  @IsString()
+  @MinLength(10)
+  @MaxLength(5000)
+  creativePrompt?: string;
   @IsOptional() @IsString() @MaxLength(8000) websiteBrief?: string;
   @IsOptional() @IsString() @MaxLength(4000) tiktokInsights?: string;
   @IsOptional() @clipString(160) @IsString() @MaxLength(160) productName?: string;
@@ -71,10 +151,28 @@ export class StartAutomationDto {
   @IsString({ each: true })
   @MaxLength(500, { each: true })
   suggestedAngles?: string[];
-  @IsOptional() @clipEach(120) @IsArray() @ArrayMaxSize(8) @IsString({ each: true }) @MaxLength(120, { each: true }) competitors?: string[];
-  @IsOptional() @clipEach(80) @IsArray() @ArrayMaxSize(8) @IsString({ each: true }) @MaxLength(80, { each: true }) competitorAccounts?: string[];
+  @IsOptional()
+  @clipEach(120)
+  @IsArray()
+  @ArrayMaxSize(8)
+  @IsString({ each: true })
+  @MaxLength(120, { each: true })
+  competitors?: string[];
+  @IsOptional()
+  @clipEach(80)
+  @IsArray()
+  @ArrayMaxSize(8)
+  @IsString({ each: true })
+  @MaxLength(80, { each: true })
+  competitorAccounts?: string[];
   @IsOptional() @clipString(2000) @IsString() @MaxLength(2000) audience?: string;
-  @IsOptional() @clipEach(400) @IsArray() @ArrayMaxSize(8) @IsString({ each: true }) @MaxLength(400, { each: true }) valueProps?: string[];
+  @IsOptional()
+  @clipEach(400)
+  @IsArray()
+  @ArrayMaxSize(8)
+  @IsString({ each: true })
+  @MaxLength(400, { each: true })
+  valueProps?: string[];
   @IsMongoId() socialAccountId: string;
   @IsIn(['daily', 'weekly']) cadence: 'daily' | 'weekly';
   @Type(() => Number) @IsInt() @Min(1) @Max(7) postsPerPeriod: number;

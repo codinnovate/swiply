@@ -202,6 +202,8 @@ export interface Schedule {
   autopilot: boolean;
   status: string;
   websiteUrl?: string | null;
+  businessDescription?: string | null;
+  creativePrompt?: string | null;
   websiteBrief?: string | null;
   tiktokInsights?: string | null;
   cadence?: "daily" | "weekly" | null;

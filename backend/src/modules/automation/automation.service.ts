@@ -4,17 +4,31 @@ import { Model, Types } from 'mongoose';
 
 import { ApiException } from '../../common/errors/api.exception';
 import { ContentService } from '../content/content.service';
-import { EngagementRule, EngagementRuleDocument } from '../engagement/schemas/engagement-rule.schema';
+import {
+  EngagementRule,
+  EngagementRuleDocument,
+} from '../engagement/schemas/engagement-rule.schema';
 import { MediaService } from '../media/media.service';
 import { PostsService } from '../posts/posts.service';
 import { Schedule, ScheduleDocument } from '../schedules/schemas/schedule.schema';
-import { SocialAccount, SocialAccountDocument } from '../social-accounts/schemas/social-account.schema';
+import {
+  SocialAccount,
+  SocialAccountDocument,
+} from '../social-accounts/schemas/social-account.schema';
 import { WorkspacesService } from '../workspaces/workspaces.service';
 import { BrandResearchService } from './brand-research.service';
-import { ResearchBrandDto, SaveAutomationDraftDto, StartAutomationDto, SuggestPostingTimesDto } from './dto/start-automation.dto';
+import {
+  ResearchBrandDto,
+  SaveAutomationDraftDto,
+  StartAutomationDto,
+  SuggestPostingTimesDto,
+} from './dto/start-automation.dto';
 import { buildPostingSlots } from './posting-slots';
 import { isValidTimeZone, resizePostingTimes, timezoneForCountry } from './posting-times';
-import { AutomationAuditLog, AutomationAuditLogDocument } from './schemas/automation-audit-log.schema';
+import {
+  AutomationAuditLog,
+  AutomationAuditLogDocument,
+} from './schemas/automation-audit-log.schema';
 
 @Injectable()
 export class AutomationService {
@@ -59,7 +73,10 @@ export class AutomationService {
   async pauseAll(workspaceId: string, userId: string) {
     const id = new Types.ObjectId(workspaceId);
     const [schedules, rules] = await Promise.all([
-      this.schedules.updateMany({ workspaceId: id, status: 'active' }, { $set: { status: 'paused' } }),
+      this.schedules.updateMany(
+        { workspaceId: id, status: 'active' },
+        { $set: { status: 'paused' } },
+      ),
       this.rules.updateMany({ workspaceId: id, enabled: true }, { $set: { enabled: false } }),
     ]);
     await this.audit.create({
@@ -87,7 +104,7 @@ export class AutomationService {
       workspaceId: new Types.ObjectId(workspaceId),
       socialAccountId: schedule.socialAccountIds[0] || null,
       action: 'automation.draft',
-      summary: `Saved draft for ${schedule.websiteUrl || dto.websiteUrl}`,
+      summary: `Saved draft for ${schedule.name}`,
       details: { scheduleId: schedule.id },
       actorUserId: new Types.ObjectId(userId),
     });
@@ -95,7 +112,7 @@ export class AutomationService {
   }
 
   researchBrand(workspaceId: string, userId: string, dto: ResearchBrandDto) {
-    return this.research.research(workspaceId, userId, dto.websiteUrl);
+    return this.research.research(workspaceId, userId, dto);
   }
 
   async suggestPostingTimes(workspaceId: string, userId: string, dto: SuggestPostingTimesDto) {
@@ -139,7 +156,12 @@ export class AutomationService {
     const wasDraft = !existing || existing.status === 'draft';
     const schedule = await this.upsertSchedule(
       workspaceId,
-      { ...dto, productName: researched.productName, websiteBrief: researched.websiteBrief, tiktokInsights: researched.tiktokInsights },
+      {
+        ...dto,
+        productName: researched.productName,
+        websiteBrief: researched.websiteBrief,
+        tiktokInsights: researched.tiktokInsights,
+      },
       'active',
       researched,
     );
@@ -147,8 +169,11 @@ export class AutomationService {
     const queued = [];
     if (wasDraft) {
       for (const [index, scheduledFor] of slots.entries()) {
-        const angle = researched.suggestedAngles[index % Math.max(1, researched.suggestedAngles.length)];
-        const topic = [researched.productName, angle || researched.oneLiner].filter(Boolean).join(': ');
+        const angle =
+          researched.suggestedAngles[index % Math.max(1, researched.suggestedAngles.length)];
+        const topic = [researched.productName, angle || researched.oneLiner]
+          .filter(Boolean)
+          .join(': ');
         const item = await this.content.generate(workspaceId, userId, {
           type: 'slideshow',
           goal: 'traffic',
@@ -182,8 +207,8 @@ export class AutomationService {
       socialAccountId: account._id,
       action: wasDraft ? 'content_published' : 'automation.updated',
       summary: wasDraft
-        ? `Queued ${queued.length} TikTok slideshows from ${dto.websiteUrl}`
-        : `Updated automation for ${dto.websiteUrl}`,
+        ? `Queued ${queued.length} TikTok slideshows for ${researched.productName}`
+        : `Updated automation for ${researched.productName}`,
       details: { scheduleId: schedule.id, posts: queued.length },
       actorUserId: new Types.ObjectId(userId),
     });
@@ -211,10 +236,10 @@ export class AutomationService {
     }
     const account = await this.requireTiktokAccount(workspaceId, socialAccountId);
     const researched = this.researchFromSchedule(schedule);
-    if (!researched || !schedule.websiteUrl) {
+    if (!researched) {
       throw ApiException.unprocessable(
         'BRAND_RESEARCH_FAILED',
-        'Save website research on this automation before sending a test post',
+        'Save business research on this automation before sending a test post',
       );
     }
     const assets = await this.media.listImages(workspaceId);
@@ -251,7 +276,7 @@ export class AutomationService {
       workspaceId: new Types.ObjectId(workspaceId),
       socialAccountId: account._id,
       action: 'automation.test_post',
-      summary: `Sent a test TikTok slideshow for ${schedule.websiteUrl}`,
+      summary: `Sent a test TikTok slideshow for ${researched.productName}`,
       details: { scheduleId: String(schedule._id), contentId: String(item.id || item._id) },
       actorUserId: new Types.ObjectId(userId),
     });
@@ -268,7 +293,9 @@ export class AutomationService {
       oneLiner: String(stored.oneLiner || websiteBrief.slice(0, 180)),
       audience: String(stored.audience || ''),
       valueProps: Array.isArray(stored.valueProps) ? stored.valueProps.map(String) : [],
-      suggestedAngles: Array.isArray(stored.suggestedAngles) ? stored.suggestedAngles.map(String) : [],
+      suggestedAngles: Array.isArray(stored.suggestedAngles)
+        ? stored.suggestedAngles.map(String)
+        : [],
       competitors: Array.isArray(stored.competitors) ? stored.competitors.map(String) : [],
       competitorAccounts: Array.isArray(stored.competitorAccounts)
         ? stored.competitorAccounts.map(String)
@@ -296,10 +323,14 @@ export class AutomationService {
     return account;
   }
 
-  private async resolveResearch(workspaceId: string, userId: string, dto: StartAutomationDto | SaveAutomationDraftDto) {
+  private async resolveResearch(
+    workspaceId: string,
+    userId: string,
+    dto: StartAutomationDto | SaveAutomationDraftDto,
+  ) {
     if (dto.websiteBrief && dto.tiktokInsights) {
       return {
-        productName: dto.productName || new URL(dto.websiteUrl).hostname.replace(/^www\./, ''),
+        productName: dto.productName || this.fallbackProductName(dto),
         oneLiner: 'oneLiner' in dto && dto.oneLiner ? dto.oneLiner : dto.websiteBrief.slice(0, 180),
         audience: 'audience' in dto ? dto.audience || '' : '',
         valueProps: 'valueProps' in dto ? dto.valueProps || [] : [],
@@ -310,7 +341,7 @@ export class AutomationService {
         tiktokInsights: dto.tiktokInsights,
       };
     }
-    return this.research.research(workspaceId, userId, dto.websiteUrl);
+    return this.research.research(workspaceId, userId, dto);
   }
 
   private async upsertSchedule(
@@ -336,10 +367,7 @@ export class AutomationService {
     const timeZone = isValidTimeZone(dto.timeZone || '')
       ? dto.timeZone!
       : timezoneForCountry(dto.targetCountry, workspace.timezone || 'UTC');
-    const productName =
-      researched?.productName ||
-      dto.productName ||
-      new URL(dto.websiteUrl).hostname.replace(/^www\./, '');
+    const productName = researched?.productName || dto.productName || this.fallbackProductName(dto);
     let socialAccountIds: Types.ObjectId[] = [];
     if (dto.socialAccountId) {
       const account = await this.accounts
@@ -361,7 +389,7 @@ export class AutomationService {
           suggestedAngles: researched.suggestedAngles || [],
           competitors: researched.competitors || [],
           competitorAccounts: researched.competitorAccounts || [],
-          websiteUrl: dto.websiteUrl,
+          websiteUrl: dto.websiteUrl || '',
         }
       : dto.websiteBrief && dto.tiktokInsights
         ? {
@@ -374,7 +402,7 @@ export class AutomationService {
             suggestedAngles: dto.suggestedAngles || [],
             competitors: dto.competitors || [],
             competitorAccounts: dto.competitorAccounts || [],
-            websiteUrl: dto.websiteUrl,
+            websiteUrl: dto.websiteUrl || '',
           }
         : null;
     const fields = {
@@ -386,7 +414,8 @@ export class AutomationService {
         cadence === 'weekly'
           ? {
               postsPerWeek: postsPerPeriod,
-              daysOfWeek: postsPerPeriod === 7 ? [0, 1, 2, 3, 4, 5, 6] : [1, 3, 5].slice(0, postsPerPeriod),
+              daysOfWeek:
+                postsPerPeriod === 7 ? [0, 1, 2, 3, 4, 5, 6] : [1, 3, 5].slice(0, postsPerPeriod),
               timeOfDay: timesOfDay[0],
             }
           : null,
@@ -404,8 +433,15 @@ export class AutomationService {
           : null,
       endDate: null,
       contentSource: 'ai_autogenerate',
-      autoGeneratePrompt: researched?.websiteBrief || dto.websiteBrief || null,
-      websiteUrl: dto.websiteUrl,
+      autoGeneratePrompt:
+        researched?.websiteBrief ||
+        dto.websiteBrief ||
+        dto.creativePrompt ||
+        dto.businessDescription ||
+        null,
+      websiteUrl: dto.websiteUrl || null,
+      businessDescription: dto.businessDescription?.trim() || null,
+      creativePrompt: dto.creativePrompt?.trim() || null,
       websiteBrief: researched?.websiteBrief || dto.websiteBrief || null,
       tiktokInsights: researched?.tiktokInsights || dto.tiktokInsights || null,
       cadence,
@@ -434,5 +470,15 @@ export class AutomationService {
       socialAccountIds,
       ...fields,
     });
+  }
+
+  private fallbackProductName(dto: SaveAutomationDraftDto | StartAutomationDto) {
+    if (dto.websiteUrl) return new URL(dto.websiteUrl).hostname.replace(/^www\./, '');
+    const description =
+      dto.businessDescription?.trim() ||
+      dto.creativePrompt?.trim() ||
+      dto.websiteBrief?.trim() ||
+      '';
+    return description.split(/[.!?\n]/)[0]?.slice(0, 80) || 'Business';
   }
 }

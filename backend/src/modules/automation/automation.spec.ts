@@ -2,8 +2,39 @@ import { extractWebsiteText, formatWebsiteCorpus } from './website-text';
 import { pickRandomSlideSubset, randomSlideCount } from './slide-picker';
 import { buildPostingSlots } from './posting-slots';
 import { resizePostingTimes, timezoneForCountry } from './posting-times';
-import { extractSearchSnippets, extractTiktokPosts, formatSearchEvidence, formatTiktokEvidence } from './competitor-search';
+import {
+  extractSearchSnippets,
+  extractTiktokPosts,
+  formatSearchEvidence,
+  formatTiktokEvidence,
+} from './competitor-search';
 import { buildSlideshowSystemPrompt, buildSlideshowUserPrompt } from '../../ai/copy-prompt';
+import { validate } from 'class-validator';
+import { ResearchBrandDto } from './dto/start-automation.dto';
+
+describe('automation brand source', () => {
+  it('accepts a business description instead of a website', async () => {
+    const dto = new ResearchBrandDto();
+    dto.businessDescription =
+      'A proposal and payments platform for freelance designers and small studios.';
+
+    expect(await validate(dto)).toEqual([]);
+  });
+
+  it('accepts a creative brief without a business or website', async () => {
+    const dto = new ResearchBrandDto();
+    dto.creativePrompt = 'Create practical personal-finance slideshows for university students.';
+
+    expect(await validate(dto)).toEqual([]);
+  });
+
+  it('requires either a valid website or a useful description', async () => {
+    const dto = new ResearchBrandDto();
+    dto.businessDescription = 'Too short';
+
+    expect(await validate(dto)).not.toEqual([]);
+  });
+});
 
 describe('website-text', () => {
   it('pulls title, description, and headings from html', () => {
