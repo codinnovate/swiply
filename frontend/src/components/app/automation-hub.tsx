@@ -31,20 +31,54 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
-import type { ContentItem, Schedule, ScheduledPost, SocialAccount } from "@/lib/types";
+import type {
+  ContentItem,
+  Schedule,
+  ScheduledPost,
+  SocialAccount,
+} from "@/lib/types";
 import { formatDate, titleCase } from "@/lib/utils";
 
 function scheduleId(item: Schedule) {
   return item.id || item._id || "";
 }
 
+type AutomationAuditItem = {
+  id?: string;
+  summary: string;
+  createdAt: string;
+  action: string;
+  details?: { scheduleId?: string };
+};
+
+function activityDraftId(item: AutomationAuditItem, schedules: Schedule[]) {
+  if (item.action !== "automation.draft") return "";
+  const drafts = schedules.filter((schedule) => schedule.status === "draft");
+  const direct = String(item.details?.scheduleId || "");
+  if (direct && drafts.some((schedule) => scheduleId(schedule) === direct))
+    return direct;
+  const matching = drafts.find(
+    (schedule) =>
+      (schedule.websiteUrl && item.summary.includes(schedule.websiteUrl)) ||
+      item.summary.includes(schedule.name),
+  );
+  if (matching) return scheduleId(matching);
+  return drafts.length === 1 ? scheduleId(drafts[0]) : "";
+}
+
 export function AutomationHub() {
   const { workspace } = useWorkspace();
   const qc = useQueryClient();
-  const [tab, setTab] = useState<"automations" | "queue" | "activity">("automations");
-  const [preview, setPreview] = useState<{ contentId: string; scheduledFor?: string } | null>(null);
+  const [tab, setTab] = useState<"automations" | "queue" | "activity">(
+    "automations",
+  );
+  const [preview, setPreview] = useState<{
+    contentId: string;
+    scheduledFor?: string;
+  } | null>(null);
   const schedules = useQuery({
     queryKey: queryKeys.schedules(workspace?.id || ""),
     queryFn: () => api<Schedule[]>("/schedules", {}, workspace?.id),
@@ -62,17 +96,14 @@ export function AutomationHub() {
   });
   const content = useQuery({
     queryKey: queryKeys.content(workspace?.id || "", "slideshow"),
-    queryFn: () => api<ContentItem[]>("/content?type=slideshow", {}, workspace?.id),
+    queryFn: () =>
+      api<ContentItem[]>("/content?type=slideshow", {}, workspace?.id),
     enabled: !!workspace,
   });
   const audit = useQuery({
     queryKey: ["automation-audit", workspace?.id],
     queryFn: () =>
-      api<Array<{ id?: string; summary: string; createdAt: string; action: string }>>(
-        "/automation/audit-log",
-        {},
-        workspace?.id,
-      ),
+      api<AutomationAuditItem[]>("/automation/audit-log", {}, workspace?.id),
     enabled: !!workspace && tab === "activity",
     retry: false,
   });
@@ -87,11 +118,16 @@ export function AutomationHub() {
       toast.success("Automation updated");
       qc.invalidateQueries({ queryKey: ["schedules"] });
     },
-    onError: (error) => toast.error(error instanceof Error ? error.message : "Could not update"),
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Could not update"),
   });
   const remove = useMutation({
     mutationFn: (item: Schedule) =>
-      api(`/schedules/${scheduleId(item)}`, { method: "DELETE" }, workspace?.id),
+      api(
+        `/schedules/${scheduleId(item)}`,
+        { method: "DELETE" },
+        workspace?.id,
+      ),
     onSuccess: () => {
       toast.success("Automation removed");
       qc.invalidateQueries({ queryKey: ["schedules"] });
@@ -99,14 +135,20 @@ export function AutomationHub() {
   });
   const testPost = useMutation({
     mutationFn: (item: Schedule) =>
-      api(`/automation/${scheduleId(item)}/test-post`, { method: "POST" }, workspace?.id),
+      api(
+        `/automation/${scheduleId(item)}/test-post`,
+        { method: "POST" },
+        workspace?.id,
+      ),
     onSuccess: () => {
       toast.success("Test post sent");
       qc.invalidateQueries({ queryKey: ["posts"] });
       qc.invalidateQueries({ queryKey: ["automation-audit"] });
     },
     onError: (error) =>
-      toast.error(error instanceof Error ? error.message : "Could not send a test post"),
+      toast.error(
+        error instanceof Error ? error.message : "Could not send a test post",
+      ),
   });
   const upcoming = (posts.data || []).filter((post) =>
     ["queued", "pending_review", "processing"].includes(post.status),
@@ -133,242 +175,310 @@ export function AutomationHub() {
           </Button>
         }
       />
-      <div className="mb-5 flex gap-2">
-        {[
-          ["automations", "Automations"],
-          ["queue", "Queue"],
-          ["activity", "Activity"],
-        ].map(([value, label]) => (
-          <Button
-            key={value}
-            size="sm"
-            variant={tab === value ? "secondary" : "outline"}
-            onClick={() => setTab(value as typeof tab)}
-          >
-            {label}
-          </Button>
-        ))}
-      </div>
-      {schedules.isLoading ? (
-        <PageLoader />
-      ) : tab === "automations" ? (
-        rows.length ? (
-          <div className="overflow-x-auto rounded-2xl border">
-            <table className="w-full min-w-180 text-left text-sm">
-              <thead className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
-                <tr>
-                  <th className="px-4 py-3 font-medium">Automation</th>
-                  <th className="px-4 py-3 font-medium">Country</th>
-                  <th className="px-4 py-3 font-medium">Language</th>
-                  <th className="px-4 py-3 font-medium">Cadence</th>
-                  <th className="px-4 py-3 font-medium">Times</th>
-                  <th className="px-4 py-3 font-medium">Publish to</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium">Updated</th>
-                  <th className="px-4 py-3 font-medium text-right">
-                    <span className="sr-only">Actions</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((item) => {
-                  const id = scheduleId(item);
-                  const account = item.socialAccountIds?.[0];
-                  return (
-                    <tr key={id} className="border-t">
-                      <td className="px-4 py-3">
-                        <Link href={`/app/automation/setup?id=${id}`} className="font-semibold hover:text-primary">
-                          {item.name}
-                        </Link>
-                        <p className="mt-0.5 max-w-xs truncate text-xs text-muted-foreground">
-                          {item.websiteUrl || "No website yet"}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">{item.targetCountry || "—"}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{item.language || "English"}</td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {item.cadence ? `${item.postsPerPeriod}× ${item.cadence}` : titleCase(item.mode)}
-                      </td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">
-                        {item.timesOfDay?.length ? item.timesOfDay.join(", ") : "—"}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {account ? accountName[String(account)] || "—" : "—"}
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge
-                          variant={
-                            item.status === "active"
-                              ? "success"
-                              : item.status === "draft"
-                                ? "secondary"
-                                : "warning"
-                          }
-                        >
-                          {titleCase(item.status)}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">
-                        {formatDate(item.updatedAt || item.createdAt, true)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={Boolean(testPost.isPending && testPost.variables && scheduleId(testPost.variables) === id)}
-                            onClick={() => testPost.mutate(item)}
+      <Tabs value={tab} onValueChange={(value) => setTab(value as typeof tab)}>
+        <TabsList aria-label="Automation sections">
+          <TabsTrigger value="automations">Automations</TabsTrigger>
+          <TabsTrigger value="queue">Queue</TabsTrigger>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
+        </TabsList>
+        <TabsContent value="automations">
+          {schedules.isLoading ? (
+            <PageLoader />
+          ) : rows.length ? (
+            <div className="overflow-x-auto rounded-2xl border">
+              <table className="w-full min-w-180 text-left text-sm">
+                <thead className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">Automation</th>
+                    <th className="px-4 py-3 font-medium">Country</th>
+                    <th className="px-4 py-3 font-medium">Language</th>
+                    <th className="px-4 py-3 font-medium">Cadence</th>
+                    <th className="px-4 py-3 font-medium">Times</th>
+                    <th className="px-4 py-3 font-medium">Publish to</th>
+                    <th className="px-4 py-3 font-medium">Status</th>
+                    <th className="px-4 py-3 font-medium">Updated</th>
+                    <th className="px-4 py-3 font-medium text-right">
+                      <span className="sr-only">Actions</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((item) => {
+                    const id = scheduleId(item);
+                    const account = item.socialAccountIds?.[0];
+                    return (
+                      <tr key={id} className="border-t">
+                        <td className="px-4 py-3">
+                          <Link
+                            href={`/app/automation/setup?id=${id}`}
+                            className="font-semibold hover:text-primary"
                           >
-                            {testPost.isPending && testPost.variables && scheduleId(testPost.variables) === id ? (
-                              <LoaderCircle className="size-3.5 animate-spin" />
-                            ) : (
-                              <Send className="size-3.5" />
-                            )}
-                            Test post
-                          </Button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button size="icon" variant="outline" aria-label="More actions">
-                                <MoreHorizontal className="size-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem asChild>
+                            {item.name}
+                          </Link>
+                          <p className="mt-0.5 max-w-xs truncate text-xs text-muted-foreground">
+                            {item.websiteUrl || "No website yet"}
+                          </p>
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {item.targetCountry || "—"}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {item.language || "English"}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {item.cadence
+                            ? `${item.postsPerPeriod}× ${item.cadence}`
+                            : titleCase(item.mode)}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground">
+                          {item.timesOfDay?.length
+                            ? item.timesOfDay.join(", ")
+                            : "—"}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {account ? accountName[String(account)] || "—" : "—"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge
+                            variant={
+                              item.status === "active"
+                                ? "success"
+                                : item.status === "draft"
+                                  ? "secondary"
+                                  : "warning"
+                            }
+                          >
+                            {titleCase(item.status)}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground">
+                          {formatDate(item.updatedAt || item.createdAt, true)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex justify-end gap-2">
+                            {item.status === "draft" ? (
+                              <Button asChild size="sm">
                                 <Link href={`/app/automation/setup?id=${id}`}>
-                                  <Pencil className="size-4" />
-                                  {item.status === "draft" ? "Continue draft" : "Edit"}
+                                  <Pencil className="size-3.5" />
+                                  Continue draft
                                 </Link>
-                              </DropdownMenuItem>
-                              {item.status !== "draft" && (
-                                <DropdownMenuItem onSelect={() => toggle.mutate(item)}>
-                                  {item.status === "active" ? (
-                                    <Pause className="size-4" />
-                                  ) : (
-                                    <Play className="size-4" />
-                                  )}
-                                  {item.status === "active" ? "Pause" : "Resume"}
-                                </DropdownMenuItem>
-                              )}
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                variant="destructive"
-                                onSelect={() => confirm("Delete this automation?") && remove.mutate(item)}
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={Boolean(
+                                  testPost.isPending &&
+                                  testPost.variables &&
+                                  scheduleId(testPost.variables) === id,
+                                )}
+                                onClick={() => testPost.mutate(item)}
                               >
-                                <Trash2 className="size-4" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <EmptyState
-            title="No automations yet"
-            description="Paste your site, save a draft, then choose how often Swiply should post."
-            icon={Sparkles}
-            action={
-              <Button asChild>
-                <Link href="/app/automation/setup">
-                  <Plus className="size-4" />
-                  New automation
-                </Link>
-              </Button>
-            }
-          />
-        )
-      ) : tab === "queue" ? (
-        upcoming.length ? (
-          <div className="grid gap-4">
-            {upcoming.map((post) => (
-              <Card key={post.id || post._id}>
-                <CardContent className="flex items-center gap-3 pt-5">
-                  <span className="grid size-10 place-items-center rounded-xl bg-secondary/10 text-secondary">
-                    <CalendarClock className="size-4" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold">TikTok slideshow</p>
-                    <p className="text-xs text-muted-foreground">{formatDate(post.scheduledFor, true)}</p>
-                  </div>
-                  <Badge variant="secondary">{titleCase(post.status)}</Badge>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      setPreview({ contentId: post.contentId, scheduledFor: post.scheduledFor })
-                    }
-                  >
-                    Preview
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-            {(content.data || []).slice(0, 6).length > 0 && (
-              <div className="grid gap-4 sm:grid-cols-3">
-                {(content.data || []).slice(0, 6).map((item) => {
-                  const id = item.id || item._id || "";
-                  return (
-                    <button
-                      key={id}
-                      type="button"
-                      className="text-left"
-                      onClick={() => setPreview({ contentId: id })}
-                    >
-                      <Card className="overflow-hidden">
-                        <div className="aspect-9/12 bg-muted">
-                          {item.slideshow?.slides[0]?.imageUrl ? (
-                            <img
-                              src={item.slideshow.slides[0].imageUrl}
-                              alt=""
-                              className="size-full object-cover"
-                            />
-                          ) : null}
-                        </div>
-                        <CardContent className="pt-4">
-                          <p className="line-clamp-2 text-sm font-semibold">{item.postCaption}</p>
-                        </CardContent>
-                      </Card>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        ) : (
-          <EmptyState
-            title="Nothing queued"
-            description="Start an automation to generate randomized TikTok slideshows and schedule them."
-            icon={CalendarClock}
-          />
-        )
-      ) : audit.isError ? (
-        <EmptyState
-          title="Activity will appear here"
-          description="Every research run, generated slideshow, and pause is recorded."
-          icon={Clock3}
-        />
-      ) : (
-        <div className="space-y-3">
-          {(audit.data || []).map((item, index) => (
-            <Card key={item.id || index}>
-              <CardContent className="pt-5">
-                <p className="text-sm font-semibold">{item.summary}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {titleCase(item.action)} · {formatDate(item.createdAt, true)}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-          {!audit.data?.length && (
-            <EmptyState title="No activity yet" description="Save a draft or start an automation to see the trail." icon={Clock3} />
+                                {testPost.isPending &&
+                                testPost.variables &&
+                                scheduleId(testPost.variables) === id ? (
+                                  <LoaderCircle className="size-3.5 animate-spin" />
+                                ) : (
+                                  <Send className="size-3.5" />
+                                )}
+                                Test post
+                              </Button>
+                            )}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  aria-label="More actions"
+                                >
+                                  <MoreHorizontal className="size-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/app/automation/setup?id=${id}`}>
+                                    <Pencil className="size-4" />
+                                    {item.status === "draft"
+                                      ? "Continue draft"
+                                      : "Edit"}
+                                  </Link>
+                                </DropdownMenuItem>
+                                {item.status !== "draft" && (
+                                  <DropdownMenuItem
+                                    onSelect={() => toggle.mutate(item)}
+                                  >
+                                    {item.status === "active" ? (
+                                      <Pause className="size-4" />
+                                    ) : (
+                                      <Play className="size-4" />
+                                    )}
+                                    {item.status === "active"
+                                      ? "Pause"
+                                      : "Resume"}
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  variant="destructive"
+                                  onSelect={() =>
+                                    confirm("Delete this automation?") &&
+                                    remove.mutate(item)
+                                  }
+                                >
+                                  <Trash2 className="size-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <EmptyState
+              title="No automations yet"
+              description="Paste your site, save a draft, then choose how often Swiply should post."
+              icon={Sparkles}
+              action={
+                <Button asChild>
+                  <Link href="/app/automation/setup">
+                    <Plus className="size-4" />
+                    New automation
+                  </Link>
+                </Button>
+              }
+            />
           )}
-        </div>
-      )}
+        </TabsContent>
+        <TabsContent value="queue">
+          {posts.isLoading ? (
+            <PageLoader />
+          ) : upcoming.length ? (
+            <div className="grid gap-4">
+              {upcoming.map((post) => (
+                <Card key={post.id || post._id}>
+                  <CardContent className="flex items-center gap-3 pt-5">
+                    <span className="grid size-10 place-items-center rounded-xl bg-secondary/10 text-secondary">
+                      <CalendarClock className="size-4" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold">TikTok slideshow</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDate(post.scheduledFor, true)}
+                      </p>
+                    </div>
+                    <Badge variant="secondary">{titleCase(post.status)}</Badge>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        setPreview({
+                          contentId: post.contentId,
+                          scheduledFor: post.scheduledFor,
+                        })
+                      }
+                    >
+                      Preview
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+              {(content.data || []).slice(0, 6).length > 0 && (
+                <div className="grid gap-4 sm:grid-cols-3">
+                  {(content.data || []).slice(0, 6).map((item) => {
+                    const id = item.id || item._id || "";
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        className="text-left"
+                        onClick={() => setPreview({ contentId: id })}
+                      >
+                        <Card className="overflow-hidden">
+                          <div className="aspect-9/12 bg-muted">
+                            {item.slideshow?.slides[0]?.imageUrl ? (
+                              <img
+                                src={item.slideshow.slides[0].imageUrl}
+                                alt=""
+                                className="size-full object-cover"
+                              />
+                            ) : null}
+                          </div>
+                          <CardContent className="pt-4">
+                            <p className="line-clamp-2 text-sm font-semibold">
+                              {item.postCaption}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : (
+            <EmptyState
+              title="Nothing queued"
+              description="Start an automation to generate randomized TikTok slideshows and schedule them."
+              icon={CalendarClock}
+            />
+          )}
+        </TabsContent>
+        <TabsContent value="activity">
+          {audit.isLoading ? (
+            <PageLoader />
+          ) : audit.isError ? (
+            <EmptyState
+              title="Activity will appear here"
+              description="Every research run, generated slideshow, and pause is recorded."
+              icon={Clock3}
+            />
+          ) : (
+            <div className="space-y-3">
+              {(audit.data || []).map((item, index) => {
+                const draftId = activityDraftId(item, rows);
+                return (
+                  <Card key={item.id || index}>
+                    <CardContent className="flex items-center justify-between gap-4 pt-5">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold">{item.summary}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {titleCase(item.action)} ·{" "}
+                          {formatDate(item.createdAt, true)}
+                        </p>
+                      </div>
+                      {draftId && (
+                        <Button
+                          asChild
+                          size="sm"
+                          variant="outline"
+                          className="shrink-0"
+                        >
+                          <Link href={`/app/automation/setup?id=${draftId}`}>
+                            <Pencil className="size-3.5" />
+                            Continue draft
+                          </Link>
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+              {!audit.data?.length && (
+                <EmptyState
+                  title="No activity yet"
+                  description="Save a draft or start an automation to see the trail."
+                  icon={Clock3}
+                />
+              )}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
       <SlideshowPreviewDialog
         contentId={preview?.contentId || null}
         open={!!preview}
