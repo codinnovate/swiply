@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Download, Link2, MessageCircle, Settings2, Trash2 } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { useWorkspace } from "@/components/app/app-shell";
 import { PageHeader } from "@/components/app/page-header";
@@ -272,6 +272,9 @@ function PublishingDefaultsDialog({
     reset,
     formState: { errors },
   } = useForm<DefaultsValues>();
+  const autoAddMusic = useWatch({ control, name: "autoAddMusic" });
+  const rendersMusicVideo =
+    account?.connectionProvider === "buffer" && autoAddMusic === "yes";
 
   useEffect(() => {
     const defaults = account?.publishingDefaults || {};
@@ -418,6 +421,13 @@ function PublishingDefaultsDialog({
                     { value: "yes", label: "Yes" },
                   ]}
                 />
+                {rendersMusicVideo && (
+                  <p className="-mt-2 text-xs leading-5 text-muted-foreground">
+                    Buffer can&apos;t ask TikTok to add music, so Swiply posts
+                    slideshows as a video set to a track from your music
+                    library instead of a swipeable photo post.
+                  </p>
+                )}
                 <div className="grid gap-3 rounded-xl border p-4 sm:grid-cols-2">
                   {[
                     ["duet", "Allow duets"],

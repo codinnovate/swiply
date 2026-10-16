@@ -3,9 +3,11 @@ import { spawn } from 'node:child_process';
 import ffmpegPath from 'ffmpeg-static';
 
 import { ApiException } from '../../common/errors/api.exception';
+import { slideshowVideoArgs } from './slideshow-video';
 import { fitTikTokDimensions, parseFfmpegSize } from './tiktok-image-fit';
 
 const TRANSCODE_TIMEOUT_MS = 60_000;
+const RENDER_TIMEOUT_MS = 5 * 60_000;
 
 @Injectable()
 export class FfmpegService {
@@ -55,6 +57,25 @@ export class FfmpegService {
     return fitted;
   }
 
+  async renderSlideshowVideo(
+    imagePaths: string[],
+    audioPath: string,
+    outputPath: string,
+  ): Promise<void> {
+    const { code, stderr } = await this.run(
+      slideshowVideoArgs(imagePaths, audioPath, outputPath),
+      RENDER_TIMEOUT_MS,
+      'FFmpeg timed out while rendering the slideshow video',
+    );
+    if (code !== 0) {
+      throw ApiException.unprocessable(
+        'MEDIA_TRANSCODE_FAILED',
+        'FFmpeg could not render the slideshow video',
+        { stderr: stderr.slice(-800) },
+      );
+    }
+  }
+
   private binary(): string {
     if (!ffmpegPath) {
       throw ApiException.unprocessable(
@@ -65,17 +86,19 @@ export class FfmpegService {
     return ffmpegPath;
   }
 
-  private run(args: string[]): Promise<{ code: number; stdout: string; stderr: string }> {
+  private run(
+    args: string[],
+    timeoutMs = TRANSCODE_TIMEOUT_MS,
+    timeoutMessage = 'FFmpeg timed out while resizing an image',
+  ): Promise<{ code: number; stdout: string; stderr: string }> {
     return new Promise((resolve, reject) => {
       const child = spawn(this.binary(), args, { stdio: ['ignore', 'pipe', 'pipe'] });
       let stdout = '';
       let stderr = '';
       const timer = setTimeout(() => {
         child.kill('SIGKILL');
-        reject(
-          ApiException.unprocessable('MEDIA_TRANSCODE_FAILED', 'FFmpeg timed out while resizing an image'),
-        );
-      }, TRANSCODE_TIMEOUT_MS);
+        reject(ApiException.unprocessable('MEDIA_TRANSCODE_FAILED', timeoutMessage));
+      }, timeoutMs);
       child.stdout.on('data', (chunk: Buffer) => {
         stdout += chunk.toString();
       });

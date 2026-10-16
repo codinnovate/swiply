@@ -12,6 +12,7 @@ import { Content, ContentDocument } from '../content/schemas/content.schema';
 import { CreatePostDto } from './dto/create-post.dto';
 import { Post, PostDocument } from './schemas/post.schema';
 import { SocialAccountsService } from '../social-accounts/social-accounts.service';
+import { SlideshowVideoService } from '../media/slideshow-video.service';
 import { TikTokMediaFitService } from '../media/tiktok-media-fit.service';
 import { PublishingProvidersService } from '../publishing-providers/publishing-providers.service';
 import type { PublishingProvider } from '../publishing-providers/schemas/publishing-provider-connection.schema';
@@ -26,6 +27,7 @@ export class PostsService {
     private readonly socialAccounts: SocialAccountsService,
     private readonly publishingProviders: PublishingProvidersService,
     private readonly tiktokMediaFit: TikTokMediaFitService,
+    private readonly slideshowVideo: SlideshowVideoService,
   ) {}
 
   async create(workspaceId: string, dto: CreatePostDto) {
@@ -249,6 +251,16 @@ export class PostsService {
     const text = [content.postCaption || content.post?.text || '', ...content.hashtags]
       .filter(Boolean)
       .join('\n\n');
+    // Buffer's API has no TikTok auto-music option, so the music is baked into a video instead.
+    if (needsRenderedMusic(account, imageUrls, content.video?.videoUrl)) {
+      return this.publishingProviders.createPost(workspaceId, account, {
+        text,
+        imageUrls: [],
+        videoUrl: await this.slideshowVideo.renderWithMusic(workspaceId, imageUrls),
+        scheduledFor,
+        publishNow,
+      });
+    }
     return this.publishingProviders.createPost(workspaceId, account, {
       text,
       imageUrls,
@@ -262,4 +274,18 @@ export class PostsService {
     if (platform !== 'tiktok' || !imageUrls.length) return Promise.resolve(imageUrls);
     return this.tiktokMediaFit.fitAll(workspaceId, imageUrls);
   }
+}
+
+export function needsRenderedMusic(
+  account: Pick<SocialAccountDocument, 'platform' | 'connectionProvider' | 'publishingDefaults'>,
+  imageUrls: string[],
+  videoUrl?: string | null,
+): boolean {
+  return (
+    account.platform === 'tiktok' &&
+    account.connectionProvider === 'buffer' &&
+    account.publishingDefaults?.autoAddMusic === 'yes' &&
+    imageUrls.length > 0 &&
+    !videoUrl
+  );
 }

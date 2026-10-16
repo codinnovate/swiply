@@ -8,6 +8,7 @@ import { MediaController } from './media.controller';
 import { MediaService } from './media.service';
 import { FfmpegService } from './ffmpeg.service';
 import { S3StorageService } from './s3-storage.service';
+import { SlideshowVideoService } from './slideshow-video.service';
 import { TikTokMediaFitService } from './tiktok-media-fit.service';
 
 @Module({
@@ -19,7 +20,13 @@ import { TikTokMediaFitService } from './tiktok-media-fit.service';
     WorkspacesModule,
   ],
   controllers: [MediaController],
-  providers: [MediaService, S3StorageService, FfmpegService, TikTokMediaFitService],
-  exports: [MediaService, TikTokMediaFitService],
+  providers: [
+    MediaService,
+    S3StorageService,
+    FfmpegService,
+    TikTokMediaFitService,
+    SlideshowVideoService,
+  ],
+  exports: [MediaService, TikTokMediaFitService, SlideshowVideoService],
 })
 export class MediaModule {}

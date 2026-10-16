@@ -9,14 +9,12 @@ import { Model, Types } from 'mongoose';
 import { ApiException } from '../../common/errors/api.exception';
 import { FfmpegService } from './ffmpeg.service';
 import { MediaAsset, MediaAssetDocument } from './schemas/media-asset.schema';
+import { downloadRemoteImage } from './remote-media';
 import { S3StorageService } from './s3-storage.service';
 import {
   needsTikTokFit,
   tiktokFitStorageKey,
 } from './tiktok-image-fit';
-
-const DOWNLOAD_TIMEOUT_MS = 20_000;
-const DOWNLOAD_MAX_BYTES = 50 * 1024 * 1024;
 
 @Injectable()
 export class TikTokMediaFitService {
@@ -89,45 +87,7 @@ export class TikTokMediaFitService {
         if (error instanceof ApiException && error.code === 'STORAGE_NOT_CONFIGURED') throw error;
       }
     }
-    return this.download(imageUrl);
-  }
-
-  private async download(imageUrl: string): Promise<Buffer> {
-    let url: URL;
-    try {
-      url = new URL(imageUrl);
-    } catch {
-      throw ApiException.unprocessable('MEDIA_TRANSCODE_FAILED', 'Image URL is not valid');
-    }
-    if (url.protocol !== 'https:') {
-      throw ApiException.unprocessable('REMOTE_MEDIA_UNSAFE', 'TikTok images must be fetched over HTTPS');
-    }
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), DOWNLOAD_TIMEOUT_MS);
-    let response: Response;
-    try {
-      response = await fetch(url, {
-        signal: controller.signal,
-        redirect: 'error',
-        headers: { Accept: 'image/*' },
-      });
-    } catch {
-      throw ApiException.unprocessable('MEDIA_TRANSCODE_FAILED', 'Could not download the image to resize');
-    } finally {
-      clearTimeout(timer);
-    }
-    if (!response.ok) {
-      throw ApiException.unprocessable('MEDIA_TRANSCODE_FAILED', 'Could not download the image to resize');
-    }
-    const length = Number(response.headers.get('content-length') || 0);
-    if (length > DOWNLOAD_MAX_BYTES) {
-      throw ApiException.unprocessable('MEDIA_TRANSCODE_FAILED', 'Image is too large to resize');
-    }
-    const body = Buffer.from(await response.arrayBuffer());
-    if (body.byteLength > DOWNLOAD_MAX_BYTES) {
-      throw ApiException.unprocessable('MEDIA_TRANSCODE_FAILED', 'Image is too large to resize');
-    }
-    return body;
+    return downloadRemoteImage(imageUrl);
   }
 }
 

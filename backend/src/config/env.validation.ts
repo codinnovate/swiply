@@ -94,6 +94,7 @@ export class EnvironmentVariables {
   @IsString() @IsOptional() CLOUDFRONT_DOMAIN?: string;
   @IsString() @IsOptional() CLOUDFRONT_DISTRIBUTION_ID?: string;
   @IsString() @IsOptional() AWS_ENDPOINT_URL?: string;
+  @IsString() @IsOptional() SLIDESHOW_MUSIC_TRACK_KEYS?: string;
   @IsString() @IsOptional() STRIPE_SECRET_KEY?: string;
   @IsString() @IsOptional() STRIPE_WEBHOOK_SECRET?: string;
   @IsString() @IsOptional() REDIS_URL?: string;

@@ -71,6 +71,12 @@ export const storageConfig = registerAs('storage', () => ({
   cloudFrontDomain: process.env.CLOUDFRONT_DOMAIN,
   cloudFrontDistributionId: process.env.CLOUDFRONT_DISTRIBUTION_ID,
   endpoint: process.env.AWS_ENDPOINT_URL,
+  // Royalty-free tracks (S3 keys in the media bucket) mixed into TikTok
+  // slideshows sent through Buffer, whose API has no auto-music option.
+  slideshowMusicTrackKeys: (process.env.SLIDESHOW_MUSIC_TRACK_KEYS ?? '')
+    .split(',')
+    .map((key) => key.trim())
+    .filter(Boolean),
 }));
 
 export const researchConfig = registerAs('research', () => ({
