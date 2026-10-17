@@ -1,3 +1,4 @@
+import { TIKTOK_SLIDE_FRAME } from '../media/slide-render';
 import { needsRenderedMusic, PostsService } from './posts.service';
 
 const bufferTikTok = {
@@ -6,6 +7,7 @@ const bufferTikTok = {
   publishingDefaults: { autoAddMusic: 'yes' as const },
 };
 const slides = ['https://cdn.example/1.jpg', 'https://cdn.example/2.jpg'];
+const rendered = ['https://cdn.example/slides/1.tiktok.jpg', 'https://cdn.example/slides/2.tiktok.jpg'];
 
 describe('needsRenderedMusic', () => {
   it('renders music only for Buffer TikTok slideshows that asked for it', () => {
@@ -32,6 +34,11 @@ describe('PostsService provider submission', () => {
     const slideshowVideo = {
       renderWithMusic: jest.fn().mockResolvedValue('https://cdn.example/rendered.mp4'),
     };
+    const slideRender = {
+      renderAll: jest.fn(async (_ws: string, items: Array<{ imageUrl: string }>, _frame?: unknown) =>
+        items.map((item) => rendered[slides.indexOf(item.imageUrl)]),
+      ),
+    };
     const service = new PostsService(
       {} as never,
       {} as never,
@@ -41,14 +48,17 @@ describe('PostsService provider submission', () => {
       publishingProviders as never,
       tiktokMediaFit as never,
       slideshowVideo as never,
+      slideRender as never,
     );
-    return { service, publishingProviders, slideshowVideo };
+    return { service, publishingProviders, slideshowVideo, slideRender, tiktokMediaFit };
   }
   const content = {
     type: 'slideshow',
     postCaption: 'Caption',
     hashtags: ['#tag'],
-    slideshow: { slides: slides.map((imageUrl) => ({ imageUrl })) },
+    slideshow: {
+      slides: slides.map((imageUrl, index) => ({ imageUrl, caption: index ? null : 'Stop scrolling' })),
+    },
     video: null,
   };
   const when = new Date('2026-10-20T10:00:00Z');
@@ -58,7 +68,7 @@ describe('PostsService provider submission', () => {
 
     await service['submitToProvider']('ws1', bufferTikTok as never, content as never, when, false);
 
-    expect(slideshowVideo.renderWithMusic).toHaveBeenCalledWith('ws1', slides);
+    expect(slideshowVideo.renderWithMusic).toHaveBeenCalledWith('ws1', rendered);
     expect(publishingProviders.createPost).toHaveBeenCalledWith('ws1', bufferTikTok, {
       text: 'Caption\n\n#tag',
       imageUrls: [],
@@ -78,7 +88,39 @@ describe('PostsService provider submission', () => {
     expect(publishingProviders.createPost).toHaveBeenCalledWith(
       'ws1',
       account,
-      expect.objectContaining({ imageUrls: slides, videoUrl: undefined, publishNow: true }),
+      expect.objectContaining({ imageUrls: rendered, videoUrl: undefined, publishNow: true }),
     );
+  });
+
+  it('publishes slides cropped to 9:16 with their captions drawn on', async () => {
+    const { service, publishingProviders, slideRender, tiktokMediaFit } = build();
+    const account = { ...bufferTikTok, publishingDefaults: { autoAddMusic: 'no' } };
+
+    await service['submitToProvider']('ws1', account as never, content as never, when, true);
+
+    expect(slideRender.renderAll).toHaveBeenCalledWith(
+      'ws1',
+      [
+        { imageUrl: slides[0], caption: 'Stop scrolling' },
+        { imageUrl: slides[1], caption: null },
+      ],
+      TIKTOK_SLIDE_FRAME,
+    );
+    expect(tiktokMediaFit.fitAll).not.toHaveBeenCalled();
+    expect(publishingProviders.createPost.mock.calls[0][2].imageUrls).toEqual(rendered);
+  });
+
+  it('renders Instagram slides at 4:5 and leaves plain image posts to the TikTok size fit', async () => {
+    const { service, slideRender, tiktokMediaFit } = build();
+    const instagram = { platform: 'instagram', connectionProvider: 'buffer', publishingDefaults: {} };
+
+    await service['submitToProvider']('ws1', instagram as never, content as never, when, true);
+    expect(slideRender.renderAll.mock.calls[0][2]).toEqual({ width: 1080, height: 1350 });
+
+    const post = { type: 'post', postCaption: 'Hi', hashtags: [], post: { imageUrls: slides, text: 'Hi' }, video: null };
+    const tiktok = { ...bufferTikTok, publishingDefaults: { autoAddMusic: 'no' } };
+    await service['submitToProvider']('ws1', tiktok as never, post as never, when, true);
+    expect(tiktokMediaFit.fitAll).toHaveBeenCalledWith('ws1', slides);
+    expect(slideRender.renderAll).toHaveBeenCalledTimes(1);
   });
 });

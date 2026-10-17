@@ -8,6 +8,7 @@ import { MediaController } from './media.controller';
 import { MediaService } from './media.service';
 import { FfmpegService } from './ffmpeg.service';
 import { S3StorageService } from './s3-storage.service';
+import { SlideRenderService } from './slide-render.service';
 import { SlideshowVideoService } from './slideshow-video.service';
 import { TikTokMediaFitService } from './tiktok-media-fit.service';
 
@@ -26,7 +27,8 @@ import { TikTokMediaFitService } from './tiktok-media-fit.service';
     FfmpegService,
     TikTokMediaFitService,
     SlideshowVideoService,
+    SlideRenderService,
   ],
-  exports: [MediaService, TikTokMediaFitService, SlideshowVideoService],
+  exports: [MediaService, TikTokMediaFitService, SlideshowVideoService, SlideRenderService],
 })
 export class MediaModule {}

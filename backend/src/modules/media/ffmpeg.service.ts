@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 import ffmpegPath from 'ffmpeg-static';
 
 import { ApiException } from '../../common/errors/api.exception';
+import { slideRenderArgs } from './slide-render';
 import { slideshowVideoArgs } from './slideshow-video';
 import { fitTikTokDimensions, parseFfmpegSize } from './tiktok-image-fit';
 
@@ -55,6 +56,22 @@ export class FfmpegService {
     const fitted = fitTikTokDimensions(probed.width, probed.height);
     await this.scaleToJpeg(inputPath, outputPath, fitted.width, fitted.height);
     return fitted;
+  }
+
+  /** Crops a slide to its platform frame and burns in its caption (see slide-render.ts). */
+  async renderSlideImage(options: Parameters<typeof slideRenderArgs>[0]): Promise<void> {
+    const { code, stderr } = await this.run(
+      slideRenderArgs(options),
+      TRANSCODE_TIMEOUT_MS,
+      'FFmpeg timed out while rendering a slide',
+    );
+    if (code !== 0) {
+      throw ApiException.unprocessable(
+        'MEDIA_TRANSCODE_FAILED',
+        'FFmpeg could not render the slide caption',
+        { stderr: stderr.slice(-800) },
+      );
+    }
   }
 
   async renderSlideshowVideo(

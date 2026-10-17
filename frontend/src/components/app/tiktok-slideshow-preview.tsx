@@ -62,7 +62,8 @@ export function TikTokSlideshowPreview({
             alt={slide.altText || slide.caption || `Slide ${index + 1}`}
             className="size-full object-cover"
           />
-          <div className="absolute inset-0 bg-black/25" />
+          {/* Published slides get this scrim only when they carry a caption (backend slide-render.ts). */}
+          {slide.caption && <div className="absolute inset-0 bg-black/25" />}
           <div className="absolute inset-x-0 top-0 h-24 bg-linear-to-b from-black/50 to-transparent" />
           <p className="absolute left-3 top-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/80">
             TikTok · Photo
