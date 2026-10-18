@@ -14,6 +14,7 @@ import {
   MessageCircleReply,
   Moon,
   Plus,
+  Radar,
   Search,
   Settings,
   Sparkles,
@@ -53,6 +54,7 @@ const navigation = [
     label: "Growth",
     items: [
       { href: "/app/x-growth", label: "X Growth Engine", icon: TrendingUp },
+      { href: "/app/competitors", label: "Competitor analysis", icon: Radar },
     ],
   },
   {

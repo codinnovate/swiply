@@ -71,6 +71,8 @@ These keys belong to Swiply itself. Users must never be asked for them.
 | `RESEND_API_KEY` | Create a key in [Resend](https://resend.com/api-keys) after adding and verifying your sending domain. Email delivery is not implemented yet. |
 | `REDIS_URL` | Local: `redis://127.0.0.1:6379`. For production, copy the TLS connection URL from your managed Redis provider. |
 | `TIKAPI_KEY` | Create a key in [TikAPI](https://tikapi.io/). Official TikTok APIs cannot search competitors; Swiply uses TikAPI public search and hashtag feeds to see what is posting in the product niche. Optional `TIKAPI_SANDBOX=true` hits their sandbox. |
+| `APIFY_TOKEN` | Powers Growth → Competitor analysis (a competitor's TikTok videos, hashtags and stats). Sign up at [Apify](https://console.apify.com/) and copy the token from **Settings → API & Integrations**. The free plan's $5 monthly credit covers about 2,900 videos with the default `clockworks~tiktok-scraper` actor (`APIFY_TIKTOK_ACTOR`). `COMPETITOR_VIDEO_LIMIT` (default 40) caps videos per lookup. |
+| `TIKTOK_AD_LIBRARY_CLIENT_KEY`, `TIKTOK_AD_LIBRARY_CLIENT_SECRET` | Shows the ads a competitor runs, from TikTok's official Ad Library. Free, but you must [apply for the Commercial Content API](https://developers.tiktok.com/products/commercial-content-api); once approved, TikTok generates a separate research client whose key and secret go here. Covers ads shown in the EEA, Switzerland and the UK. Optional `TIKTOK_AD_LIBRARY_COUNTRIES` (e.g. `GB,FR,DE`) narrows the search. |
 
 ## Users: AI provider keys only
 

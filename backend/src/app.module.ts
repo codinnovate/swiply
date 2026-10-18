@@ -23,6 +23,7 @@ import { AutomationModule } from './modules/automation/automation.module';
 import { PublishingProvidersModule } from './modules/publishing-providers/publishing-providers.module';
 import { PostingConsistencyModule } from './modules/posting-consistency/posting-consistency.module';
 import { ViralityModule } from './modules/virality/virality.module';
+import { CompetitorsModule } from './modules/competitors/competitors.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { ViralityModule } from './modules/virality/virality.module';
     PublishingProvidersModule,
     PostingConsistencyModule,
     ViralityModule,
+    CompetitorsModule,
   ],
   providers: [
     // Authenticated by default — routes opt out with @Public().

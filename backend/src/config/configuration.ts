@@ -82,6 +82,18 @@ export const storageConfig = registerAs('storage', () => ({
 export const researchConfig = registerAs('research', () => ({
   tikapiKey: process.env.TIKAPI_KEY,
   tikapiSandbox: process.env.TIKAPI_SANDBOX === 'true',
+  // Competitor analysis. Apify's TikTok scraper returns a profile's public
+  // videos (free plan: $5 of monthly credit); the Ad Library needs an approved
+  // TikTok Commercial Content API research client.
+  apifyToken: process.env.APIFY_TOKEN,
+  apifyTiktokActor: process.env.APIFY_TIKTOK_ACTOR ?? 'clockworks~tiktok-scraper',
+  competitorVideoLimit: parseInt(process.env.COMPETITOR_VIDEO_LIMIT ?? '40', 10),
+  tiktokAdLibraryClientKey: process.env.TIKTOK_AD_LIBRARY_CLIENT_KEY,
+  tiktokAdLibraryClientSecret: process.env.TIKTOK_AD_LIBRARY_CLIENT_SECRET,
+  tiktokAdLibraryCountries: (process.env.TIKTOK_AD_LIBRARY_COUNTRIES ?? '')
+    .split(',')
+    .map((code) => code.trim().toUpperCase())
+    .filter(Boolean),
 }));
 
 export const postingConsistencyConfig = registerAs('postingConsistency', () => ({

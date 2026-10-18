@@ -115,6 +115,12 @@ export class EnvironmentVariables {
   @IsString() @IsOptional() RESEND_API_KEY?: string;
   @IsString() @IsOptional() TIKAPI_KEY?: string;
   @IsString() @IsOptional() TIKAPI_SANDBOX?: string;
+  @IsString() @IsOptional() APIFY_TOKEN?: string;
+  @IsString() @IsOptional() APIFY_TIKTOK_ACTOR?: string;
+  @Type(() => Number) @IsInt() @Min(5) @Max(100) @IsOptional() COMPETITOR_VIDEO_LIMIT?: number;
+  @IsString() @IsOptional() TIKTOK_AD_LIBRARY_CLIENT_KEY?: string;
+  @IsString() @IsOptional() TIKTOK_AD_LIBRARY_CLIENT_SECRET?: string;
+  @IsString() @IsOptional() TIKTOK_AD_LIBRARY_COUNTRIES?: string;
 
   // --- POSTLOCK public X profile verification (no user OAuth) ---
   @IsIn(['fxtwitter', 'development', 'http']) @IsOptional() X_DATA_PROVIDER = 'fxtwitter';
