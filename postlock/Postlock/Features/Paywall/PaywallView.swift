@@ -132,9 +132,9 @@ struct PaywallView: View {
             .padding(.top, Spacing.large)
 
             if let selectedPackage {
-                Text(compactPriceCopy(for: selectedPackage))
+                Text(purchaseDisclosureCopy(for: selectedPackage))
                     .font(.caption)
-                    .foregroundStyle(Theme.secondaryText.opacity(0.72))
+                    .foregroundStyle(.white.opacity(0.82))
                     .multilineTextAlignment(.center)
                     .padding(.top, 2)
             }
@@ -171,8 +171,7 @@ struct PaywallView: View {
 
     private var primaryCTATitle: String {
         guard let selectedPackage else { return "Continue" }
-        let hasTrial = selectedPackage.storeProduct.introductoryDiscount?.paymentMode == .freeTrial
-        return hasTrial ? "Try for $0" : "Continue"
+        return ctaTitle(for: selectedPackage)
     }
 
     private func compactPriceCopy(for package: Package) -> String {
@@ -182,6 +181,19 @@ struct PaywallView: View {
             return "Just \(price) per year (\(monthly)/mo)"
         }
         return "Just \(price) per month"
+    }
+
+    private func purchaseDisclosureCopy(for package: Package) -> String {
+        PaywallCopy.disclosure(
+            price: package.storeProduct.localizedPriceString,
+            isAnnual: package.packageType == .annual,
+            trialPeriod: freeTrialPeriodLabel(for: package)
+        )
+    }
+
+    private func freeTrialPeriodLabel(for package: Package) -> String? {
+        guard let trial = package.storeProduct.introductoryDiscount, trial.paymentMode == .freeTrial else { return nil }
+        return periodLabel(trial.subscriptionPeriod)
     }
 
     private func periodLabel(_ period: SubscriptionPeriod) -> String {
@@ -247,7 +259,7 @@ struct PaywallView: View {
 
                     if let selectedPackage {
                         PrimaryButton(
-                            title: selectedPackage.storeProduct.introductoryDiscount?.paymentMode == .freeTrial ? "Try for $0" : "Continue",
+                            title: ctaTitle(for: selectedPackage),
                             isLoading: isPurchasing,
                             isDisabled: isRestoring
                         ) {
@@ -273,12 +285,11 @@ struct PaywallView: View {
     }
 
     private func renewalCopy(for package: Package) -> String {
-        let price = package.storeProduct.localizedPriceString
-        let billingPeriod = package.packageType == .annual ? "year" : "month"
-        if let trial = package.storeProduct.introductoryDiscount, trial.paymentMode == .freeTrial {
-            return "\(periodLabel(trial.subscriptionPeriod)) free, then \(price) per \(billingPeriod). Renews automatically until cancelled."
-        }
-        return "\(price) per \(billingPeriod). Renews automatically until cancelled."
+        purchaseDisclosureCopy(for: package)
+    }
+
+    private func ctaTitle(for package: Package) -> String {
+        PaywallCopy.ctaTitle(trialPeriod: freeTrialPeriodLabel(for: package))
     }
 }
 
@@ -300,7 +311,16 @@ private struct PlanCard: View {
         case .year: unit = value == 1 ? "year" : "years"
         @unknown default: unit = "days"
         }
-        return "\(value) \(unit) free, then \(package.storeProduct.localizedPriceString)"
+        let billingPeriod = PaywallCopy.billingPeriod(isAnnual: package.packageType == .annual)
+        return "\(value) \(unit) free, then \(package.storeProduct.localizedPriceString) per \(billingPeriod)"
+    }
+
+    private var renewalLabel: String {
+        PaywallCopy.renewalLabel(
+            price: package.storeProduct.localizedPriceString,
+            isAnnual: package.packageType == .annual,
+            hasTrial: trialLabel != nil
+        )
     }
 
     var body: some View {
@@ -322,6 +342,9 @@ private struct PlanCard: View {
                 Text(trialLabel ?? package.storeProduct.localizedPriceString)
                     .font(.subheadline)
                     .foregroundStyle(Theme.secondaryText)
+                Text(renewalLabel)
+                    .font(.caption)
+                    .foregroundStyle(Theme.secondaryText.opacity(0.82))
             }
             Spacer()
             Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")

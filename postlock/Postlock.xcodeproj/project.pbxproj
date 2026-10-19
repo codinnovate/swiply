@@ -10,6 +10,7 @@
 		0B43C089E926A55FB0E93771 /* LeaderboardPreferencesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40E0BD28348DAA173FB88EF9 /* LeaderboardPreferencesStore.swift */; };
 		103764D2F50FD6145BE54FA5 /* Virality.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69360A7098CA64B11C4904E7 /* Virality.swift */; };
 		11E69B7D7CA4CFBC354FCD11 /* PostingChallenge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 268E4C64667787CAE831A90A /* PostingChallenge.swift */; };
+		134CAE4D5BE674B67DBF7B04 /* PaywallCopyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B77B95EC6D04355E2675A81 /* PaywallCopyTests.swift */; };
 		17D819DD54CC91DF001CD2B1 /* PostlockChallengeWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1B2D54450AAF5FB462455DC2 /* PostlockChallengeWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		191F805F57673AA377879DA7 /* ViralityStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40D044E2BAD699BB1C910F70 /* ViralityStore.swift */; };
 		23BD5635CC25D51289502FF3 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8CAAAD0091BE4823CAFEB93 /* NotificationService.swift */; };
@@ -25,6 +26,7 @@
 		5DDBB647DDFB3FDFC2D2B99E /* PostingStateCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB363665E73796C6B9E1B32 /* PostingStateCalculatorTests.swift */; };
 		6915D3BF577FA79D309BFCD3 /* PostlockChallengeWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EC6E8B68F020CFC27F7181A /* PostlockChallengeWidget.swift */; };
 		6AFA73162872678F650A3136 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3886050B0C38B2C963AF67FD /* RootView.swift */; };
+		6E8138E86951E79560967DC9 /* PaywallCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B819AB5D269F76AE462843F /* PaywallCopy.swift */; };
 		71F0393CEE7BFEA77D93CDA9 /* ChallengeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F01FCD66146E857A3CB637 /* ChallengeView.swift */; };
 		7365B14AD673BEB92138AB05 /* PostlockDeviceActivityMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6818C326F0B6AF27F208A17A /* PostlockDeviceActivityMonitor.swift */; };
 		763F0AD88B42D83075664CD3 /* PostingProfileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27AC65C501F2AC5B47CB5670 /* PostingProfileStore.swift */; };
@@ -128,6 +130,7 @@
 		508BCFABB8FC0CA1847A74A2 /* PostingProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostingProfile.swift; sourceTree = "<group>"; };
 		52C4CB5A2E8887CD1A6F8FDB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		577DC93AB6538516892DF67A /* PostingCommitment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostingCommitment.swift; sourceTree = "<group>"; };
+		5B77B95EC6D04355E2675A81 /* PaywallCopyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallCopyTests.swift; sourceTree = "<group>"; };
 		5EC6E8B68F020CFC27F7181A /* PostlockChallengeWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostlockChallengeWidget.swift; sourceTree = "<group>"; };
 		5F0D577C736C1ED168D11F8E /* UsernameSetupViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsernameSetupViewModel.swift; sourceTree = "<group>"; };
 		5F47D111B0ED641A4BD154C4 /* AppSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSession.swift; sourceTree = "<group>"; };
@@ -141,6 +144,7 @@
 		73F01FCD66146E857A3CB637 /* ChallengeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChallengeView.swift; sourceTree = "<group>"; };
 		755653B2CF91C78C3AB8D629 /* UsernameNormalizerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsernameNormalizerTests.swift; sourceTree = "<group>"; };
 		76D4DA3A70CA7E06AECA4F75 /* PostingProfileClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostingProfileClient.swift; sourceTree = "<group>"; };
+		7B819AB5D269F76AE462843F /* PaywallCopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallCopy.swift; sourceTree = "<group>"; };
 		7B8E5EA2B0D76A20BD463E1A /* ServerSentEventParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerSentEventParserTests.swift; sourceTree = "<group>"; };
 		8643366B70F42E806757AF42 /* PostingCommitmentStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostingCommitmentStore.swift; sourceTree = "<group>"; };
 		9B219A04B54C09679AD4EDBE /* ViralityClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViralityClient.swift; sourceTree = "<group>"; };
@@ -277,6 +281,7 @@
 		814C74B33CE3E2150BE62633 /* PostlockTests */ = {
 			isa = PBXGroup;
 			children = (
+				5B77B95EC6D04355E2675A81 /* PaywallCopyTests.swift */,
 				AAB363665E73796C6B9E1B32 /* PostingStateCalculatorTests.swift */,
 				A6D2A12C45123549059E3C3F /* ReminderPlannerTests.swift */,
 				7B8E5EA2B0D76A20BD463E1A /* ServerSentEventParserTests.swift */,
@@ -372,6 +377,7 @@
 		EF92333C57978B9A38D39421 /* Paywall */ = {
 			isa = PBXGroup;
 			children = (
+				7B819AB5D269F76AE462843F /* PaywallCopy.swift */,
 				B292DDC09FC3AC15E227600F /* PaywallView.swift */,
 			);
 			path = Paywall;
@@ -580,6 +586,7 @@
 				0B43C089E926A55FB0E93771 /* LeaderboardPreferencesStore.swift in Sources */,
 				37CFF9E5D0B19B327C78097E /* LeaderboardView.swift in Sources */,
 				23BD5635CC25D51289502FF3 /* NotificationService.swift in Sources */,
+				6E8138E86951E79560967DC9 /* PaywallCopy.swift in Sources */,
 				85BEDF0756E0111C500CBEED /* PaywallView.swift in Sources */,
 				C6669F896FDFC39DF8E74678 /* PostVerificationClient.swift in Sources */,
 				11E69B7D7CA4CFBC354FCD11 /* PostingChallenge.swift in Sources */,
@@ -612,6 +619,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				134CAE4D5BE674B67DBF7B04 /* PaywallCopyTests.swift in Sources */,
 				5DDBB647DDFB3FDFC2D2B99E /* PostingStateCalculatorTests.swift in Sources */,
 				F7AB0B1548C91DC53BDB0148 /* ReminderPlannerTests.swift in Sources */,
 				597739DA527586B01FCCCC68 /* ServerSentEventParserTests.swift in Sources */,
@@ -806,7 +814,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 9WHCDKVKJQ;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -918,7 +926,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 9WHCDKVKJQ;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
