@@ -13,6 +13,7 @@ import type {
   SourcePostInput,
   ValidatableContent,
   PublishableContent,
+  PublishResult,
 } from './platform-adapter.interface';
 
 /**
@@ -29,7 +30,7 @@ export abstract class BasePlatformAdapter implements PlatformAdapter {
   abstract handleOAuthCallback(request: OAuthExchangeRequest): Promise<PlatformConnection>;
   abstract refreshAccessToken(refreshToken: string): Promise<PlatformCredentials>;
   abstract fetchRecentPosts(accessToken: string, limit: number): Promise<SourcePostInput[]>;
-  async publishContent(_accessToken: string, _content: PublishableContent): Promise<{ platformPostId: string; platformPostUrl: string | null }> {
+  async publishContent(_accessToken: string, _content: PublishableContent): Promise<PublishResult> {
     throw this.notImplemented('publishing');
   }
 

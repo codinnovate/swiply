@@ -10,8 +10,17 @@ import type {
   PlatformCapabilities,
   PlatformConnection,
   PlatformCredentials,
+  PublishableContent,
+  PublishResult,
   SourcePostInput,
 } from '../platform-adapter.interface';
+import {
+  assertSettingsAllowed,
+  commonPostInfo,
+  type TikTokCreatorInfo,
+} from './tiktok/tiktok-post-settings';
+import { TikTokPostingClient, type TikTokPublishStatus } from './tiktok/tiktok-posting.client';
+import { ApiException } from '../../common/errors/api.exception';
 
 const AUTHORIZE_URL = 'https://www.tiktok.com/v2/auth/authorize/';
 const TOKEN_URL = 'https://open.tiktokapis.com/v2/oauth/token/';
@@ -54,11 +63,14 @@ export class TikTokAdapter extends BasePlatformAdapter {
     maxTextLength: 2200,
   };
 
+  private readonly posting: TikTokPostingClient;
+
   constructor(
     private readonly http: HttpService,
     private readonly config: ConfigService,
   ) {
     super();
+    this.posting = new TikTokPostingClient(http);
   }
 
   isConfigured(): boolean {
@@ -134,6 +146,56 @@ export class TikTokAdapter extends BasePlatformAdapter {
     } catch (error) {
       throw this.exchangeFailure(error, 'recent posts lookup');
     }
+  }
+
+  /** Fresh creator state; TikTok requires it each time the post screen renders. */
+  queryCreatorInfo(accessToken: string): Promise<TikTokCreatorInfo> {
+    return this.posting.queryCreatorInfo(accessToken);
+  }
+
+  fetchPublishStatus(accessToken: string, publishId: string): Promise<TikTokPublishStatus> {
+    return this.posting.fetchStatus(accessToken, publishId);
+  }
+
+  /**
+   * Direct Post. Settings come from the creator, never from defaults, and are
+   * re-checked against live creator_info so a stale choice (a privacy option
+   * the account lost, a reached posting cap) fails before any upload starts.
+   */
+  async publishContent(accessToken: string, content: PublishableContent): Promise<PublishResult> {
+    const settings = content.tiktok;
+    if (!settings) {
+      throw ApiException.unprocessable(
+        'TIKTOK_POST_SETTINGS_REQUIRED',
+        'Choose TikTok visibility, interactions and disclosure before posting',
+      );
+    }
+    const isVideo = Boolean(content.videoUrl);
+    if (!isVideo && !content.imageUrls.length) {
+      throw ApiException.unprocessable('CONTENT_INVALID_FOR_PLATFORM', 'TikTok posts need a video or photos');
+    }
+    const creator = await this.posting.queryCreatorInfo(accessToken);
+    assertSettingsAllowed(settings, creator, {
+      isVideo,
+      durationSeconds: content.videoDurationSeconds,
+    });
+
+    const caption = [content.postCaption, ...content.hashtags].filter(Boolean).join(' ');
+    const publishId = isVideo
+      ? await this.posting.postVideo(accessToken, content.videoUrl as string, {
+          ...commonPostInfo(settings),
+          title: caption,
+          disable_duet: !settings.allowDuet,
+          disable_stitch: !settings.allowStitch,
+          is_aigc: settings.isAigc,
+        })
+      : await this.posting.postPhotos(accessToken, content.imageUrls, {
+          ...commonPostInfo(settings),
+          title: settings.title || undefined,
+          description: caption,
+          auto_add_music: settings.autoAddMusic,
+        });
+    return { platformPostId: publishId, platformPostUrl: null, status: 'processing' };
   }
 
   private async postToken(

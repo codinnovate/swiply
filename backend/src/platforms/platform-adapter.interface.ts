@@ -1,4 +1,5 @@
 import type { Platform } from '../modules/social-accounts/schemas/social-account.schema';
+import type { TikTokPostSettings } from './adapters/tiktok/tiktok-post-settings';
 
 export const CONTENT_TYPES = ['slideshow', 'video', 'post'] as const;
 export type ContentType = (typeof CONTENT_TYPES)[number];
@@ -80,6 +81,19 @@ export interface PublishableContent extends ValidatableContent {
   hashtags: string[];
   imageUrls: string[];
   videoUrl?: string | null;
+  videoDurationSeconds?: number | null;
+  /** The creator's per-post choices; required by TikTok Direct Post, ignored elsewhere. */
+  tiktok?: TikTokPostSettings | null;
+}
+
+export interface PublishResult {
+  platformPostId: string;
+  platformPostUrl: string | null;
+  /**
+   * 'processing' when the platform finishes asynchronously (TikTok); the
+   * platformPostId is then a publish handle the caller has to poll.
+   */
+  status?: 'published' | 'processing';
 }
 
 export interface ContentValidationResult {
@@ -115,7 +129,7 @@ export interface PlatformAdapter {
   refreshAccessToken(refreshToken: string): Promise<PlatformCredentials>;
 
   fetchRecentPosts(accessToken: string, limit: number): Promise<SourcePostInput[]>;
-  publishContent(accessToken: string, content: PublishableContent): Promise<{ platformPostId: string; platformPostUrl: string | null }>;
+  publishContent(accessToken: string, content: PublishableContent): Promise<PublishResult>;
 
   validateContent(content: ValidatableContent): ContentValidationResult;
 }
