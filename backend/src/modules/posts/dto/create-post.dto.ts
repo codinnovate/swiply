@@ -1,5 +1,6 @@
-import { Transform } from 'class-transformer';
-import { IsBoolean, IsDateString, IsMongoId, IsOptional } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsBoolean, IsDateString, IsMongoId, IsOptional, ValidateNested } from 'class-validator';
+import { TikTokPostSettingsDto } from './tiktok-post-settings.dto';
 
 export class CreatePostDto {
   @IsMongoId() contentId: string;
@@ -10,4 +11,9 @@ export class CreatePostDto {
   @Transform(({ value }) => value === true || value === 'true')
   @IsBoolean()
   publishNow?: boolean;
+  /** Required to publish to a directly connected TikTok account. */
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => TikTokPostSettingsDto)
+  tiktok?: TikTokPostSettingsDto;
 }

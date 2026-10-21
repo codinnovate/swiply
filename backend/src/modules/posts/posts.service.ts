@@ -18,6 +18,30 @@ import { SlideshowVideoService } from '../media/slideshow-video.service';
 import { TikTokMediaFitService } from '../media/tiktok-media-fit.service';
 import { PublishingProvidersService } from '../publishing-providers/publishing-providers.service';
 import type { PublishingProvider } from '../publishing-providers/schemas/publishing-provider-connection.schema';
+import { assertSettingsShape } from '../../platforms/adapters/tiktok/tiktok-post-settings';
+import type { TikTokPostSettingsDto } from './dto/tiktok-post-settings.dto';
+import type { TikTokSettings } from './schemas/post.schema';
+
+/** The creator's consent is stamped server-side, at the moment they submit. */
+export function toTikTokSettings(dto: TikTokPostSettingsDto): TikTokSettings {
+  const settings: TikTokSettings = {
+    title: dto.title?.trim() || null,
+    privacyLevel: dto.privacyLevel,
+    allowComment: dto.allowComment,
+    allowDuet: dto.allowDuet,
+    allowStitch: dto.allowStitch,
+    brandOrganic: dto.brandOrganic,
+    brandContent: dto.brandContent,
+    autoAddMusic: dto.autoAddMusic,
+    isAigc: dto.isAigc,
+    consentedAt: new Date(),
+  };
+  assertSettingsShape(settings);
+  return settings;
+}
+
+const isDirectTikTok = (account: Pick<SocialAccountDocument, 'platform' | 'connectionProvider'>) =>
+  account.platform === 'tiktok' && (account.connectionProvider ?? 'direct') === 'direct';
 
 @Injectable()
 export class PostsService {
@@ -75,13 +99,17 @@ export class PostsService {
           { errors: validation.errors },
         );
     }
+    const tiktokSettings = isDirectTikTok(account) && dto.tiktok ? toTikTokSettings(dto.tiktok) : null;
+    // TikTok requires the creator to choose these per post, so a direct TikTok
+    // post without them (e.g. from autopilot) waits for review instead of publishing.
+    const awaitsTikTokSettings = isDirectTikTok(account) && !tiktokSettings;
     const post = await this.postModel.create({
       workspaceId: new Types.ObjectId(workspaceId),
       contentId: content._id,
       socialAccountId: account._id,
       platform: account.platform,
       scheduledFor,
-      status: 'queued',
+      status: awaitsTikTokSettings ? 'pending_review' : 'queued',
       attempts: 0,
       lastAttemptAt: null,
       publishedAt: null,
@@ -93,6 +121,7 @@ export class PostsService {
       providerStatus: null,
       submittedAt: null,
       lastProviderStatusCheckedAt: null,
+      tiktokSettings,
     });
     if ((account.connectionProvider ?? 'direct') !== 'direct') {
       try {
@@ -117,7 +146,7 @@ export class PostsService {
         await post.save();
         throw error;
       }
-    } else if (dto.publishNow) {
+    } else if (dto.publishNow && !awaitsTikTokSettings) {
       return this.publishNow(workspaceId, String(post.id || post._id));
     }
     return post;
@@ -154,7 +183,27 @@ export class PostsService {
     await post.save();
   }
 
-  async publishNow(workspaceId: string, id: string) {
+  async publishNow(workspaceId: string, id: string, tiktok?: TikTokPostSettingsDto) {
+    if (tiktok) {
+      // Attaching the creator's choices is what releases a TikTok post from review.
+      const updated = await this.postModel
+        .updateOne(
+          {
+            _id: new Types.ObjectId(id),
+            workspaceId: new Types.ObjectId(workspaceId),
+            platform: 'tiktok',
+            publishingProvider: 'direct',
+            status: { $in: ['queued', 'failed', 'pending_review'] },
+          },
+          { $set: { tiktokSettings: toTikTokSettings(tiktok), status: 'queued' } },
+        )
+        .exec();
+      if (!updated.matchedCount)
+        throw ApiException.unprocessable(
+          'POST_NOT_PUBLISHABLE',
+          'TikTok settings only apply to a direct TikTok post that has not been published',
+        );
+    }
     const post = await this.postModel
       .findOneAndUpdate(
         {
@@ -215,12 +264,23 @@ export class PostsService {
             hashtags: content.hashtags,
             imageUrls,
             videoUrl: content.video?.videoUrl,
+            videoDurationSeconds: content.video?.durationSeconds,
+            tiktok: post.tiktokSettings,
           },
         );
-      post.status = 'published';
-      post.publishedAt = new Date();
       post.platformPostId = result.platformPostId;
       post.platformPostUrl = result.platformPostUrl;
+      if (result.status === 'processing') {
+        // TikTok finishes asynchronously; TikTokPublishStatusService polls the publish_id.
+        post.status = 'processing';
+        post.externalProviderPostId = result.platformPostId;
+        post.providerStatus = 'PROCESSING_UPLOAD';
+        post.submittedAt = new Date();
+        post.lastProviderStatusCheckedAt = null;
+      } else {
+        post.status = 'published';
+        post.publishedAt = new Date();
+      }
       await post.save();
       return post;
     } catch (error) {

@@ -7,6 +7,7 @@ import { SocialAccount, SocialAccountSchema } from '../social-accounts/schemas/s
 import { Post, PostSchema } from './schemas/post.schema';
 import { PostsController } from './posts.controller';
 import { PostsService } from './posts.service';
+import { TikTokPublishStatusService } from './tiktok-publish-status.service';
 import { SocialAccountsModule } from '../social-accounts/social-accounts.module';
 import { MediaModule } from '../media/media.module';
 import { PublishingProvidersModule } from '../publishing-providers/publishing-providers.module';
@@ -14,7 +15,7 @@ import { PublishingProvidersModule } from '../publishing-providers/publishing-pr
 @Module({
   imports: [MongooseModule.forFeature([{ name: Post.name, schema: PostSchema }, { name: Content.name, schema: ContentSchema }, { name: SocialAccount.name, schema: SocialAccountSchema }]), PlatformsModule, WorkspacesModule, SocialAccountsModule, PublishingProvidersModule, MediaModule],
   controllers: [PostsController],
-  providers: [PostsService],
+  providers: [PostsService, TikTokPublishStatusService],
   exports: [PostsService],
 })
 export class PostsModule {}

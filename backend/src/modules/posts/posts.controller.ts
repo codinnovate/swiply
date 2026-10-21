@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentWorkspace, RequireRoles } from '../../common/decorators/workspace.decorator';
 import { WorkspaceGuard } from '../../common/guards/workspace.guard';
 import { CreatePostDto } from './dto/create-post.dto';
+import { PublishNowDto } from './dto/tiktok-post-settings.dto';
 import { PostsService } from './posts.service';
 
 @ApiTags('posts')
@@ -25,7 +26,7 @@ export class PostsController {
   @HttpPost(':id/publish-now')
   @RequireRoles('editor')
   @ApiOperation({ summary: 'Publish a queued post immediately' })
-  async publishNow(@CurrentWorkspace('workspaceId') workspaceId: string, @Param('id') id: string) { return { data: await this.service.publishNow(workspaceId, id) }; }
+  async publishNow(@CurrentWorkspace('workspaceId') workspaceId: string, @Param('id') id: string, @Body() dto: PublishNowDto) { return { data: await this.service.publishNow(workspaceId, id, dto?.tiktok) }; }
   @Delete(':id')
   @RequireRoles('editor')
   async remove(@CurrentWorkspace('workspaceId') workspaceId: string, @Param('id') id: string) { await this.service.cancel(workspaceId, id); }

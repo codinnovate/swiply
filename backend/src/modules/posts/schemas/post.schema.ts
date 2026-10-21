@@ -1,5 +1,26 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
+import {
+  TIKTOK_PRIVACY_LEVELS,
+  type TikTokPostSettings,
+} from '../../../platforms/adapters/tiktok/tiktok-post-settings';
+
+/** The creator's Direct Post choices, kept as an audit trail of what they consented to. */
+@Schema({ _id: false })
+export class TikTokSettings implements TikTokPostSettings {
+  @Prop({ type: String, default: null }) title: string | null;
+  @Prop({ type: String, enum: TIKTOK_PRIVACY_LEVELS, required: true })
+  privacyLevel: TikTokPostSettings['privacyLevel'];
+  @Prop({ required: true }) allowComment: boolean;
+  @Prop({ required: true }) allowDuet: boolean;
+  @Prop({ required: true }) allowStitch: boolean;
+  @Prop({ required: true }) brandOrganic: boolean;
+  @Prop({ required: true }) brandContent: boolean;
+  @Prop({ default: false }) autoAddMusic: boolean;
+  @Prop({ default: false }) isAigc: boolean;
+  @Prop({ required: true }) consentedAt: Date;
+}
+const TikTokSettingsSchema = SchemaFactory.createForClass(TikTokSettings);
 
 @Schema({ timestamps: true, collection: 'posts' })
 export class Post {
@@ -29,6 +50,7 @@ export class Post {
   @Prop({ type: String, default: null }) providerStatus: string | null;
   @Prop({ type: Date, default: null }) submittedAt: Date | null;
   @Prop({ type: Date, default: null }) lastProviderStatusCheckedAt: Date | null;
+  @Prop({ type: TikTokSettingsSchema, default: null }) tiktokSettings: TikTokSettings | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -36,3 +58,4 @@ export type PostDocument = HydratedDocument<Post>;
 export const PostSchema = SchemaFactory.createForClass(Post);
 PostSchema.index({ status: 1, scheduledFor: 1 });
 PostSchema.index({ publishingProvider: 1, status: 1, lastProviderStatusCheckedAt: 1 });
+PostSchema.index({ platform: 1, publishingProvider: 1, status: 1 });
