@@ -6,6 +6,7 @@ import { Model, Types, isValidObjectId } from 'mongoose';
 import { TokenCipher } from '../../common/crypto/token-cipher.service';
 import { ApiException, ApiErrorBody } from '../../common/errors/api.exception';
 import { PinterestAdapter, PINTEREST_IMPORT_LIMIT } from '../../platforms/adapters/pinterest.adapter';
+import { TikTokAdapter } from '../../platforms/adapters/tiktok.adapter';
 import { OAuthStateService } from '../../platforms/oauth-state.service';
 import {
   PlatformRegistry,
@@ -296,6 +297,23 @@ export class SocialAccountsService {
       failed,
       capped: pins.length >= PINTEREST_IMPORT_LIMIT,
     };
+  }
+
+  /** TikTok's guidelines require fresh creator info every time the post screen renders. */
+  async getTikTokCreatorInfo(workspaceId: string, accountId: string) {
+    const account = await this.findOwnedOrFail(workspaceId, accountId);
+    const adapter = this.registry.get('tiktok');
+    if (
+      account.platform !== 'tiktok' ||
+      (account.connectionProvider ?? 'direct') !== 'direct' ||
+      !(adapter instanceof TikTokAdapter)
+    ) {
+      throw ApiException.unprocessable(
+        'PLATFORM_CAPABILITY_UNSUPPORTED',
+        'Creator info is only available for a directly connected TikTok account',
+      );
+    }
+    return adapter.queryCreatorInfo(await this.getUsableAccessToken(workspaceId, accountId));
   }
 
   private async pinterestContext(workspaceId: string, accountId: string) {

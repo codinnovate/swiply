@@ -108,6 +108,20 @@ export class SocialAccountsController {
     return { data: toSocialAccountResponse(account) };
   }
 
+  @Get(':id/tiktok/creator-info')
+  @ApiBearerAuth()
+  @UseGuards(WorkspaceGuard)
+  @RequireRoles('editor')
+  @ApiOperation({
+    summary: 'Live TikTok creator info (nickname, privacy options, interaction limits) for the post screen',
+  })
+  async tiktokCreatorInfo(
+    @CurrentWorkspace('workspaceId') workspaceId: string,
+    @Param('id') id: string,
+  ) {
+    return { data: await this.socialAccountsService.getTikTokCreatorInfo(workspaceId, id) };
+  }
+
   @Get(':id/pinterest/boards')
   @ApiBearerAuth()
   @UseGuards(WorkspaceGuard)
