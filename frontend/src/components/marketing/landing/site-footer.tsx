@@ -2,7 +2,8 @@ const footerLinks = [
   { href: "#features", label: "Features" },
   { href: "#pricing", label: "Pricing" },
   { href: "#how", label: "How it works" },
-  { href: "#top", label: "Privacy" },
+  { href: "/privacy", label: "Privacy" },
+  { href: "/terms", label: "Terms" },
 ];
 
 export function SiteFooter() {
