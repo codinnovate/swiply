@@ -48,12 +48,12 @@ export function PostCard({ platform, slideIndex, hook, dark = false }: ReelPost 
         </div>
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1">
-            <span className="block h-[5px] w-[14px] rounded-full bg-[#FF5A1F]" />
+            <span className="block h-[5px] w-[14px] rounded-full bg-[#075AF2]" />
             {Array.from({ length: 4 }, (_, i) => (
               <span key={i} className={cn("block size-[5px] rounded-full", dark ? "bg-[#2E3138]" : "bg-[#DCE3EB]")} />
             ))}
           </div>
-          <span className="text-[9.5px] font-semibold tracking-[.08em] text-[#FF5A1F]">AUTO-POSTED</span>
+          <span className="text-[9.5px] font-semibold tracking-[.08em] text-[#075AF2]">AUTO-POSTED</span>
         </div>
       </div>
     </div>

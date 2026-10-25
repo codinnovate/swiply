@@ -12,7 +12,7 @@ function StatCard({ value, body, dark }: (typeof platformStats)[number]) {
       <div
         className={cn(
           "font-[family-name:var(--font-landing-serif)] text-[clamp(36px,4vw,50px)] font-normal tracking-[-.01em]",
-          dark && "text-[#FF5A1F]",
+          dark && "text-[#075AF2]",
         )}
       >
         {value}
@@ -26,8 +26,8 @@ export function PlatformSection() {
   return (
     <section id="platforms" className="bg-[#F6F9FC] px-5 pb-[88px] pt-24">
       <div className="mx-auto max-w-[1080px] text-center">
-        <div className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[.14em] text-[#FF5A1F]">
-          <span className="block size-[7px] rounded-full bg-[#FF5A1F]" /> Two platforms. On purpose.
+        <div className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[.14em] text-[#075AF2]">
+          <span className="block size-[7px] rounded-full bg-[#075AF2]" /> Two platforms. On purpose.
         </div>
         <h2 className="mx-auto mt-[26px] max-w-[900px] text-pretty font-[family-name:var(--font-landing-serif)] text-[clamp(31px,5vw,58px)] font-normal leading-[1.2] tracking-[-.012em] text-[#7B848E]">
           Everyone else posts <strong className="font-normal text-[#0D0D0F]">everywhere.</strong> Swiply posts image slideshows to{" "}
@@ -35,7 +35,7 @@ export function PlatformSection() {
             <span className="rounded-[.5em] bg-[#0D0D0F] px-[.7em] py-[.28em] text-[.62em] font-bold text-white">TikTok</span>
             <span className="rounded-[.5em] bg-[#0D0D0F] px-[.7em] py-[.28em] text-[.62em] font-bold text-white">Instagram</span>
           </span>{" "}
-          — the two feeds where static carousels still beat video on <strong className="font-normal text-[#0D0D0F]">cost per install.</strong>
+          - the two feeds where static carousels still beat video on <strong className="font-normal text-[#0D0D0F]">cost per install.</strong>
         </h2>
       </div>
 

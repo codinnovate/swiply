@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 const footerLinks = [
   { href: "#features", label: "Features" },
   { href: "#pricing", label: "Pricing" },
@@ -11,7 +13,7 @@ export function SiteFooter() {
     <footer className="px-5 pb-11 pt-[34px]">
       <div className="mx-auto flex max-w-[1080px] flex-wrap items-center justify-between gap-5 border-t border-[#E4EAF0] pt-[26px]">
         <div className="flex items-center gap-[9px] font-[family-name:var(--font-landing-serif)] text-[22px] font-normal tracking-[-.01em] text-[#0D0D0F]">
-          <span className="block size-[18px] rounded-[5px] bg-[#FF5A1F]" /> Swiply
+          <Image src="/brand/swiply-logo-icon-transparent.png" alt="" width={22} height={22} className="size-[22px] rounded-[6px]" /> Swiply
         </div>
         <div className="flex flex-wrap gap-[22px] text-sm font-medium">
           {footerLinks.map((link) => (

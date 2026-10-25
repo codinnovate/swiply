@@ -1,6 +1,7 @@
+import Image from "next/image";
 import { PostReel } from "./post-reel";
 
-const avatarColors = ["#FFD9C7", "#BFD9F2", "#D6CDF5", "#FFC59B"];
+const avatarColors = ["#C7DBFF", "#BFD9F2", "#C9F3EF", "#A9C8FF"];
 
 function TrustBadge() {
   return (
@@ -26,15 +27,15 @@ function PromptCard() {
     <div className="mx-auto mt-10 max-w-[760px] rounded-[22px] bg-white px-[22px] pb-4 pt-[22px] text-left shadow-[0_30px_60px_-30px_rgba(20,45,80,0.35),0_2px_0_rgba(255,255,255,0.6)_inset]">
       <div className="flex items-center gap-0.5 text-[clamp(16px,2vw,19px)] font-semibold text-[#0D0D0F]">
         What are we posting this week?
-        <span className="inline-block h-5 w-0.5 animate-[swiply-caret_1.1s_steps(1)_infinite] bg-[#FF5A1F] motion-reduce:animate-none" />
+        <span className="inline-block h-5 w-0.5 animate-[swiply-caret_1.1s_steps(1)_infinite] bg-[#075AF2] motion-reduce:animate-none" />
       </div>
       <div className="mt-[34px] flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-[18px]">
           <span className="inline-flex items-center gap-[7px] text-[14.5px] font-semibold text-[#44505E]">
-            <span className="text-[18px] leading-none text-[#FF5A1F]">+</span> Brand kit
+            <span className="text-[18px] leading-none text-[#075AF2]">+</span> Brand kit
           </span>
           <span className="inline-flex items-center gap-[7px] text-[14.5px] font-semibold text-[#44505E]">
-            <span className="text-[18px] leading-none text-[#FF5A1F]">+</span> Screenshots
+            <span className="text-[18px] leading-none text-[#11CFC3]">+</span> Screenshots
           </span>
           <span className="inline-flex items-center gap-2 rounded-full bg-[#F2F5F8] px-3 py-1.5 text-xs text-[#7C8793]">5 slides · 9:16</span>
         </div>
@@ -51,12 +52,20 @@ export function Hero() {
       className="relative -mt-[74px] bg-[linear-gradient(180deg,#CBE4FA_0%,#DEEEFB_34%,#EFF6FC_68%,#F6F9FC_100%)] px-5 pt-[130px]"
     >
       <div className="mx-auto max-w-[980px] text-center">
+        <Image
+          src="/brand/swiply-logo-lockup-transparent.png"
+          alt="Swiply"
+          width={360}
+          height={115}
+          priority
+          className="mx-auto mb-5 h-auto w-[min(64vw,360px)]"
+        />
         <TrustBadge />
 
         <h1 className="mt-[26px] text-balance font-[family-name:var(--font-landing-serif)] text-[clamp(44px,7.4vw,88px)] font-normal leading-[1.0] tracking-[-.018em] text-[#0D0D0F]">
           Stop Making Content for Hours
           <br />
-          <span className="text-[#FF5A1F]">Post Slideshows</span> on Autopilot.
+          <span className="text-[#075AF2]">Post Slideshows</span> on Autopilot.
         </h1>
 
         <p className="mx-auto mt-[22px] max-w-[620px] text-[clamp(15px,1.6vw,18px)] font-medium leading-[1.55] text-[#59636E]">

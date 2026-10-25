@@ -3,7 +3,7 @@ import { steps } from "./data";
 function StepCard({ step, previewLabel, title, body }: (typeof steps)[number]) {
   return (
     <div className="flex flex-col gap-4 rounded-[22px] bg-white p-7 shadow-[0_14px_34px_-26px_rgba(20,45,80,0.5)]">
-      <span className="text-xs tracking-[.12em] text-[#FF5A1F]">{step}</span>
+      <span className="text-xs tracking-[.12em] text-[#075AF2]">{step}</span>
       <div className="flex h-[132px] items-center justify-center rounded-[14px] bg-[repeating-linear-gradient(135deg,#F0F4F8_0_9px,#E6ECF3_9px_18px)] p-3 text-center text-[11px] text-[#7C8793]">
         {previewLabel}
       </div>

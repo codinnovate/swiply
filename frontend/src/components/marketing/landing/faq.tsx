@@ -23,7 +23,7 @@ export function Faq() {
                 className="flex w-full cursor-pointer items-center justify-between gap-4 border-0 bg-transparent p-0 text-left"
               >
                 <span className="text-base font-bold tracking-[-.01em] text-[#0D0D0F]">{faq.q}</span>
-                <span className="text-xl font-bold leading-none text-[#FF5A1F]">{open ? "–" : "+"}</span>
+                <span className="text-xl font-bold leading-none text-[#075AF2]">{open ? "–" : "+"}</span>
               </button>
               {open && (
                 <p className="m-0 mt-3 max-w-[620px] text-[14.5px] font-medium leading-[1.65] text-[#59636E]">{faq.a}</p>

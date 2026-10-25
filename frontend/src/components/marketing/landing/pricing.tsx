@@ -38,14 +38,14 @@ function PriceCard({ card, annual }: { card: PriceCardData; annual: boolean }) {
       <div className="flex items-center justify-between gap-3">
         <div className="text-[15px] font-bold">{card.name}</div>
         {card.featured && (
-          <span className="rounded-full bg-[#FF5A1F] px-2.5 py-[5px] text-[10.5px] font-semibold tracking-[.1em] text-white">POPULAR</span>
+          <span className="rounded-full bg-[#075AF2] px-2.5 py-[5px] text-[10.5px] font-semibold tracking-[.1em] text-white">POPULAR</span>
         )}
       </div>
       <div className="mt-3.5 flex items-baseline gap-1.5">
         <span
           className={cn(
             "font-[family-name:var(--font-landing-serif)] text-[54px] font-normal tracking-[-.01em]",
-            card.featured && "text-[#FF5A1F]",
+            card.featured && "text-[#075AF2]",
           )}
         >
           {price}
@@ -63,8 +63,8 @@ function PriceCard({ card, annual }: { card: PriceCardData; annual: boolean }) {
           <div key={feature} className="flex items-start gap-2.5">
             <span
               className={cn(
-                "mt-px flex size-4 flex-none items-center justify-center rounded-full text-[10px] font-bold text-[#FF5A1F]",
-                card.featured ? "bg-[#FF5A1F]/18" : "bg-[#FFF0E9]",
+                "mt-px flex size-4 flex-none items-center justify-center rounded-full text-[10px] font-bold text-[#075AF2]",
+                card.featured ? "bg-[#075AF2]/18" : "bg-[#EAF1FE]",
               )}
             >
               ✓
@@ -79,7 +79,7 @@ function PriceCard({ card, annual }: { card: PriceCardData; annual: boolean }) {
         href="#top"
         className={cn(
           "mt-7 block rounded-full py-[13px] text-center text-[14.5px] font-bold transition-colors",
-          card.featured ? "bg-[#FF5A1F] text-white hover:bg-[#FF6F3C]" : "bg-[#F2F5F8] text-[#0D0D0F] hover:bg-[#E6EBF1]",
+          card.featured ? "bg-[#075AF2] text-white hover:bg-[#0A4FD1]" : "bg-[#F2F5F8] text-[#0D0D0F] hover:bg-[#E6EBF1]",
         )}
       >
         {card.ctaLabel}

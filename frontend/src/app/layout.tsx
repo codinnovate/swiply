@@ -11,8 +11,8 @@ const bricolage = Bricolage_Grotesque({
   variable: "--font-bricolage",
 });
 
-export const metadata: Metadata = { title: { default: "Swiply — Slideshows on autopilot", template: "%s · Swiply" }, description: "Swiply turns your product into scroll-stopping image slideshows and publishes them straight to TikTok and Instagram.", applicationName: "Swiply" };
-export const viewport: Viewport = { themeColor: [{ media: "(prefers-color-scheme: light)", color: "#fbf8f2" }, { media: "(prefers-color-scheme: dark)", color: "#211c26" }] };
+export const metadata: Metadata = { title: { default: "Swiply - Slideshows on autopilot", template: "%s · Swiply" }, description: "Swiply turns your product into scroll-stopping image slideshows and publishes them straight to TikTok and Instagram.", applicationName: "Swiply" };
+export const viewport: Viewport = { themeColor: [{ media: "(prefers-color-scheme: light)", color: "#f9fafc" }, { media: "(prefers-color-scheme: dark)", color: "#0e1320" }] };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return <html lang="en" suppressHydrationWarning className={`${instrumentSerif.variable} ${inter.variable} ${bricolage.variable}`}><body className="min-h-dvh antialiased"><AppProviders>{children}</AppProviders></body></html>;

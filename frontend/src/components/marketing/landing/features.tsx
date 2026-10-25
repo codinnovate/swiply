@@ -19,7 +19,7 @@ function AutopilotQueueCard() {
       <div className="flex min-w-0 flex-[1_1_240px] flex-col gap-2">
         {queue.map((item) => (
           <div key={item.title} className="flex items-center gap-3 rounded-xl bg-[#17181C] px-3.5 py-3">
-            <span className="block size-2 flex-none animate-[swiply-pulse_2.4s_ease-in-out_infinite] rounded-full bg-[#FF5A1F] motion-reduce:animate-none" />
+            <span className="block size-2 flex-none animate-[swiply-pulse_2.4s_ease-in-out_infinite] rounded-full bg-[#075AF2] motion-reduce:animate-none" />
             <span className="min-w-0 flex-1 truncate text-[13.5px] font-semibold">{item.title}</span>
             <span className="text-[11px] text-[#7C8793]">{item.when}</span>
           </div>
@@ -56,7 +56,7 @@ function HookListVisual() {
             row.active ? "border-[#FFD3BF] bg-white" : "border-[#E4EAF0] bg-transparent"
           }`}
         >
-          <span className={`block size-1.5 flex-none rounded-full ${row.active ? "bg-[#FF5A1F]" : "bg-[#C9D2DC]"}`} />
+          <span className={`block size-1.5 flex-none rounded-full ${row.active ? "bg-[#075AF2]" : "bg-[#C9D2DC]"}`} />
           <span className={`text-[11.5px] font-semibold ${row.active ? "text-[#0D0D0F]" : "text-[#5A6470]"}`}>{row.text}</span>
         </div>
       ))}
@@ -68,7 +68,7 @@ function BrandSwatchesVisual() {
   return (
     <>
       <div className="flex gap-1.5">
-        <span className="block size-[30px] rounded-lg bg-[#FF5A1F]" />
+        <span className="block size-[30px] rounded-lg bg-[#075AF2]" />
         <span className="block size-[30px] rounded-lg bg-[#0D0D0F]" />
         <span className="block size-[30px] rounded-lg bg-[#CBE4FA]" />
         <span className="block size-[30px] rounded-lg border border-[#E4EAF0] bg-white" />
@@ -96,7 +96,7 @@ function BarChartVisual() {
         {heights.map((h, i) => (
           <span
             key={i}
-            className={`block w-3 rounded ${i === 5 ? "bg-[#FF5A1F]" : "bg-[#D9E2EC]"}`}
+            className={`block w-3 rounded ${i === 5 ? "bg-[#075AF2]" : "bg-[#D9E2EC]"}`}
             style={{ height: `${h}px` }}
           />
         ))}
@@ -135,7 +135,7 @@ export function Features() {
     <section id="features" className="px-5 pb-24">
       <div className="mx-auto max-w-[1080px]">
         <h2 className="m-0 mb-[34px] max-w-[660px] font-[family-name:var(--font-landing-serif)] text-[clamp(34px,4.8vw,54px)] font-normal leading-[1.05] tracking-[-.015em] text-[#0D0D0F]">
-          Built for founders who <span className="text-[#FF5A1F]">don&apos;t have a content team.</span>
+          Built for founders who <span className="text-[#075AF2]">don&apos;t have a content team.</span>
         </h2>
 
         <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-3.5">
@@ -148,7 +148,7 @@ export function Features() {
           <FeatureCard
             visual={<BrandSwatchesVisual />}
             title="Your brand, locked"
-            body="Fonts, colors and logo placement stay on-system across every slide — no template drift."
+            body="Fonts, colors and logo placement stay on-system across every slide - no template drift."
           />
           <FeatureCard
             visual={<BarChartVisual />}
