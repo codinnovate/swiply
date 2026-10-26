@@ -220,7 +220,7 @@ export function AutomationHub() {
                           </p>
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">
-                          {item.targetCountry || "—"}
+                          {item.targetCountry || "-"}
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">
                           {item.language || "English"}
@@ -233,10 +233,10 @@ export function AutomationHub() {
                         <td className="px-4 py-3 text-xs text-muted-foreground">
                           {item.timesOfDay?.length
                             ? item.timesOfDay.join(", ")
-                            : "—"}
+                            : "-"}
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">
-                          {account ? accountName[String(account)] || "—" : "—"}
+                          {account ? accountName[String(account)] || "-" : "-"}
                         </td>
                         <td className="px-4 py-3">
                           <Badge

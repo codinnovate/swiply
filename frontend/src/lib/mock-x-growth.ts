@@ -176,23 +176,23 @@ const frontendTrends: Trend[] = [
     summary:
       "Developers are debating whether the latest changes make RSC more practical for production apps.",
     status: "rising",
-    momentum: "Rising quickly — up 3.2x in the last 24 hours",
+    momentum: "Rising quickly - up 3.2x in the last 24 hours",
     relevantPosts: 1840,
     engagementLevel: "High",
     whyItMatters:
-      "Your audience is mostly React/frontend engineers actively deciding their next-stack bets — this is the exact conversation they're already in.",
+      "Your audience is mostly React/frontend engineers actively deciding their next-stack bets - this is the exact conversation they're already in.",
     detail: {
       whatIsHappening:
         "A wave of posts followed a framework maintainer's thread arguing RSC's mental model finally 'clicked' after a caching fix shipped this week. Threads are splitting into camps for and against adoption in mid-size apps.",
       whyTrending:
         "The fix addressed the most-cited complaint from the last six months (stale cache on revalidation), so it reopened a debate a lot of people had quietly shelved.",
       keyOpinions: [
-        "\"RSC's DX finally matches the pitch — the caching model was the missing piece.\"",
+        "\"RSC's DX finally matches the pitch - the caching model was the missing piece.\"",
         "\"This is still too much complexity for teams under 20 engineers.\"",
         "\"Nobody is talking about the migration cost from a client-heavy app.\"",
       ],
       topPosts: [
-        { handle: "@sebastianlp", name: "Sebastian", content: "Ran the new revalidation model in prod for a week. This is the first time RSC has felt boring — in a good way.", likes: 4200, reposts: 610, replies: 320 },
+        { handle: "@sebastianlp", name: "Sebastian", content: "Ran the new revalidation model in prod for a week. This is the first time RSC has felt boring - in a good way.", likes: 4200, reposts: 610, replies: 320 },
         { handle: "@devkat", name: "Kat Chen", content: "Hot take: RSC solved a problem most teams don't have yet. The complexity tax is still real for < 20 person teams.", likes: 2100, reposts: 240, replies: 480 },
       ],
       commonViewpoints: [
@@ -216,11 +216,11 @@ const frontendTrends: Trend[] = [
     summary:
       "Engineering leads are sharing internal data on AI review tools catching more bugs than junior reviewers.",
     status: "hot",
-    momentum: "Hot — sustained high volume for 3 days",
+    momentum: "Hot - sustained high volume for 3 days",
     relevantPosts: 2960,
     engagementLevel: "Very High",
     whyItMatters:
-      "This sits directly at the intersection of your two strongest topics — AI tooling and day-to-day engineering workflow — where your past posts have overperformed.",
+      "This sits directly at the intersection of your two strongest topics - AI tooling and day-to-day engineering workflow - where your past posts have overperformed.",
     detail: {
       whatIsHappening:
         "Multiple eng leads at mid-size startups posted internal metrics showing AI-first review catching a higher percentage of real bugs than the median junior engineer's first pass, sparking both excitement and pushback about what it means for junior hiring.",
@@ -252,11 +252,11 @@ const frontendTrends: Trend[] = [
     summary:
       "A new crop of sync-engine libraries is pulling local-first architecture back into mainstream conversation.",
     status: "rising",
-    momentum: "Rising — 2.1x posts week-over-week",
+    momentum: "Rising - 2.1x posts week-over-week",
     relevantPosts: 970,
     engagementLevel: "Medium",
     whyItMatters:
-      "Recurring interest topic for your audience whenever a new sync engine ships — good evergreen angle to revisit with a fresh hook.",
+      "Recurring interest topic for your audience whenever a new sync engine ships - good evergreen angle to revisit with a fresh hook.",
     detail: {
       whatIsHappening:
         "A newly released sync engine gained fast adoption in side-project circles, reviving discussion about when local-first is worth the complexity versus a standard server-driven CRUD app.",
@@ -281,11 +281,11 @@ const frontendTrends: Trend[] = [
     summary:
       "A viral thread pushing back on hustle-coded shipping culture is generating strong agree/disagree engagement.",
     status: "cooling",
-    momentum: "Cooling — peaked yesterday, volume down 18%",
+    momentum: "Cooling - peaked yesterday, volume down 18%",
     relevantPosts: 3210,
     engagementLevel: "High",
     whyItMatters:
-      "Still has reach, but window is closing — a personal, specific take posted today can still ride the tail before it fades.",
+      "Still has reach, but window is closing - a personal, specific take posted today can still ride the tail before it fades.",
     detail: {
       whatIsHappening:
         "An indie developer's thread arguing that constant shipping culture is producing worse products went viral, drawing both strong agreement from burned-out builders and pushback from build-in-public advocates.",
@@ -312,10 +312,10 @@ const indieTrends: Trend[] = [
     topic: "Solo founders sharing first $10k MRR breakdowns",
     summary: "A cluster of transparent revenue breakdown posts is driving unusually high saves and bookmarks.",
     status: "hot",
-    momentum: "Hot — 4x normal volume for this topic",
+    momentum: "Hot - 4x normal volume for this topic",
     relevantPosts: 1540,
     engagementLevel: "Very High",
-    whyItMatters: "Revenue-transparency posts consistently outperform your account's baseline — this format is proven for your audience.",
+    whyItMatters: "Revenue-transparency posts consistently outperform your account's baseline - this format is proven for your audience.",
     detail: {
       whatIsHappening: "Several solo founders posted detailed $10k MRR breakdowns in the same week, including channel mix and churn, which spread widely as a comparable reference set.",
       whyTrending: "Concrete numbers plus specificity (channel-by-channel) make the posts highly saveable and referenceable, which the algorithm rewards.",
@@ -332,7 +332,7 @@ const indieTrends: Trend[] = [
     topic: "\"AI wrapper\" fatigue among indie hackers",
     summary: "Growing pushback against thin AI-wrapper products is reshaping what gets positive reception.",
     status: "rising",
-    momentum: "Rising — sentiment shift accelerating this week",
+    momentum: "Rising - sentiment shift accelerating this week",
     relevantPosts: 2280,
     engagementLevel: "High",
     whyItMatters: "Directly affects how you should position any AI-adjacent product launch this month.",
@@ -352,7 +352,7 @@ const indieTrends: Trend[] = [
     topic: "Cold outbound making a comeback for early SaaS",
     summary: "Founders report better response rates from manual cold outbound than content marketing this quarter.",
     status: "rising",
-    momentum: "Rising — 1.8x posts this week",
+    momentum: "Rising - 1.8x posts this week",
     relevantPosts: 860,
     engagementLevel: "Medium",
     whyItMatters: "A tactical, numbers-driven angle that fits your build-in-public voice well.",
@@ -375,14 +375,14 @@ const aiTrends: Trend[] = [
     topic: "Small, fine-tuned models beating general models on narrow tasks",
     summary: "New benchmark posts show small fine-tuned models outperforming flagship models on specific tasks at a fraction of the cost.",
     status: "hot",
-    momentum: "Hot — top ML topic for 2 days straight",
+    momentum: "Hot - top ML topic for 2 days straight",
     relevantPosts: 3400,
     engagementLevel: "Very High",
     whyItMatters: "This is the exact practical-application angle your audience engages with most, versus pure research takes.",
     detail: {
       whatIsHappening: "A widely shared benchmark thread showed a fine-tuned small model beating a much larger general-purpose model on a narrow classification task at 1/20th the inference cost.",
       whyTrending: "It's a concrete, reproducible result that challenges the 'bigger is always better' narrative dominating the last year.",
-      keyOpinions: ["\"Most teams don't need a frontier model, they need the right eval and a small fine-tune.\"", "\"This only works because the task was narrow — don't overgeneralize.\""],
+      keyOpinions: ["\"Most teams don't need a frontier model, they need the right eval and a small fine-tune.\"", "\"This only works because the task was narrow - don't overgeneralize.\""],
       topPosts: [{ handle: "@zoeai", name: "Zoe M.", content: "Fine-tuned a 3B model to beat GPT-class performance on our exact task, 22x cheaper per call. Full writeup coming.", likes: 5200, reposts: 780, replies: 390 }],
       commonViewpoints: ["Task-specific fine-tuning is underrated relative to prompting frontier models."],
       contrarianViewpoints: ["Some argue the result doesn't generalize and the eval was cherry-picked."],
@@ -395,7 +395,7 @@ const aiTrends: Trend[] = [
     topic: "Agent reliability in production, not demos",
     summary: "Builders are comparing notes on what actually breaks AI agents once real users touch them.",
     status: "rising",
-    momentum: "Rising — 2.4x week-over-week",
+    momentum: "Rising - 2.4x week-over-week",
     relevantPosts: 1920,
     engagementLevel: "High",
     whyItMatters: "High-trust, practitioner-only conversation where a credible, specific post can build real authority fast.",
@@ -416,7 +416,7 @@ const niches: Record<string, { label: string; briefingSummary: string; trends: T
   frontend: {
     label: "Frontend Engineering & AI Dev Tools",
     briefingSummary:
-      "Your niche is buzzing around the RSC caching fix and AI-assisted code review — both align tightly with what's worked for you before.",
+      "Your niche is buzzing around the RSC caching fix and AI-assisted code review - both align tightly with what's worked for you before.",
     trends: frontendTrends,
     seed: "frontend-niche",
     base: 8400,
@@ -438,7 +438,7 @@ const niches: Record<string, { label: string; briefingSummary: string; trends: T
   ai: {
     label: "AI & Machine Learning",
     briefingSummary:
-      "Practical, benchmark-backed posts are outperforming theory today — small-model efficiency and agent reliability are the two hot threads.",
+      "Practical, benchmark-backed posts are outperforming theory today - small-model efficiency and agent reliability are the two hot threads.",
     trends: aiTrends,
     seed: "ai-niche",
     base: 9200,
@@ -467,17 +467,17 @@ function buildOpportunities(trends: Trend[]): ContentOpportunity[] {
 function angleRationale(angle: ContentAngle, trend: Trend): string {
   switch (angle) {
     case "Personal experience":
-      return `Most current posts on "${trend.topic}" are announcements or hot takes — a specific, lived account is underrepresented and tends to earn more trust.`;
+      return `Most current posts on "${trend.topic}" are announcements or hot takes - a specific, lived account is underrepresented and tends to earn more trust.`;
     case "Contrarian":
-      return `The dominant narrative around "${trend.topic}" hasn't been seriously challenged yet — a well-argued contrarian take can stand out in a crowded conversation.`;
+      return `The dominant narrative around "${trend.topic}" hasn't been seriously challenged yet - a well-argued contrarian take can stand out in a crowded conversation.`;
     case "Tutorial":
       return `People are discussing "${trend.topic}" conceptually, but almost nobody has published a concrete, step-by-step walkthrough.`;
     case "Educational":
-      return `A lot of the discussion assumes context newer followers don't have — a clear explainer on "${trend.topic}" can capture that audience.`;
+      return `A lot of the discussion assumes context newer followers don't have - a clear explainer on "${trend.topic}" can capture that audience.`;
     case "List":
-      return `This topic is generating scattered individual takes — a structured list format can become the reference post people bookmark.`;
+      return `This topic is generating scattered individual takes - a structured list format can become the reference post people bookmark.`;
     case "Opinion":
-      return `Your audience engages well with clear, specific stances — "${trend.topic}" is actively being debated right now, which rewards a strong point of view.`;
+      return `Your audience engages well with clear, specific stances - "${trend.topic}" is actively being debated right now, which rewards a strong point of view.`;
     case "Question":
       return `Open questions about "${trend.topic}" tend to drive high reply counts, which helps visibility beyond your existing followers.`;
     case "Build-in-public":
@@ -517,8 +517,8 @@ function buildRecommendedPosts(trends: Trend[]): RecommendedPost[] {
     if (i === 2) {
       templates.push({
         trend,
-        hook: `Quick thread on ${trend.topic.toLowerCase()} — what's actually happening and why it matters.`,
-        fullPost: `Quick thread on ${trend.topic.toLowerCase()} — what's actually happening and why it matters for teams like ours.\n\n1/ ${trend.detail.whatIsHappening}`,
+        hook: `Quick thread on ${trend.topic.toLowerCase()} - what's actually happening and why it matters.`,
+        fullPost: `Quick thread on ${trend.topic.toLowerCase()} - what's actually happening and why it matters for teams like ours.\n\n1/ ${trend.detail.whatIsHappening}`,
         postType: "Educational",
         relevance: "Medium",
         audience: "High",
@@ -554,14 +554,14 @@ function buildDailyPlan(recommended: RecommendedPost[]): DailyPlanItem[] {
 const bestTimes: BestTimeWindow[] = [
   {
     window: "9:00–9:30 AM",
-    audienceActivity: "Peak — your followers' most active 30-minute window on weekdays",
+    audienceActivity: "Peak - your followers' most active 30-minute window on weekdays",
     historicalPerformance: "38% above your account average engagement rate",
     confidence: "High confidence",
     reason: "Your audience has historically generated stronger engagement during this window, and today's top trend is currently accelerating.",
   },
   {
     window: "12:30–1:00 PM",
-    audienceActivity: "Secondary peak — lunch-hour scroll window",
+    audienceActivity: "Secondary peak - lunch-hour scroll window",
     historicalPerformance: "12% above your account average",
     confidence: "Medium confidence",
     reason: "Consistent but smaller lift across your last 30 days of posts in this slot.",
@@ -571,7 +571,7 @@ const bestTimes: BestTimeWindow[] = [
     audienceActivity: "Evening engagement window, higher reply rate than like rate",
     historicalPerformance: "Not enough historical data yet",
     confidence: "Initial estimate",
-    reason: "Based on general X activity patterns for your audience's timezone mix — will refine as more of your posts land in this window.",
+    reason: "Based on general X activity patterns for your audience's timezone mix - will refine as more of your posts land in this window.",
   },
 ];
 

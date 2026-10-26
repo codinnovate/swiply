@@ -140,7 +140,7 @@ export function guessHandle(company: string, handle = ""): string | null {
 }
 
 export function formatCount(value: number | null | undefined): string {
-  if (value === null || value === undefined) return "—";
+  if (value === null || value === undefined) return "-";
   return new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(value);
 }
 
@@ -151,12 +151,12 @@ export function formatPercent(rate: number): string {
 const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 export function formatWeekday(day: number | null): string {
-  return day === null ? "—" : weekdays[day] ?? "—";
+  return day === null ? "-" : weekdays[day] ?? "-";
 }
 
 /** Converts the report's best UTC hour to the viewer's clock, e.g. "6 PM". */
 export function formatHourUtc(hour: number | null, reference = new Date()): string {
-  if (hour === null) return "—";
+  if (hour === null) return "-";
   const date = new Date(Date.UTC(reference.getUTCFullYear(), reference.getUTCMonth(), reference.getUTCDate(), hour));
   return new Intl.DateTimeFormat(undefined, { hour: "numeric" }).format(date);
 }
@@ -192,7 +192,7 @@ export function sortHashtags(hashtags: HashtagStat[], sort: HashtagSort): Hashta
 
 /** How a video did against the account's own median: "2.4×" above or below typical. */
 export function performanceVsMedian(views: number, median: number): { label: string; tone: "up" | "down" | "flat" } {
-  if (!median) return { label: "—", tone: "flat" };
+  if (!median) return { label: "-", tone: "flat" };
   const ratio = views / median;
   if (ratio >= 1.5) return { label: `${ratio.toFixed(1)}× median`, tone: "up" };
   if (ratio <= 0.5) return { label: `${ratio.toFixed(1)}× median`, tone: "down" };

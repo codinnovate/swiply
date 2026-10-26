@@ -516,7 +516,7 @@ export function AutomationSetup() {
             ? "Edit this automation."
             : "Post TikTok slideshows on autopilot."
         }
-        description="Research, cadence, and times are saved as a draft. Come back anytime — you do not start from scratch."
+        description="Research, cadence, and times are saved as a draft. Come back anytime - you do not start from scratch."
       />
       <div className="mb-6 flex gap-2">
         {steps.map(([label, hint], index) => (
@@ -695,7 +695,7 @@ export function AutomationSetup() {
                       <p className="mt-2 text-xs text-muted-foreground">
                         {imageCount} image{imageCount === 1 ? "" : "s"}{" "}
                         available
-                        {hasLibrary ? " — ready to create slideshows." : "."}
+                        {hasLibrary ? " - ready to create slideshows." : "."}
                       </p>
                     </div>
                   </div>
@@ -791,7 +791,7 @@ export function AutomationSetup() {
                 <FormSelect
                   name="socialAccountId"
                   label="Publish to"
-                  description="Publishing only — research already ran against public TikTok, not this account."
+                  description="Publishing only - research already ran against public TikTok, not this account."
                   control={control}
                   required
                   rules={{ required: "Choose a TikTok account" }}
@@ -893,7 +893,7 @@ export function AutomationSetup() {
                 <div className="flex justify-between gap-3">
                   <span>Times</span>
                   <strong className="text-right">
-                    {(times || []).filter(Boolean).join(", ") || "—"}
+                    {(times || []).filter(Boolean).join(", ") || "-"}
                   </strong>
                 </div>
               </div>

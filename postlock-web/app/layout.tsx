@@ -22,8 +22,8 @@ const description =
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "POSTLOCK — Post first. Scroll later.",
-    template: "%s — POSTLOCK",
+    default: "POSTLOCK - Post first. Scroll later.",
+    template: "%s - POSTLOCK",
   },
   description,
   icons: {
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     apple: "/icon.png",
   },
   openGraph: {
-    title: "POSTLOCK — Post first. Scroll later.",
+    title: "POSTLOCK - Post first. Scroll later.",
     description,
     url: siteUrl,
     siteName: "POSTLOCK",
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: "POSTLOCK — Post first. Scroll later.",
+    title: "POSTLOCK - Post first. Scroll later.",
     description,
     images: ["/icon.png"],
   },

@@ -57,11 +57,11 @@ describe("formatters", () => {
   it("formats counts, rates, weekdays and durations", () => {
     expect(formatCount(1_250_000)).toBe("1.3M");
     expect(formatCount(950)).toBe("950");
-    expect(formatCount(null)).toBe("—");
+    expect(formatCount(null)).toBe("-");
     expect(formatPercent(0.1234)).toBe("12.3%");
     expect(formatPercent(0.0456)).toBe("4.56%");
     expect(formatWeekday(6)).toBe("Saturday");
-    expect(formatWeekday(null)).toBe("—");
+    expect(formatWeekday(null)).toBe("-");
     expect(formatDuration(75)).toBe("1:15");
     expect(formatDuration(null)).toBeNull();
   });
@@ -102,6 +102,6 @@ describe("performanceVsMedian", () => {
     expect(performanceVsMedian(3000, 1000)).toEqual({ label: "3.0× median", tone: "up" });
     expect(performanceVsMedian(400, 1000)).toEqual({ label: "0.4× median", tone: "down" });
     expect(performanceVsMedian(1100, 1000)).toEqual({ label: "Typical", tone: "flat" });
-    expect(performanceVsMedian(10, 0)).toEqual({ label: "—", tone: "flat" });
+    expect(performanceVsMedian(10, 0)).toEqual({ label: "-", tone: "flat" });
   });
 });

@@ -18,7 +18,7 @@ export const reelPosts: ReelPost[] = [
 export const platformStats = [
   { value: "7×", body: "cheaper reach than boosted video for early-stage SaaS", dark: false },
   { value: "90s", body: "from prompt to a queued, captioned, hashtagged post", dark: false },
-  { value: "0", body: "manual uploads — Swiply publishes with native APIs", dark: false },
+  { value: "0", body: "manual uploads - Swiply publishes with native APIs", dark: false },
   { value: "30/mo", body: "posts shipped on a set-and-forget cadence", dark: true },
 ];
 
@@ -33,7 +33,7 @@ export const steps = [
     step: "STEP 02",
     previewLabel: "slide generation grid",
     title: "Generate a month of slides",
-    body: "Hooks, captions, slide copy and hashtags — generated in your voice, batched 30 posts at a time.",
+    body: "Hooks, captions, slide copy and hashtags - generated in your voice, batched 30 posts at a time.",
   },
   {
     step: "STEP 03",
@@ -97,7 +97,7 @@ export const priceCards: PriceCardData[] = [
 export const faqs = [
   {
     q: "Does it really post by itself?",
-    a: "Yes. Swiply publishes through the official TikTok and Instagram APIs on the schedule you set — nothing lands in a reminder inbox waiting for you.",
+    a: "Yes. Swiply publishes through the official TikTok and Instagram APIs on the schedule you set - nothing lands in a reminder inbox waiting for you.",
   },
   {
     q: "Why only two platforms?",

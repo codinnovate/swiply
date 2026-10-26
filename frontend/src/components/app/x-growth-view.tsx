@@ -430,7 +430,7 @@ function RecommendedCard({ post, rank }: { post: RecommendedPost; rank: number }
                 {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
                 Copy
               </Button>
-              <Button size="sm" variant="outline" onClick={() => toast("Editing coming soon — opens in the post composer")}>
+              <Button size="sm" variant="outline" onClick={() => toast("Editing coming soon - opens in the post composer")}>
                 <Pencil className="size-3.5" />
                 Edit
               </Button>

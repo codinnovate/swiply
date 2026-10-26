@@ -184,7 +184,7 @@ export function ContentDetail() {
                 </div>
                 <div>
                   <dt className="text-muted-foreground">Model</dt>
-                  <dd className="mt-1 font-semibold">{x.aiModel || "—"}</dd>
+                  <dd className="mt-1 font-semibold">{x.aiModel || "-"}</dd>
                 </div>
               </dl>
             </CardContent>

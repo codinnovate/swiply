@@ -362,7 +362,7 @@ function ReportView({
         <Kpi label="Avg views" value={formatCount(summary.avgViews)} hint={`${summary.videosAnalyzed} recent videos`} />
         <Kpi label="Median views" value={formatCount(summary.medianViews)} hint="A typical post" />
         <Kpi label="Engagement" value={formatPercent(summary.avgEngagementRate)} hint="Likes, comments, shares, saves ÷ views" />
-        <Kpi label="Posts / week" value={String(summary.postsPerWeek)} hint={summary.lastPostAt ? `Last ${formatDate(summary.lastPostAt)}` : "—"} />
+        <Kpi label="Posts / week" value={String(summary.postsPerWeek)} hint={summary.lastPostAt ? `Last ${formatDate(summary.lastPostAt)}` : "-"} />
         <Kpi label="Best slot" value={formatWeekday(summary.bestWeekday).slice(0, 3)} hint={`Around ${formatHourUtc(summary.bestHourUtc)} your time`} />
         <Kpi label="Promoted" value={String(summary.promotedCount + report.ads.length)} hint={`${report.ads.length} in Ad Library · ${summary.promotedCount} on profile`} />
       </div>
@@ -657,7 +657,7 @@ function AdsPanel({ report, promoted }: { report: CompetitorReport; promoted: Co
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <Field label="First shown" value={formatDate(ad.firstShownAt)} />
                     <Field label="Last shown" value={formatDate(ad.lastShownAt)} />
-                    <Field label="Reach" value={ad.reach ?? "—"} />
+                    <Field label="Reach" value={ad.reach ?? "-"} />
                     <Field label="Creatives" value={String(ad.videoUrls.length + ad.imageUrls.length)} />
                   </div>
                   <a href={ad.libraryUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline">

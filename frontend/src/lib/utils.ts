@@ -6,7 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatDate(value?: string | Date | null, withTime = false) {
-  if (!value) return "—";
+  if (!value) return "-";
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
     ...(withTime ? { timeStyle: "short" as const } : {}),
