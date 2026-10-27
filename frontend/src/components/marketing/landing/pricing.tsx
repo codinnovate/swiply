@@ -44,7 +44,7 @@ function PriceCard({ card, annual }: { card: PriceCardData; annual: boolean }) {
       <div className="mt-3.5 flex items-baseline gap-1.5">
         <span
           className={cn(
-            "font-[family-name:var(--font-landing-serif)] text-[54px] font-normal tracking-[-.01em]",
+            "font-display text-[54px] font-normal tracking-[-.01em]",
             card.featured && "text-[#075AF2]",
           )}
         >
@@ -95,7 +95,7 @@ export function Pricing() {
     <section id="pricing" className="px-5 pb-24">
       <div className="mx-auto max-w-[1080px]">
         <div className="text-center">
-          <h2 className="m-0 font-[family-name:var(--font-landing-serif)] text-[clamp(34px,4.8vw,54px)] font-normal leading-[1.05] tracking-[-.015em] text-[#0D0D0F]">
+          <h2 className="m-0 font-display text-[clamp(34px,4.8vw,54px)] font-normal leading-[1.05] tracking-[-.015em] text-[#0D0D0F]">
             Cheaper than one freelance designer.
           </h2>
           <BillingToggle annual={annual} onChange={setAnnual} />

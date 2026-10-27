@@ -14,7 +14,7 @@ export function LegalPage({ title, children }: { title: string; children: ReactN
       <main className="px-5 py-24">
         <article className="mx-auto max-w-3xl">
           <p className="text-sm font-bold uppercase tracking-[.2em] text-primary">Legal</p>
-          <h1 className="mt-4 font-display text-5xl font-semibold leading-tight">{title}</h1>
+          <h1 className="mt-4 font-display text-5xl font-normal leading-tight">{title}</h1>
           <p className="mt-4 text-sm text-muted-foreground">Last updated {LEGAL_LAST_UPDATED}</p>
           <div className="mt-12 space-y-10 text-base leading-7 text-muted-foreground">{children}</div>
         </article>

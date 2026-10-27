@@ -10,7 +10,7 @@ import { SiteFooter } from "@/components/marketing/landing/site-footer";
 
 export default function Home() {
   return (
-    <div className="w-full overflow-x-hidden bg-[#F6F9FC] font-[family-name:var(--font-landing-inter)] text-[#0D0D0F]">
+    <div className="w-full overflow-x-hidden bg-[#F6F9FC] font-sans text-[#0D0D0F]">
       <NavBar />
       <Hero />
       <PlatformSection />

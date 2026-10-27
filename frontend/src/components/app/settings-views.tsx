@@ -76,7 +76,7 @@ export function GeneralSettings() {
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="flex items-center gap-4">
-            <span className="grid size-16 place-items-center rounded-2xl bg-accent font-display text-xl font-bold">
+            <span className="grid size-16 place-items-center rounded-2xl bg-accent font-display text-xl font-normal">
               {initials(me.data?.name)}
             </span>
             <Button variant="outline" size="sm">
@@ -309,7 +309,7 @@ function ProviderCard({
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <span className="grid size-11 place-items-center rounded-2xl bg-foreground font-display text-lg font-bold text-background">
+          <span className="grid size-11 place-items-center rounded-2xl bg-foreground font-display text-lg font-normal text-background">
             {name[0]}
           </span>
           {credential ? (
@@ -406,7 +406,7 @@ export function BillingSettings() {
           <div className="flex items-center justify-between rounded-2xl bg-muted p-5">
             <div>
               <Badge>Free</Badge>
-              <p className="mt-3 font-display text-2xl font-semibold">
+              <p className="mt-3 font-display text-2xl font-normal">
                 Your current plan
               </p>
               <p className="mt-1 text-sm text-muted-foreground">

@@ -127,7 +127,7 @@ export function XGrowthView() {
                 <Sparkles className="size-3.5 text-primary" />
                 Today&apos;s briefing
               </div>
-              <h2 className="mt-3 font-display text-2xl font-semibold sm:text-3xl">
+              <h2 className="mt-3 font-display text-2xl font-normal sm:text-3xl">
                 {loading ? "Refreshing your briefing…" : dataset.briefingSummary}
               </h2>
             </div>
@@ -178,7 +178,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <p className="text-[11px] uppercase tracking-wide text-background/55">{label}</p>
-      <p className="mt-1 font-display text-xl font-semibold capitalize">{value}</p>
+      <p className="mt-1 font-display text-xl font-normal capitalize">{value}</p>
     </div>
   );
 }
@@ -186,7 +186,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 function SectionHeading({ id, title, description }: { id: string; title: string; description: string }) {
   return (
     <div id={id} className="scroll-mt-32">
-      <h2 className="font-display text-xl font-semibold">{title}</h2>
+      <h2 className="font-display text-xl font-normal">{title}</h2>
       <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{description}</p>
     </div>
   );
@@ -414,7 +414,7 @@ function RecommendedCard({ post, rank }: { post: RecommendedPost; rank: number }
               <Badge variant="secondary">{post.postType}</Badge>
               <span className="text-xs text-muted-foreground">{post.topic}</span>
             </div>
-            <p className="mt-3 font-display text-lg font-semibold leading-snug">{post.hook}</p>
+            <p className="mt-3 font-display text-lg font-normal leading-snug">{post.hook}</p>
             <p className="mt-2 whitespace-pre-line text-sm leading-6 text-muted-foreground">{post.fullPost}</p>
             <p className="mt-3 rounded-xl bg-muted/50 p-3 text-xs leading-5 text-muted-foreground">
               <span className="font-semibold text-foreground">Why this post: </span>
@@ -514,7 +514,7 @@ function BestTimeSection({ windows }: { windows: ReturnType<typeof getBestTimes>
                   {w.confidence}
                 </Badge>
               </div>
-              <p className="mt-3 font-display text-xl font-semibold">{w.window}</p>
+              <p className="mt-3 font-display text-xl font-normal">{w.window}</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">{w.reason}</p>
               <div className="mt-4 space-y-2 border-t pt-3 text-xs">
                 <div className="flex justify-between"><span className="text-muted-foreground">Audience activity</span><span className="font-semibold">{w.audienceActivity}</span></div>
@@ -602,7 +602,7 @@ function MiniStat({ icon: Icon, label, value }: { icon: typeof Clock; label: str
   return (
     <div>
       <span className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary"><Icon className="size-4" /></span>
-      <p className="mt-2 font-display text-lg font-semibold">{value}</p>
+      <p className="mt-2 font-display text-lg font-normal">{value}</p>
       <p className="text-xs text-muted-foreground">{label}</p>
     </div>
   );
@@ -631,7 +631,7 @@ function AnalyticsSection({ analytics }: { analytics: ReturnType<typeof getNiche
               <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><Icon className="size-4.5" /></span>
               <div>
                 <p className="text-xs text-muted-foreground">{label}</p>
-                <p className="font-display text-lg font-semibold">{value}</p>
+                <p className="font-display text-lg font-normal">{value}</p>
               </div>
             </CardContent>
           </Card>

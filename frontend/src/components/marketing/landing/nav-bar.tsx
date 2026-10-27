@@ -24,7 +24,7 @@ export function NavBar() {
             priority
             className="size-[30px] rounded-[9px]"
           />
-          <span className="font-[family-name:var(--font-landing-serif)] text-[23px] font-normal tracking-[-.01em]">
+          <span className="font-display text-[23px] font-normal tracking-[-.01em]">
             Swiply
           </span>
         </Link>

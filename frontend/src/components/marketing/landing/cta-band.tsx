@@ -2,7 +2,7 @@ export function CtaBand() {
   return (
     <section className="px-5 pb-7">
       <div className="mx-auto max-w-[1080px] rounded-[28px] bg-[linear-gradient(180deg,#CBE4FA_0%,#E6F1FB_100%)] px-7 py-[clamp(40px,6vw,72px)] text-center">
-        <h2 className="m-0 text-balance font-[family-name:var(--font-landing-serif)] text-[clamp(36px,5.8vw,66px)] font-normal leading-[1.02] tracking-[-.015em] text-[#0D0D0F]">
+        <h2 className="m-0 text-balance font-display text-[clamp(36px,5.8vw,66px)] font-normal leading-[1.02] tracking-[-.015em] text-[#0D0D0F]">
           Your next 30 posts are
           <br />
           <span className="text-[#075AF2]">already written.</span>

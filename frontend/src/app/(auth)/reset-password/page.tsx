@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Reset password" };
 export default function ResetPassword() {
   return (
     <div className="w-full">
-      <h1 className="font-display text-4xl font-semibold">Reset password.</h1>
+      <h1 className="font-display text-4xl font-normal">Reset password.</h1>
       <p className="mb-8 mt-2 text-muted-foreground">
         Use the 6-digit code from the backend console, then choose a new password.
       </p>

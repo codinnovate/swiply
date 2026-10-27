@@ -319,7 +319,7 @@ function ReportView({
               <Avatar url={profile?.avatarUrl ?? null} name={profile?.displayName ?? report.company} size="lg" />
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <h2 className="truncate font-display text-2xl font-semibold">{profile?.displayName ?? report.company}</h2>
+                  <h2 className="truncate font-display text-2xl font-normal">{profile?.displayName ?? report.company}</h2>
                   {profile?.verified && <BadgeCheck className="size-5 shrink-0 text-sky-400" aria-label="Verified" />}
                 </div>
                 <a
@@ -631,7 +631,7 @@ function AdsPanel({ report, promoted }: { report: CompetitorReport; promoted: Co
   return (
     <div className="space-y-6">
       <section>
-        <h3 className="font-display text-lg font-semibold">TikTok Ad Library</h3>
+        <h3 className="font-display text-lg font-normal">TikTok Ad Library</h3>
         <p className="mb-3 text-sm text-muted-foreground">
           Ads TikTok has published for this advertiser in the last 12 months. The library covers ads shown in the EEA,
           Switzerland and the UK.
@@ -684,7 +684,7 @@ function AdsPanel({ report, promoted }: { report: CompetitorReport; promoted: Co
       </section>
 
       <section>
-        <h3 className="font-display text-lg font-semibold">Promoted posts on their profile</h3>
+        <h3 className="font-display text-lg font-normal">Promoted posts on their profile</h3>
         <p className="mb-3 text-sm text-muted-foreground">
           Posts TikTok labels as ads or paid partnerships, usually boosted with Spark Ads. These show worldwide.
         </p>
@@ -831,7 +831,7 @@ function HeroStat({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <p className="text-[11px] uppercase tracking-wide text-background/55">{label}</p>
-      <p className="mt-1 font-display text-xl font-semibold">{value}</p>
+      <p className="mt-1 font-display text-xl font-normal">{value}</p>
     </div>
   );
 }
@@ -841,7 +841,7 @@ function Kpi({ label, value, hint }: { label: string; value: string; hint: strin
     <Card>
       <CardContent className="pt-4">
         <p className="text-xs font-semibold text-muted-foreground">{label}</p>
-        <p className="mt-1 font-display text-2xl font-semibold tabular-nums">{value}</p>
+        <p className="mt-1 font-display text-2xl font-normal tabular-nums">{value}</p>
         <p className="mt-1 truncate text-[11px] text-muted-foreground" title={hint}>
           {hint}
         </p>

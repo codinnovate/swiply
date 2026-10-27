@@ -202,7 +202,7 @@ function ProviderCard({
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <span className="grid size-11 place-items-center rounded-2xl bg-foreground font-display text-lg font-bold text-background">
+          <span className="grid size-11 place-items-center rounded-2xl bg-foreground font-display text-lg font-normal text-background">
             {info.name[0]}
           </span>
           {credential ? (

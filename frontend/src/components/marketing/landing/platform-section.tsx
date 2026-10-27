@@ -11,7 +11,7 @@ function StatCard({ value, body, dark }: (typeof platformStats)[number]) {
     >
       <div
         className={cn(
-          "font-[family-name:var(--font-landing-serif)] text-[clamp(36px,4vw,50px)] font-normal tracking-[-.01em]",
+          "font-display text-[clamp(36px,4vw,50px)] font-normal tracking-[-.01em]",
           dark && "text-[#075AF2]",
         )}
       >
@@ -29,7 +29,7 @@ export function PlatformSection() {
         <div className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[.14em] text-[#075AF2]">
           <span className="block size-[7px] rounded-full bg-[#075AF2]" /> Two platforms. On purpose.
         </div>
-        <h2 className="mx-auto mt-[26px] max-w-[900px] text-pretty font-[family-name:var(--font-landing-serif)] text-[clamp(31px,5vw,58px)] font-normal leading-[1.2] tracking-[-.012em] text-[#7B848E]">
+        <h2 className="mx-auto mt-[26px] max-w-[900px] text-pretty font-display text-[clamp(31px,5vw,58px)] font-normal leading-[1.2] tracking-[-.012em] text-[#7B848E]">
           Everyone else posts <strong className="font-normal text-[#0D0D0F]">everywhere.</strong> Swiply posts image slideshows to{" "}
           <span className="mx-1 inline-flex items-center gap-2 align-middle">
             <span className="rounded-[.5em] bg-[#0D0D0F] px-[.7em] py-[.28em] text-[.62em] font-bold text-white">TikTok</span>

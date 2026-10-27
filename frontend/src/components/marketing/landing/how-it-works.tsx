@@ -18,7 +18,7 @@ export function HowItWorks() {
     <section id="how" className="px-5 pb-24">
       <div className="mx-auto max-w-[1080px]">
         <div className="mb-[34px] flex flex-wrap items-end justify-between gap-6">
-          <h2 className="m-0 max-w-[600px] font-[family-name:var(--font-landing-serif)] text-[clamp(34px,4.8vw,54px)] font-normal leading-[1.05] tracking-[-.015em] text-[#0D0D0F]">
+          <h2 className="m-0 max-w-[600px] font-display text-[clamp(34px,4.8vw,54px)] font-normal leading-[1.05] tracking-[-.015em] text-[#0D0D0F]">
             Connect once.
             <br />
             Then never open an editor again.

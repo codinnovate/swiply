@@ -9,7 +9,7 @@ export function Faq() {
   return (
     <section className="px-5 pb-24">
       <div className="mx-auto max-w-[760px]">
-        <h2 className="m-0 mb-[22px] font-[family-name:var(--font-landing-serif)] text-[clamp(30px,3.8vw,42px)] font-normal leading-[1.1] tracking-[-.012em] text-[#0D0D0F]">
+        <h2 className="m-0 mb-[22px] font-display text-[clamp(30px,3.8vw,42px)] font-normal leading-[1.1] tracking-[-.012em] text-[#0D0D0F]">
           Questions founders ask
         </h2>
         {faqs.map((faq, i) => {

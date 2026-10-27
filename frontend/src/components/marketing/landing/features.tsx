@@ -74,7 +74,7 @@ function BrandSwatchesVisual() {
         <span className="block size-[30px] rounded-lg border border-[#E4EAF0] bg-white" />
       </div>
       <div className="mt-1 flex items-center gap-2">
-        <span className="rounded-lg border border-[#E4EAF0] bg-white px-2.5 py-1 font-[family-name:var(--font-landing-serif)] text-[26px] leading-none">
+        <span className="rounded-lg border border-[#E4EAF0] bg-white px-2.5 py-1 font-display text-[26px] leading-none">
           Aa
         </span>
         <span className="text-[11.5px] font-semibold text-[#5A6470]">Instrument Serif · Inter</span>
@@ -134,7 +134,7 @@ export function Features() {
   return (
     <section id="features" className="px-5 pb-24">
       <div className="mx-auto max-w-[1080px]">
-        <h2 className="m-0 mb-[34px] max-w-[660px] font-[family-name:var(--font-landing-serif)] text-[clamp(34px,4.8vw,54px)] font-normal leading-[1.05] tracking-[-.015em] text-[#0D0D0F]">
+        <h2 className="m-0 mb-[34px] max-w-[660px] font-display text-[clamp(34px,4.8vw,54px)] font-normal leading-[1.05] tracking-[-.015em] text-[#0D0D0F]">
           Built for founders who <span className="text-[#075AF2]">don&apos;t have a content team.</span>
         </h2>
 

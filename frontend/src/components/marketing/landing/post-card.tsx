@@ -40,7 +40,7 @@ export function PostCard({ platform, slideIndex, hook, dark = false }: ReelPost 
       <div className="flex flex-col gap-3 px-3.5 pb-4 pt-3.5">
         <div
           className={cn(
-            "font-[family-name:var(--font-landing-serif)] text-[20px] leading-[1.1] tracking-[-.005em]",
+            "font-display text-[20px] leading-[1.1] tracking-[-.005em]",
             dark ? "text-white" : "text-[#0D0D0F]",
           )}
         >

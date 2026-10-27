@@ -70,7 +70,7 @@ export function CalendarView() {
           <Button size="icon" variant="ghost" onClick={() => setMonth(subMonths(month, 1))}>
             <ChevronLeft className="size-4" />
           </Button>
-          <h2 className="font-display text-xl font-semibold">{format(month, "MMMM yyyy")}</h2>
+          <h2 className="font-display text-xl font-normal">{format(month, "MMMM yyyy")}</h2>
           <Button size="icon" variant="ghost" onClick={() => setMonth(addMonths(month, 1))}>
             <ChevronRight className="size-4" />
           </Button>

@@ -62,7 +62,7 @@ export function Hero() {
         />
         <TrustBadge />
 
-        <h1 className="mt-[26px] text-balance font-[family-name:var(--font-landing-serif)] text-[clamp(44px,7.4vw,88px)] font-normal leading-[1.0] tracking-[-.018em] text-[#0D0D0F]">
+        <h1 className="mt-[26px] text-balance font-display text-[clamp(44px,7.4vw,88px)] font-normal leading-[1.0] tracking-[-.018em] text-[#0D0D0F]">
           Stop Making Content for Hours
           <br />
           <span className="text-[#075AF2]">Post Slideshows</span> on Autopilot.

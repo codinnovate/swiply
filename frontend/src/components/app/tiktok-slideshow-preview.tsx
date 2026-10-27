@@ -72,7 +72,7 @@ export function TikTokSlideshowPreview({
             {index + 1}/{total}
           </p>
           {slide.caption && (
-            <p className="pointer-events-none absolute inset-x-5 top-1/2 -translate-y-1/2 text-center font-display text-[1.85rem] font-extrabold leading-[1.05] tracking-[-0.03em] text-white drop-shadow-[0_2px_18px_rgba(0,0,0,0.9)]">
+            <p className="pointer-events-none absolute inset-x-5 top-1/2 -translate-y-1/2 text-center font-sans text-[1.85rem] font-extrabold leading-[1.05] tracking-[-0.03em] text-white drop-shadow-[0_2px_18px_rgba(0,0,0,0.9)]">
               {slide.caption}
             </p>
           )}

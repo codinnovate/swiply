@@ -169,7 +169,7 @@ export function AccountsView() {
           ))}
         </div>
       )}
-      <h2 className="mb-4 mt-10 font-display text-2xl font-semibold">
+      <h2 className="mb-4 mt-10 font-display text-2xl font-normal">
         Connect a direct social account
       </h2>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -200,7 +200,7 @@ export function AccountsView() {
                     <Badge variant="warning">Setup required</Badge>
                   ) : null}
                 </div>
-                <h3 className="mt-5 font-display text-xl font-semibold">
+                <h3 className="mt-5 font-display text-xl font-normal">
                   {titleCase(item.platform)}
                 </h3>
                 <p className="mt-1 min-h-10 text-xs leading-5 text-muted-foreground">

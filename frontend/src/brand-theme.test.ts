@@ -34,4 +34,24 @@ describe("brand theme", () => {
     }
     expect(read("src/app/manifest.ts")).toContain('theme_color: "#075AF2"');
   });
+
+  it("loads only DM Sans and Instrument Serif, and uses them on every page", () => {
+    const layout = read("src/app/layout.tsx");
+    expect(layout).toMatch(/import \{ DM_Sans, Instrument_Serif \} from "next\/font\/google"/);
+
+    const css = read("src/app/globals.css");
+    expect(css).toContain("--font-sans: var(--font-dm-sans)");
+    expect(css).toContain("--font-display: var(--font-instrument-serif)");
+
+    const sources = readdirSync(path.join(root, "src"), { recursive: true, encoding: "utf8" }).filter((file) =>
+      file.endsWith(".tsx"),
+    );
+    for (const file of sources) {
+      const source = read(`src/${file}`);
+      // Page-specific font variables are how the landing page drifted from the app.
+      expect(source, file).not.toMatch(/font-\[family-name:/);
+      // Instrument Serif ships one weight; anything heavier is browser-faked bold.
+      expect(source, file).not.toMatch(/font-display[^"`']*font-(medium|semibold|bold|extrabold)/);
+    }
+  });
 });
