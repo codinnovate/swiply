@@ -22,6 +22,7 @@ import {
   SocialAccountDocument,
   type Platform,
 } from './schemas/social-account.schema';
+import { PostMetric, PostMetricDocument } from '../analytics/schemas/post-metric.schema';
 import { Post, PostDocument } from '../posts/schemas/post.schema';
 import { MediaService } from '../media/media.service';
 
@@ -44,6 +45,8 @@ export class SocialAccountsService {
     private readonly memberModel: Model<WorkspaceMemberDocument>,
     @InjectModel(Post.name)
     private readonly postModel: Model<PostDocument>,
+    @InjectModel(PostMetric.name)
+    private readonly metricModel: Model<PostMetricDocument>,
     private readonly registry: PlatformRegistry,
     private readonly oauthState: OAuthStateService,
     private readonly cipher: TokenCipher,
@@ -213,6 +216,8 @@ export class SocialAccountsService {
     // credentials, and Section 12 treats "still in the database somewhere"
     // as not deleted.
     await this.accountModel.deleteOne({ _id: account._id }).exec();
+    // Cached analytics came from this account's token; they go with it.
+    await this.metricModel.deleteMany({ socialAccountId: account._id }).exec();
 
     this.logger.log(`Disconnected ${account.platform} account ${accountId}`);
   }

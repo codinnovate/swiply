@@ -1,9 +1,15 @@
 import { INestApplication } from '@nestjs/common';
+import { getModelToken } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
 import nock from 'nock';
 import request from 'supertest';
 
 import { createTestApp, destroyTestApp } from './app-harness';
 import { clearDatabase } from './mongo-test-env';
+import {
+  PostMetric,
+  PostMetricDocument,
+} from '../src/modules/analytics/schemas/post-metric.schema';
 
 interface Registered {
   token: string;
@@ -362,6 +368,33 @@ describe('Social accounts (e2e)', () => {
         .expect(200);
 
       expect(after.body.data).toHaveLength(0);
+    });
+
+    it('deletes the analytics cached from that account', async () => {
+      const user = await register('owner@example.com');
+      await connectTikTok(user);
+      const list = await server()
+        .get('/api/social-accounts')
+        .set('Authorization', `Bearer ${user.token}`)
+        .expect(200);
+      const accountId = list.body.data[0].id;
+      const metrics = app.get<Model<PostMetricDocument>>(getModelToken(PostMetric.name));
+      await metrics.create({
+        workspaceId: new Types.ObjectId(),
+        socialAccountId: new Types.ObjectId(accountId),
+        platform: 'tiktok',
+        platformPostId: 'v1',
+        postedAt: new Date(),
+        views: 10,
+        fetchedAt: new Date(),
+      });
+
+      await server()
+        .delete(`/api/social-accounts/${accountId}`)
+        .set('Authorization', `Bearer ${user.token}`)
+        .expect(204);
+
+      expect(await metrics.countDocuments({ socialAccountId: new Types.ObjectId(accountId) })).toBe(0);
     });
   });
 

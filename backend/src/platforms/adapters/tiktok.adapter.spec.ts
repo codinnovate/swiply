@@ -198,3 +198,98 @@ describe('TikTokAdapter', () => {
     });
   });
 });
+
+describe('TikTokAdapter.fetchPostMetrics', () => {
+  const adapter = adapterWith(CONFIG);
+  const video = (id: string, extra: Record<string, unknown> = {}) => ({
+    id,
+    title: `Video ${id}`,
+    create_time: 1_790_000_000,
+    cover_image_url: `https://cdn.tiktok.test/${id}.jpg`,
+    share_url: `https://www.tiktok.com/@me/video/${id}`,
+    view_count: 1000,
+    like_count: 50,
+    comment_count: 4,
+    share_count: 2,
+    ...extra,
+  });
+
+  beforeAll(() => nock.disableNetConnect());
+  afterAll(() => nock.enableNetConnect());
+  afterEach(() => nock.cleanAll());
+
+  it('asks for view counts and maps each video', async () => {
+    let fields = '';
+    nock('https://open.tiktokapis.com')
+      .post('/v2/video/list/')
+      .query((query) => {
+        fields = String(query.fields);
+        return true;
+      })
+      .reply(200, { data: { videos: [video('v1')], has_more: false, cursor: 0 } });
+
+    const metrics = await adapter.fetchPostMetrics('token', 10);
+
+    expect(fields.split(',')).toEqual(
+      expect.arrayContaining(['view_count', 'like_count', 'comment_count', 'share_count']),
+    );
+    expect(metrics).toEqual([
+      {
+        platformPostId: 'v1',
+        title: 'Video v1',
+        postedAt: new Date(1_790_000_000 * 1000),
+        coverImageUrl: 'https://cdn.tiktok.test/v1.jpg',
+        shareUrl: 'https://www.tiktok.com/@me/video/v1',
+        views: 1000,
+        likes: 50,
+        comments: 4,
+        shares: 2,
+      },
+    ]);
+  });
+
+  it('follows the cursor across pages and stops at the limit', async () => {
+    const cursors: number[] = [];
+    nock('https://open.tiktokapis.com')
+      .post('/v2/video/list/', (body: { cursor: number; max_count: number }) => {
+        cursors.push(body.cursor);
+        return true;
+      })
+      .query(true)
+      .times(2)
+      .reply((_uri, body) =>
+        (body as { cursor: number }).cursor === 0
+          ? [200, { data: { videos: Array.from({ length: 20 }, (_, i) => video(`a${i}`)), has_more: true, cursor: 111 } }]
+          : [200, { data: { videos: Array.from({ length: 20 }, (_, i) => video(`b${i}`)), has_more: true, cursor: 222 } }],
+      );
+
+    const metrics = await adapter.fetchPostMetrics('token', 25);
+
+    expect(cursors).toEqual([0, 111]);
+    expect(metrics).toHaveLength(25);
+    expect(metrics[24].platformPostId).toBe('b4');
+  });
+
+  it('treats missing counts as zero and skips videos without an id', async () => {
+    nock('https://open.tiktokapis.com')
+      .post('/v2/video/list/')
+      .query(true)
+      .reply(200, {
+        data: {
+          videos: [{ id: 'v1', create_time: 1_790_000_000 }, video('', {})],
+          has_more: false,
+        },
+      });
+
+    const [only, ...rest] = await adapter.fetchPostMetrics('token', 10);
+
+    expect(rest).toHaveLength(0);
+    expect(only).toMatchObject({ platformPostId: 'v1', title: null, views: 0, likes: 0, comments: 0, shares: 0 });
+  });
+
+  it('wraps TikTok failures in an ApiException', async () => {
+    nock('https://open.tiktokapis.com').post('/v2/video/list/').query(true).reply(401, { error: { code: 'access_token_invalid' } });
+
+    await expect(adapter.fetchPostMetrics('token', 10)).rejects.toBeInstanceOf(ApiException);
+  });
+});

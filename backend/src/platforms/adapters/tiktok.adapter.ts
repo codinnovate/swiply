@@ -10,6 +10,7 @@ import type {
   PlatformCapabilities,
   PlatformConnection,
   PlatformCredentials,
+  PostMetricsInput,
   PublishableContent,
   PublishResult,
   SourcePostInput,
@@ -21,6 +22,25 @@ import {
 } from './tiktok/tiktok-post-settings';
 import { TikTokPostingClient, type TikTokPublishStatus } from './tiktok/tiktok-posting.client';
 import { ApiException } from '../../common/errors/api.exception';
+
+const VIDEO_METRIC_FIELDS =
+  'id,title,create_time,cover_image_url,share_url,view_count,like_count,comment_count,share_count';
+
+interface TikTokVideo {
+  id?: string;
+  title?: string;
+  create_time?: number;
+  cover_image_url?: string;
+  share_url?: string;
+  view_count?: number;
+  like_count?: number;
+  comment_count?: number;
+  share_count?: number;
+}
+
+interface TikTokVideoPage {
+  data?: { videos?: TikTokVideo[]; cursor?: number; has_more?: boolean };
+}
 
 const AUTHORIZE_URL = 'https://www.tiktok.com/v2/auth/authorize/';
 const TOKEN_URL = 'https://open.tiktokapis.com/v2/oauth/token/';
@@ -146,6 +166,45 @@ export class TikTokAdapter extends BasePlatformAdapter {
     } catch (error) {
       throw this.exchangeFailure(error, 'recent posts lookup');
     }
+  }
+
+  /**
+   * The account's recent videos with their public counts, newest first.
+   * `video/list` pages at 20, so this follows the cursor until `limit`.
+   */
+  async fetchPostMetrics(accessToken: string, limit: number): Promise<PostMetricsInput[]> {
+    const metrics: PostMetricsInput[] = [];
+    let cursor: number | undefined = 0;
+    try {
+      while (cursor !== undefined && metrics.length < limit) {
+        const response: { data: TikTokVideoPage } = await firstValueFrom(
+          this.http.post<TikTokVideoPage>(
+            'https://open.tiktokapis.com/v2/video/list/',
+            { max_count: Math.min(limit - metrics.length, 20), cursor },
+            { params: { fields: VIDEO_METRIC_FIELDS }, headers: { Authorization: `Bearer ${accessToken}` } },
+          ),
+        );
+        const page: TikTokVideoPage['data'] = response.data.data;
+        for (const video of page?.videos ?? []) {
+          if (!video.id || !video.create_time) continue;
+          metrics.push({
+            platformPostId: video.id,
+            title: video.title || null,
+            postedAt: new Date(video.create_time * 1000),
+            coverImageUrl: video.cover_image_url ?? null,
+            shareUrl: video.share_url ?? null,
+            views: video.view_count ?? 0,
+            likes: video.like_count ?? 0,
+            comments: video.comment_count ?? 0,
+            shares: video.share_count ?? 0,
+          });
+        }
+        cursor = page?.has_more && page.cursor !== undefined && page.videos?.length ? page.cursor : undefined;
+      }
+    } catch (error) {
+      throw this.exchangeFailure(error, 'video metrics lookup');
+    }
+    return metrics.slice(0, limit);
   }
 
   /** Fresh creator state; TikTok requires it each time the post screen renders. */

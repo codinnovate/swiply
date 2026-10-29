@@ -49,6 +49,19 @@ export interface SourcePostInput {
  * will the volume distributor (Section 9) when it needs to know which accounts
  * can take which content type.
  */
+/** Public performance counts for one of the account's own posts. */
+export interface PostMetricsInput {
+  platformPostId: string;
+  title: string | null;
+  postedAt: Date;
+  coverImageUrl: string | null;
+  shareUrl: string | null;
+  views: number;
+  likes: number;
+  comments: number;
+  shares: number;
+}
+
 export interface PlatformCapabilities {
   platform: Platform;
   usesPkce: boolean;
@@ -130,6 +143,8 @@ export interface PlatformAdapter {
 
   fetchRecentPosts(accessToken: string, limit: number): Promise<SourcePostInput[]>;
   publishContent(accessToken: string, content: PublishableContent): Promise<PublishResult>;
+  /** Absent on platforms whose API Swiply can't read post analytics from. */
+  fetchPostMetrics?(accessToken: string, limit: number): Promise<PostMetricsInput[]>;
 
   validateContent(content: ValidatableContent): ContentValidationResult;
 }

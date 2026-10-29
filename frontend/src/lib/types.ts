@@ -255,3 +255,38 @@ export interface VoiceProfile {
   sampleCount: number;
   lastAnalyzedAt: string | null;
 }
+
+export interface MetricTotals {
+  posts: number;
+  views: number;
+  likes: number;
+  comments: number;
+  shares: number;
+}
+
+export interface AnalyticsOverview {
+  days: number;
+  totals: MetricTotals;
+  daily: Array<MetricTotals & { date: string }>;
+  topPosts: Array<{
+    id: string;
+    platform: string;
+    accountName: string;
+    title: string | null;
+    postedAt: string;
+    coverImageUrl: string | null;
+    shareUrl: string | null;
+    views: number;
+    likes: number;
+    comments: number;
+    shares: number;
+    viaSwiply: boolean;
+  }>;
+  accounts: Array<{
+    id: string;
+    platform: string;
+    displayName: string;
+    lastSyncedAt: string | null;
+    syncError: string | null;
+  }>;
+}

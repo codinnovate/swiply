@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { PostMetric, PostMetricSchema } from '../analytics/schemas/post-metric.schema';
 
 import { PlatformsModule } from '../../platforms/platforms.module';
 import { WorkspacesModule } from '../workspaces/workspaces.module';
@@ -18,6 +19,7 @@ import { Post, PostSchema } from '../posts/schemas/post.schema';
     MongooseModule.forFeature([
       { name: SocialAccount.name, schema: SocialAccountSchema },
       { name: Post.name, schema: PostSchema },
+      { name: PostMetric.name, schema: PostMetricSchema },
     ]),
     WorkspacesModule,
     PlatformsModule,

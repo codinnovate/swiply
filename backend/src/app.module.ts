@@ -24,6 +24,7 @@ import { PublishingProvidersModule } from './modules/publishing-providers/publis
 import { PostingConsistencyModule } from './modules/posting-consistency/posting-consistency.module';
 import { ViralityModule } from './modules/virality/virality.module';
 import { CompetitorsModule } from './modules/competitors/competitors.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { CompetitorsModule } from './modules/competitors/competitors.module';
     PostingConsistencyModule,
     ViralityModule,
     CompetitorsModule,
+    AnalyticsModule,
   ],
   providers: [
     // Authenticated by default — routes opt out with @Public().

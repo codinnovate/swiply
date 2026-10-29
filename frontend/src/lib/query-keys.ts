@@ -17,6 +17,7 @@ export const queryKeys = {
   competitors: (workspaceId: string) => ["competitors", workspaceId] as const,
   competitorSources: (workspaceId: string) =>
     ["competitors", workspaceId, "sources"] as const,
+  analytics: (workspaceId: string, days: number) => ["analytics", workspaceId, days] as const,
   credentials: ["ai-credentials"] as const,
   models: ["ai-models"] as const,
 };
