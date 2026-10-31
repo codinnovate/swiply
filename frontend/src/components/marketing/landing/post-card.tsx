@@ -2,39 +2,41 @@ import { cn } from "@/lib/utils";
 import type { ReelPost } from "./data";
 
 export function PostCard({ platform, slideIndex, hook, dark = false }: ReelPost & { dark?: boolean }) {
+  const accent = platform === "TikTok" ? "#11CFC3" : "#FF6B35";
+
   return (
     <div
       className={cn(
-        "flex aspect-[9/16] w-[216px] flex-none flex-col overflow-hidden rounded-[18px] shadow-[0_22px_44px_-26px_rgba(20,45,80,0.7)]",
+        "group flex aspect-[9/16] w-[216px] flex-none flex-col overflow-hidden rounded-[22px] shadow-[0_22px_44px_-26px_rgba(20,45,80,0.7)] transition-transform duration-300 hover:-translate-y-2",
         dark ? "bg-[#0D0D0F]" : "bg-white",
       )}
     >
       <div
         className={cn(
-          "relative flex min-h-0 flex-1 items-start justify-between p-2.5",
+          "relative flex min-h-0 flex-1 items-start justify-between overflow-hidden p-2.5",
           dark
-            ? "bg-[repeating-linear-gradient(135deg,#191A1F_0_9px,#212329_9px_18px)]"
-            : "bg-[repeating-linear-gradient(135deg,#EDF2F7_0_9px,#E2E9F1_9px_18px)]",
+            ? "bg-[#16181F]"
+            : "bg-[#EEF5FF]",
         )}
       >
+        <div className="absolute inset-0 opacity-90" style={{ background: `radial-gradient(circle at 28% 22%, ${accent}66, transparent 34%), radial-gradient(circle at 78% 72%, #FFE16688, transparent 30%)` }} />
+        <div className="absolute bottom-5 left-5 right-5 rounded-[20px] bg-white/90 p-3 shadow-[0_18px_34px_-26px_rgba(13,13,15,.85)] transition-transform duration-300 group-hover:-translate-y-1">
+          <div className="aspect-[4/3] rounded-[16px] p-3 text-white" style={{ backgroundColor: accent }}>
+            <span className="rounded-full bg-white/22 px-2 py-1 text-[8px] font-black uppercase tracking-[.12em]">Product</span>
+            <span className="mt-12 block h-2 w-24 rounded-full bg-white/80" />
+            <span className="mt-2 block h-2 w-16 rounded-full bg-white/50" />
+          </div>
+        </div>
         <span
           className={cn(
-            "rounded-md px-2 py-1 text-[9.5px] font-semibold tracking-[.06em] text-white",
+            "relative rounded-md px-2 py-1 text-[9.5px] font-semibold tracking-[.06em] text-white",
             dark ? "bg-white/12" : "bg-[#0D0D0F]/78",
           )}
         >
           {platform}
         </span>
-        <span className={cn("rounded-md px-[7px] py-1 text-[9.5px] font-semibold text-white", dark ? "bg-white/12" : "bg-[#0D0D0F]/78")}>
+        <span className={cn("relative rounded-md px-[7px] py-1 text-[9.5px] font-semibold text-white", dark ? "bg-white/12" : "bg-[#0D0D0F]/78")}>
           {slideIndex}
-        </span>
-        <span
-          className={cn(
-            "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg px-[9px] py-1.5 text-[10px]",
-            dark ? "bg-[#0D0D0F]/55 text-[#7C8793]" : "bg-white/80 text-[#5A6470]",
-          )}
-        >
-          product shot 9:16
         </span>
       </div>
       <div className="flex flex-col gap-3 px-3.5 pb-4 pt-3.5">

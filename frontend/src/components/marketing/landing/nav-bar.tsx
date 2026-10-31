@@ -11,7 +11,7 @@ const navLinks = [
 export function NavBar() {
   return (
     <div className="sticky top-0 z-50 flex justify-center px-4 pt-[18px]">
-      <nav className="flex max-w-full items-center gap-7 rounded-full bg-[#0D0D0F] py-2 pl-[22px] pr-2 shadow-[0_18px_40px_-18px_rgba(13,13,15,0.55)]">
+      <nav className="flex max-w-full items-center gap-7 rounded-full border border-white/20 bg-[#0D0D0F]/92 py-2 pl-[22px] pr-2 shadow-[0_18px_40px_-18px_rgba(13,13,15,0.55)] backdrop-blur-xl">
         <Link
           href="#top"
           className="flex items-center gap-[10px] text-white"
@@ -37,7 +37,7 @@ export function NavBar() {
         </div>
         <a
           href="#pricing"
-          className="rounded-full bg-[#075AF2] px-5 py-[11px] text-[14.5px] font-bold text-white shadow-[0_0_0_1px_rgba(49,214,226,0.42)_inset,0_8px_24px_-6px_rgba(7,90,242,0.8)] transition-colors hover:bg-[#0A66FF]"
+          className="rounded-full bg-[#FFE166] px-5 py-[11px] text-[14.5px] font-bold text-[#251900] shadow-[0_0_0_1px_rgba(255,255,255,0.3)_inset,0_8px_24px_-8px_rgba(255,225,102,0.8)] transition-transform duration-200 hover:-translate-y-0.5"
         >
           Start free
         </a>
