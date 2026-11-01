@@ -122,22 +122,19 @@ struct PaywallView: View {
 
     private var purchaseActions: some View {
         VStack(spacing: Spacing.small) {
+            if let selectedPackage {
+                pricing(for: selectedPackage)
+                    .padding(.top, Spacing.large)
+            }
+
             PrimaryButton(
-                title: primaryCTATitle,
+                title: PaywallCopy.ctaTitle,
                 isLoading: isPurchasing,
                 isDisabled: selectedPackage == nil || isRestoring
             ) {
                 Task { await purchase() }
             }
-            .padding(.top, Spacing.large)
-
-            if let selectedPackage {
-                Text(purchaseDisclosureCopy(for: selectedPackage))
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.82))
-                    .multilineTextAlignment(.center)
-                    .padding(.top, 2)
-            }
+            .padding(.top, Spacing.small)
 
             Button {
                 selectAnnualPlan()
@@ -169,43 +166,23 @@ struct PaywallView: View {
         .padding(.bottom, -Spacing.medium)
     }
 
-    private var primaryCTATitle: String {
-        guard let selectedPackage else { return "Continue" }
-        return ctaTitle(for: selectedPackage)
-    }
+    /// The billed amount is the largest pricing text; the trial only appears in the small terms below it.
+    private func pricing(for package: Package) -> some View {
+        VStack(spacing: Spacing.small) {
+            Text(PaywallCopy.billedAmount(
+                price: package.storeProduct.localizedPriceString,
+                isAnnual: package.packageType == .annual
+            ))
+            .font(.system(size: 30, weight: .bold, design: .rounded))
+            .foregroundStyle(.white)
+            .multilineTextAlignment(.center)
 
-    private func compactPriceCopy(for package: Package) -> String {
-        let price = package.storeProduct.localizedPriceString
-        if package.packageType == .annual {
-            let monthly = package.storeProduct.localizedPricePerMonth ?? price
-            return "Just \(price) per year (\(monthly)/mo)"
+            Text(PaywallTerms.copy(for: package))
+                .font(.caption)
+                .foregroundStyle(Theme.secondaryText)
+                .multilineTextAlignment(.center)
         }
-        return "Just \(price) per month"
-    }
-
-    private func purchaseDisclosureCopy(for package: Package) -> String {
-        PaywallCopy.disclosure(
-            price: package.storeProduct.localizedPriceString,
-            isAnnual: package.packageType == .annual,
-            trialPeriod: freeTrialPeriodLabel(for: package)
-        )
-    }
-
-    private func freeTrialPeriodLabel(for package: Package) -> String? {
-        guard let trial = package.storeProduct.introductoryDiscount, trial.paymentMode == .freeTrial else { return nil }
-        return periodLabel(trial.subscriptionPeriod)
-    }
-
-    private func periodLabel(_ period: SubscriptionPeriod) -> String {
-        let unit: String
-        switch period.unit {
-        case .day: unit = period.value == 1 ? "Day" : "Days"
-        case .week: unit = period.value == 1 ? "Week" : "Weeks"
-        case .month: unit = period.value == 1 ? "Month" : "Months"
-        case .year: unit = period.value == 1 ? "Year" : "Years"
-        @unknown default: unit = "Days"
-        }
-        return "\(period.value) \(unit)"
+        .frame(maxWidth: .infinity)
     }
 
     private func purchase() async {
@@ -258,17 +235,14 @@ struct PaywallView: View {
                     }
 
                     if let selectedPackage {
+                        pricing(for: selectedPackage)
                         PrimaryButton(
-                            title: ctaTitle(for: selectedPackage),
+                            title: PaywallCopy.ctaTitle,
                             isLoading: isPurchasing,
                             isDisabled: isRestoring
                         ) {
                             Task { await purchase() }
                         }
-                        Text(renewalCopy(for: selectedPackage))
-                            .font(.caption)
-                            .foregroundStyle(Theme.secondaryText)
-                            .multilineTextAlignment(.center)
                     }
                 }
                 .padding(Spacing.extraLarge)
@@ -284,24 +258,20 @@ struct PaywallView: View {
         .tint(Theme.accent)
     }
 
-    private func renewalCopy(for package: Package) -> String {
-        purchaseDisclosureCopy(for: package)
-    }
-
-    private func ctaTitle(for package: Package) -> String {
-        PaywallCopy.ctaTitle(trialPeriod: freeTrialPeriodLabel(for: package))
-    }
 }
 
-private struct PlanCard: View {
-    let package: Package
-    let isSelected: Bool
+/// Bridges RevenueCat packages to `PaywallCopy.terms`.
+private enum PaywallTerms {
+    static func copy(for package: Package) -> String {
+        PaywallCopy.terms(
+            price: package.storeProduct.localizedPriceString,
+            isAnnual: package.packageType == .annual,
+            trialPeriod: freeTrialPeriod(for: package)
+        )
+    }
 
-    private var isAnnual: Bool { package.packageType == .annual }
-
-    private var trialLabel: String? {
-        guard let trial = package.storeProduct.introductoryDiscount,
-              trial.paymentMode == .freeTrial else { return nil }
+    private static func freeTrialPeriod(for package: Package) -> String? {
+        guard let trial = package.storeProduct.introductoryDiscount, trial.paymentMode == .freeTrial else { return nil }
         let value = trial.subscriptionPeriod.value
         let unit: String
         switch trial.subscriptionPeriod.unit {
@@ -311,17 +281,15 @@ private struct PlanCard: View {
         case .year: unit = value == 1 ? "year" : "years"
         @unknown default: unit = "days"
         }
-        let billingPeriod = PaywallCopy.billingPeriod(isAnnual: package.packageType == .annual)
-        return "\(value) \(unit) free, then \(package.storeProduct.localizedPriceString) per \(billingPeriod)"
+        return "\(value) \(unit)"
     }
+}
 
-    private var renewalLabel: String {
-        PaywallCopy.renewalLabel(
-            price: package.storeProduct.localizedPriceString,
-            isAnnual: package.packageType == .annual,
-            hasTrial: trialLabel != nil
-        )
-    }
+private struct PlanCard: View {
+    let package: Package
+    let isSelected: Bool
+
+    private var isAnnual: Bool { package.packageType == .annual }
 
     var body: some View {
         HStack {
@@ -339,10 +307,10 @@ private struct PlanCard: View {
                             .foregroundStyle(.black)
                     }
                 }
-                Text(trialLabel ?? package.storeProduct.localizedPriceString)
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.secondaryText)
-                Text(renewalLabel)
+                Text(PaywallCopy.billedAmount(price: package.storeProduct.localizedPriceString, isAnnual: isAnnual))
+                    .font(.title3.weight(.bold))
+                    .foregroundStyle(.white)
+                Text(PaywallTerms.copy(for: package))
                     .font(.caption)
                     .foregroundStyle(Theme.secondaryText.opacity(0.82))
             }
